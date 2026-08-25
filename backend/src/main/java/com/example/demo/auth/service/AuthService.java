@@ -104,6 +104,7 @@ public class AuthService {
                 .nickname(user.getNickname())
                 .phone(user.getPhone())
                 .avatar(user.getAvatar())
+                .status(user.getStatus())
                 .build();
 
         return LoginResponse.builder()
@@ -157,9 +158,6 @@ public class AuthService {
             throw BusinessException.badRequest("用户名或密码错误");
         }
 
-        if ("pending".equals(merchant.getStatus())) {
-            throw BusinessException.badRequest("账号待管理员审核通过后才能登录");
-        }
         if ("frozen".equals(merchant.getStatus())) {
             throw BusinessException.badRequest("账号已被冻结，无法登录");
         }
@@ -173,6 +171,7 @@ public class AuthService {
                 .merchantId(merchant.getId())
                 .nickname(merchant.getName())
                 .phone(merchant.getPhone())
+                .status(merchant.getStatus())
                 .build();
 
         return LoginResponse.builder()
@@ -220,9 +219,6 @@ public class AuthService {
             throw BusinessException.badRequest("手机号或密码错误");
         }
 
-        if ("pending".equals(rider.getStatus())) {
-            throw BusinessException.badRequest("账号待管理员审核通过后才能登录");
-        }
         if ("frozen".equals(rider.getStatus())) {
             throw BusinessException.badRequest("账号已被冻结，无法登录");
         }
@@ -236,6 +232,7 @@ public class AuthService {
                 .riderId(rider.getId())
                 .nickname(rider.getName())
                 .phone(rider.getPhone())
+                .status(rider.getStatus())
                 .build();
 
         return LoginResponse.builder()
@@ -268,6 +265,7 @@ public class AuthService {
                 .username(admin.getUsername())
                 .role("admin")
                 .nickname("管理员")
+                .status("active")
                 .build();
 
         return LoginResponse.builder()

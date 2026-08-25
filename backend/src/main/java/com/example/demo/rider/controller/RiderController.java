@@ -33,6 +33,11 @@ public class RiderController {
         return Result.success(riderService.getTasks(getRiderId(request)));
     }
 
+    @GetMapping("/profile")
+    public Result<Rider> getProfile(HttpServletRequest request) {
+        return Result.success(riderService.getProfile(getRiderId(request)));
+    }
+
     @PutMapping("/profile")
     public Result<Rider> updateProfile(HttpServletRequest request,
                                        @RequestBody RiderProfileUpdateRequest body) {

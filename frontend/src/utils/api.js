@@ -375,6 +375,10 @@ const api = {
     },
 
     rider: {
+        getProfile() {
+            return request({ url: '/rider/profile' })
+        },
+
         getTasks() {
             return request({ url: '/rider/tasks' })
         },

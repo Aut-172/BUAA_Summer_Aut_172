@@ -101,7 +101,7 @@ export default function ApiProvider({ children }) {
         await api.auth.register(role, { username, phone, password, nickname, captchaKey, captchaCode })
 
         if (role === 'merchant' || role === 'rider') {
-            notify('注册成功，请等待管理员审核通过后再登录', 'success')
+            notify('注册成功，可登录完善资料；审核通过后可使用工作功能', 'success')
             return null
         }
 

@@ -6,6 +6,7 @@ export default function RiderConsole() {
     const { api, notify, updateSessionUser, user } = useSession()
     const [dashboard, setDashboard] = useState(null)
     const [tasks, setTasks] = useState(null)
+    const [profile, setProfile] = useState(null)
     const [profileForm, setProfileForm] = useState({
         nickname: user?.nickname || user?.username || '',
         phone: user?.phone || '',
@@ -14,17 +15,25 @@ export default function RiderConsole() {
     const [loading, setLoading] = useState(true)
     const [savingProfile, setSavingProfile] = useState(false)
     const [busyTaskId, setBusyTaskId] = useState(null)
+    const featureLocked = profile?.status !== 'active'
 
     async function loadData() {
         setLoading(true)
         try {
-            const [dashboardData, taskData] = await Promise.all([
+            const [dashboardData, taskData, profileData] = await Promise.all([
                 api.dashboard.getMine(),
-                api.rider.getTasks()
+                api.rider.getTasks(),
+                api.rider.getProfile()
             ])
 
             setDashboard(dashboardData?.rider || null)
             setTasks(taskData || null)
+            setProfile(profileData || null)
+            setProfileForm({
+                nickname: profileData?.name || user?.nickname || user?.username || '',
+                phone: profileData?.phone || user?.phone || '',
+                serviceArea: profileData?.serviceArea || ''
+            })
         } finally {
             setLoading(false)
         }
@@ -38,10 +47,12 @@ export default function RiderConsole() {
         event.preventDefault()
         setSavingProfile(true)
         try {
-            await api.rider.updateProfile(profileForm)
+            const data = await api.rider.updateProfile(profileForm)
+            setProfile(data || null)
             updateSessionUser({
-                nickname: profileForm.nickname,
-                phone: profileForm.phone
+                nickname: data?.name || profileForm.nickname,
+                phone: data?.phone || profileForm.phone,
+                status: data?.status || user?.status
             })
             notify('骑手资料已更新', 'success')
         } catch (error) {
@@ -52,6 +63,11 @@ export default function RiderConsole() {
     }
 
     async function updateTask(taskId, status) {
+        if (featureLocked) {
+            notify('骑手账号审核通过后才能处理配送任务', 'warning')
+            return
+        }
+
         setBusyTaskId(taskId)
         try {
             await api.rider.updateTask(taskId, { status })
@@ -93,7 +109,7 @@ export default function RiderConsole() {
                                 <button
                                     className="btn primary small"
                                     type="button"
-                                    disabled={busyTaskId === task.id}
+                                    disabled={busyTaskId === task.id || featureLocked}
                                     onClick={() => updateTask(task.id, actionStatus)}
                                 >
                                     {busyTaskId === task.id ? '处理中...' : actionLabel}
@@ -119,6 +135,10 @@ export default function RiderConsole() {
                 <div className="panel empty-state">正在加载骑手数据...</div>
             ) : (
                 <>
+                    {featureLocked ? (
+                        <div className="panel empty-state">账号审核中，当前可维护资料；审核通过后可接单和处理配送任务。</div>
+                    ) : null}
+
                     <div className="split-grid">
                         <section className="panel">
                             <div className="metric-grid">

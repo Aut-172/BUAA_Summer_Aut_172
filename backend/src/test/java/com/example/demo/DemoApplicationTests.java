@@ -22,6 +22,7 @@ import com.example.demo.merchant.entity.Product;
 import com.example.demo.merchant.entity.ProductSpec;
 import com.example.demo.merchant.mapper.ProductMapper;
 import com.example.demo.merchant.mapper.ProductSpecMapper;
+import com.example.demo.merchant.service.MerchantService;
 import com.example.demo.order.entity.Orders;
 import com.example.demo.order.mapper.OrdersMapper;
 import com.example.demo.payment.entity.Payment;
@@ -108,8 +109,11 @@ class DemoApplicationTests {
     @Autowired
     private RiderMapper authRiderMapper;
 
+    @Autowired
+    private MerchantService merchantService;
+
     @Test
-    void merchantAndRiderRegistrationRequiresAdminAuditBeforeLogin() {
+    void merchantAndRiderRegistrationCanLoginButRequiresAdminAuditForCoreFeatures() {
         RegisterRequest merchantRequest = new RegisterRequest();
         merchantRequest.setUsername("pendingMerchant");
         merchantRequest.setPhone("13800138991");
@@ -126,13 +130,32 @@ class DemoApplicationTests {
         LoginRequest merchantLogin = new LoginRequest();
         merchantLogin.setUsername("pendingMerchant");
         merchantLogin.setPassword("123456");
-        BusinessException merchantPending = assertThrows(BusinessException.class,
-                () -> authService.loginMerchant(merchantLogin));
-        assertEquals(400, merchantPending.getCode());
+        LoginResponse pendingMerchantResponse = authService.loginMerchant(merchantLogin);
+        assertEquals("merchant", pendingMerchantResponse.getUser().getRole());
+        assertEquals("pending", pendingMerchantResponse.getUser().getStatus());
+
+        Product blockedProduct = new Product();
+        blockedProduct.setName("Blocked Product");
+        blockedProduct.setCategoryId(1L);
+        blockedProduct.setPrice(new BigDecimal("9.90"));
+        blockedProduct.setStock(10);
+
+        BusinessException merchantBlocked = assertThrows(BusinessException.class,
+                () -> merchantService.addProduct(merchant.getId(), blockedProduct));
+        assertEquals(403, merchantBlocked.getCode());
 
         adminService.auditMerchant(merchant.getId(), "active", "通过");
         LoginResponse merchantResponse = authService.loginMerchant(merchantLogin);
         assertEquals("merchant", merchantResponse.getUser().getRole());
+        assertEquals("active", merchantResponse.getUser().getStatus());
+
+        Product allowedProduct = new Product();
+        allowedProduct.setName("Allowed Product");
+        allowedProduct.setCategoryId(1L);
+        allowedProduct.setPrice(new BigDecimal("12.90"));
+        allowedProduct.setStock(10);
+        Product insertedProduct = merchantService.addProduct(merchant.getId(), allowedProduct);
+        assertNotNull(insertedProduct.getId());
 
         RegisterRequest riderRequest = new RegisterRequest();
         riderRequest.setUsername("pendingRider");
@@ -150,13 +173,38 @@ class DemoApplicationTests {
         LoginRequest riderLogin = new LoginRequest();
         riderLogin.setUsername("13800138992");
         riderLogin.setPassword("123456");
-        BusinessException riderPending = assertThrows(BusinessException.class,
-                () -> authService.loginRider(riderLogin));
-        assertEquals(400, riderPending.getCode());
+        LoginResponse pendingRiderResponse = authService.loginRider(riderLogin);
+        assertEquals("rider", pendingRiderResponse.getUser().getRole());
+        assertEquals("pending", pendingRiderResponse.getUser().getStatus());
+
+        Orders order = new Orders();
+        order.setOrderNo("ORD-PENDING-RIDER-1");
+        order.setUserId(10001L);
+        order.setMerchantId(20001L);
+        order.setType("delivery");
+        order.setTotalAmount(new BigDecimal("20.00"));
+        order.setActualAmount(new BigDecimal("20.00"));
+        order.setDeliveryFee(new BigDecimal("5.00"));
+        order.setDiscount(BigDecimal.ZERO);
+        order.setStatus("pending_accept");
+        order.setAddressDetail("Dormitory 2");
+        ordersMapper.insert(order);
+
+        RiderTaskUpdateRequest taskRequest = new RiderTaskUpdateRequest();
+        taskRequest.setStatus(STATUS_PENDING_ACCEPT_TEXT);
+        BusinessException riderBlocked = assertThrows(BusinessException.class,
+                () -> riderService.updateTask(rider.getId(), order.getId(), taskRequest));
+        assertEquals(403, riderBlocked.getCode());
 
         adminService.auditRider(rider.getId(), "active", "通过");
         LoginResponse riderResponse = authService.loginRider(riderLogin);
         assertEquals("rider", riderResponse.getUser().getRole());
+        assertEquals("active", riderResponse.getUser().getStatus());
+
+        riderService.updateTask(rider.getId(), order.getId(), taskRequest);
+        Orders updatedOrder = ordersMapper.selectById(order.getId());
+        assertEquals("delivering", updatedOrder.getStatus());
+        assertEquals(rider.getId(), updatedOrder.getRiderId());
     }
 
     @Test

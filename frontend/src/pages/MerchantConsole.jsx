@@ -39,6 +39,7 @@ export default function MerchantConsole() {
     const [savingProfile, setSavingProfile] = useState(false)
     const [savingProduct, setSavingProduct] = useState(false)
     const [busyOrderId, setBusyOrderId] = useState(null)
+    const featureLocked = profile?.status !== 'active'
 
     async function loadData() {
         setLoading(true)
@@ -119,6 +120,11 @@ export default function MerchantConsole() {
     async function handleSaveProduct(event) {
         event.preventDefault()
 
+        if (featureLocked) {
+            notify('商家账号审核通过后才能维护商品', 'warning')
+            return
+        }
+
         if (!productForm.categoryId) {
             notify('请选择商品分类，否则商品不会在商家详情页中展示', 'warning')
             return
@@ -155,6 +161,11 @@ export default function MerchantConsole() {
     }
 
     async function handleDeleteProduct(productId) {
+        if (featureLocked) {
+            notify('商家账号审核通过后才能维护商品', 'warning')
+            return
+        }
+
         try {
             await api.merchant.deleteProduct(productId)
             notify('商品已删除', 'success')
@@ -165,6 +176,11 @@ export default function MerchantConsole() {
     }
 
     async function handleUpdateOrder(orderId, status) {
+        if (featureLocked) {
+            notify('商家账号审核通过后才能处理订单', 'warning')
+            return
+        }
+
         setBusyOrderId(orderId)
         try {
             await api.merchant.updateOrder(orderId, {
@@ -199,6 +215,10 @@ export default function MerchantConsole() {
                 <div className="panel empty-state">正在加载商家数据...</div>
             ) : (
                 <>
+                    {featureLocked ? (
+                        <div className="panel empty-state">账号审核中，当前可维护资料；审核通过后可使用商品和订单功能。</div>
+                    ) : null}
+
                     {activeTab === 'overview' ? (
                         <div className="split-grid">
                             <section className="panel">
@@ -325,7 +345,7 @@ export default function MerchantConsole() {
                                         <span>描述</span>
                                         <textarea className="textarea" rows="4" value={productForm.description} onChange={(event) => setProductForm((current) => ({ ...current, description: event.target.value }))} />
                                     </label>
-                                    <button className="btn primary" type="submit" disabled={savingProduct}>
+                                    <button className="btn primary" type="submit" disabled={savingProduct || featureLocked}>
                                         {savingProduct ? '保存中...' : productForm.id ? '更新商品' : '新增商品'}
                                     </button>
                                 </form>
@@ -351,8 +371,8 @@ export default function MerchantConsole() {
                                                 </span>
                                             </div>
                                             <div className="card-actions">
-                                                <button className="btn ghost small" type="button" onClick={() => editProduct(product)}>编辑</button>
-                                                <button className="btn danger small" type="button" onClick={() => handleDeleteProduct(product.id)}>删除</button>
+                                                <button className="btn ghost small" type="button" disabled={featureLocked} onClick={() => editProduct(product)}>编辑</button>
+                                                <button className="btn danger small" type="button" disabled={featureLocked} onClick={() => handleDeleteProduct(product.id)}>删除</button>
                                             </div>
                                         </article>
                                     ))}
@@ -382,17 +402,17 @@ export default function MerchantConsole() {
                                     <div className="card-actions wrap">
                                         {formatStatusText(order.status) === '待取餐' ? (
                                             <>
-                                                <button className="btn primary small" type="button" disabled={busyOrderId === order.id} onClick={() => handleUpdateOrder(order.id, '配送中')}>
+                                                <button className="btn primary small" type="button" disabled={busyOrderId === order.id || featureLocked} onClick={() => handleUpdateOrder(order.id, '配送中')}>
                                                     标记配送中
                                                 </button>
-                                                <button className="btn ghost small" type="button" disabled={busyOrderId === order.id} onClick={() => handleUpdateOrder(order.id, '已完成')}>
+                                                <button className="btn ghost small" type="button" disabled={busyOrderId === order.id || featureLocked} onClick={() => handleUpdateOrder(order.id, '已完成')}>
                                                     直接完成
                                                 </button>
                                             </>
                                         ) : null}
 
                                         {formatStatusText(order.status) === '配送中' ? (
-                                            <button className="btn primary small" type="button" disabled={busyOrderId === order.id} onClick={() => handleUpdateOrder(order.id, '已完成')}>
+                                            <button className="btn primary small" type="button" disabled={busyOrderId === order.id || featureLocked} onClick={() => handleUpdateOrder(order.id, '已完成')}>
                                                 标记已完成
                                             </button>
                                         ) : null}

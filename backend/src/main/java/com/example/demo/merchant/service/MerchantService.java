@@ -370,6 +370,8 @@ public class MerchantService {
      * 添加商品
      */
     public Product addProduct(Long merchantId, Product product) {
+        requireActiveMerchant(merchantId);
+
         product.setId(null);
         product.setMerchantId(merchantId);
         product.setMonthlySales(0);
@@ -387,6 +389,8 @@ public class MerchantService {
      * 更新商品
      */
     public Product updateProduct(Long merchantId, Product product) {
+        requireActiveMerchant(merchantId);
+
         Product existing = productMapper.selectById(product.getId());
         if (existing == null) {
             throw new BusinessException(404, "商品不存在");
@@ -404,6 +408,8 @@ public class MerchantService {
      * 删除商品
      */
     public void deleteProduct(Long merchantId, Long productId) {
+        requireActiveMerchant(merchantId);
+
         Product existing = productMapper.selectById(productId);
         if (existing == null) {
             throw new BusinessException(404, "商品不存在");
@@ -427,6 +433,8 @@ public class MerchantService {
      * 添加规格分组
      */
     public void addSpecGroup(Long merchantId, SpecGroup specGroup) {
+        requireActiveMerchant(merchantId);
+
         specGroup.setId(null);
         // spec_group 表使用 product_id，不再设置 merchantId
         specGroupMapper.insert(specGroup);
@@ -436,6 +444,8 @@ public class MerchantService {
      * 删除规格分组
      */
     public void deleteSpecGroup(Long merchantId, Long groupId) {
+        requireActiveMerchant(merchantId);
+
         SpecGroup existing = specGroupMapper.selectById(groupId);
         if (existing == null) {
             throw new BusinessException(404, "规格分组不存在");
@@ -450,6 +460,8 @@ public class MerchantService {
      * 添加规格值
      */
     public void addProductSpec(Long merchantId, ProductSpec productSpec) {
+        requireActiveMerchant(merchantId);
+
         productSpec.setId(null);
         productSpecMapper.insert(productSpec);
     }
@@ -458,10 +470,22 @@ public class MerchantService {
      * 删除规格值
      */
     public void deleteProductSpec(Long merchantId, Long specId) {
+        requireActiveMerchant(merchantId);
+
         ProductSpec existing = productSpecMapper.selectById(specId);
         if (existing == null) {
             throw new BusinessException(404, "规格值不存在");
         }
         productSpecMapper.deleteById(specId);
+    }
+
+    private void requireActiveMerchant(Long merchantId) {
+        Merchant merchant = merchantMapper.selectById(merchantId);
+        if (merchant == null) {
+            throw new BusinessException(404, "商家不存在");
+        }
+        if (!"active".equals(merchant.getStatus())) {
+            throw BusinessException.forbidden("商家账号审核通过后才能使用该功能");
+        }
     }
 }

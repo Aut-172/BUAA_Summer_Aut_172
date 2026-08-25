@@ -258,6 +258,8 @@ public class OrderService {
 
     @Transactional
     public OrderVO updateMerchantOrder(Long merchantId, Long orderId, MerchantOrderUpdateRequest request) {
+        requireActiveMerchant(merchantId);
+
         Orders order = ordersMapper.selectOne(
                 new LambdaQueryWrapper<Orders>()
                         .eq(Orders::getId, orderId)
@@ -292,6 +294,16 @@ public class OrderService {
         }
         ordersMapper.updateById(order);
         return toOrderVO(order);
+    }
+
+    private void requireActiveMerchant(Long merchantId) {
+        Merchant merchant = merchantMapper.selectById(merchantId);
+        if (merchant == null) {
+            throw BusinessException.notFound("商家不存在");
+        }
+        if (!"active".equals(merchant.getStatus())) {
+            throw BusinessException.forbidden("商家账号审核通过后才能使用该功能");
+        }
     }
 
     private String normalizeStatusCode(String status) {
