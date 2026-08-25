@@ -1,0 +1,31 @@
+package com.example.demo.order.dto;
+
+import lombok.Data;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+/**
+ * 结算下单请求
+ */
+@Data
+public class CheckoutRequest {
+
+    private Long merchantId;
+    private List<CheckoutItem> items;
+    private BigDecimal total;
+    private BigDecimal deliveryFee;
+    private BigDecimal discount;
+    private String address;     // 收货地址详情
+    private Long couponId;
+
+    @Data
+    public static class CheckoutItem {
+        private Long productId;
+        private String name;
+        private BigDecimal price;
+        private Integer quantity;
+        private String image;
+        private String specLabel;
+    }
+}

@@ -1,0 +1,70 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: life-assistant
+
+  # 数据源配置
+  datasource:
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/life_assistant?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:13677640272lzt}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # SQL 初始化配置（首次部署时改为 always 执行一次，之后改为 never 防止数据丢失）
+  sql:
+    init:
+      mode: never
+      schema-locations: classpath:db/init.sql
+      continue-on-error: true
+
+  # Redis 配置
+#  data:
+#    redis:
+#      host: localhost
+#      port: 6379
+#      database: 0
+#      timeout: 3000ms
+#      connect-timeout: 3000ms
+#      lettuce:
+#        pool:
+#          max-active: 8
+#          max-idle: 8
+#          min-idle: 0
+#          max-wait: 3000ms
+#        shutdown-timeout: 100ms
+
+  # Jackson 日期格式
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    default-property-inclusion: non_null
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.example.demo.**.entity
+  global-config:
+    db-config:
+      id-type: ASSIGN_ID
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+    banner: false
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# JWT 配置
+jwt:
+  secret: LifeAssistant2025SecretKeyForJWTTokenGenerationMustBe256BitsLong
+  expiration: 86400000  # 24小时，单位毫秒
+
+# SpringDoc OpenAPI
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
