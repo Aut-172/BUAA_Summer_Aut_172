@@ -15,7 +15,9 @@ import com.example.demo.auth.mapper.RiderMapper;
 import com.example.demo.auth.mapper.UserMapper;
 import com.example.demo.common.BusinessException;
 import com.example.demo.common.JwtUtil;
+import com.example.demo.common.service.CaptchaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +33,10 @@ public class AuthService {
     private final RiderMapper riderMapper;
     private final AdminMapper adminMapper;
     private final JwtUtil jwtUtil;
+    private final CaptchaService captchaService;
+
+    @Value("${app.auth.captcha-enabled:true}")
+    private boolean captchaEnabled;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -38,6 +44,8 @@ public class AuthService {
      * 用户注册
      */
     public void register(RegisterRequest request) {
+        verifyCaptcha(request.getCaptchaKey(), request.getCaptchaCode());
+
         // 校验用户名是否已存在
         if (userMapper.selectCount(new LambdaQueryWrapper<User>()
                 .eq(User::getUsername, request.getUsername())) > 0) {
@@ -66,6 +74,8 @@ public class AuthService {
      * 用户登录
      */
     public LoginResponse login(LoginRequest request) {
+        verifyCaptcha(request.getCaptchaKey(), request.getCaptchaCode());
+
         User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
                 .eq(User::getUsername, request.getUsername())
                 .or()
@@ -106,6 +116,8 @@ public class AuthService {
      * 商家注册
      */
     public void registerMerchant(RegisterRequest request) {
+        verifyCaptcha(request.getCaptchaKey(), request.getCaptchaCode());
+
         // 校验用户名是否已存在
         if (merchantMapper.selectCount(new LambdaQueryWrapper<Merchant>()
                 .eq(Merchant::getUsername, request.getUsername())) > 0) {
@@ -123,7 +135,7 @@ public class AuthService {
         merchant.setPassword(passwordEncoder.encode(request.getPassword()));
         merchant.setPhone(request.getPhone());
         merchant.setName(request.getNickname() != null ? request.getNickname() : request.getUsername());
-        merchant.setStatus("active"); // 直接激活（测试用）
+        merchant.setStatus("pending");
 
         merchantMapper.insert(merchant);
     }
@@ -132,6 +144,8 @@ public class AuthService {
      * 商家登录
      */
     public LoginResponse loginMerchant(LoginRequest request) {
+        verifyCaptcha(request.getCaptchaKey(), request.getCaptchaCode());
+
         Merchant merchant = merchantMapper.selectOne(new LambdaQueryWrapper<Merchant>()
                 .eq(Merchant::getUsername, request.getUsername()));
 
@@ -139,17 +153,15 @@ public class AuthService {
             throw BusinessException.badRequest("用户名或密码错误");
         }
 
+        if (!passwordEncoder.matches(request.getPassword(), merchant.getPassword())) {
+            throw BusinessException.badRequest("用户名或密码错误");
+        }
+
         if ("pending".equals(merchant.getStatus())) {
-            // 自动激活
-            merchant.setStatus("active");
-            merchantMapper.updateById(merchant);
+            throw BusinessException.badRequest("账号待管理员审核通过后才能登录");
         }
         if ("frozen".equals(merchant.getStatus())) {
             throw BusinessException.badRequest("账号已被冻结，无法登录");
-        }
-
-        if (!passwordEncoder.matches(request.getPassword(), merchant.getPassword())) {
-            throw BusinessException.badRequest("用户名或密码错误");
         }
 
         String token = jwtUtil.generateToken(merchant.getId(), "merchant", merchant.getUsername());
@@ -173,6 +185,8 @@ public class AuthService {
      * 骑手注册
      */
     public void registerRider(RegisterRequest request) {
+        verifyCaptcha(request.getCaptchaKey(), request.getCaptchaCode());
+
         if (riderMapper.selectCount(new LambdaQueryWrapper<Rider>()
                 .eq(Rider::getPhone, request.getPhone())) > 0) {
             throw BusinessException.badRequest("手机号已注册");
@@ -182,7 +196,7 @@ public class AuthService {
         rider.setName(request.getNickname() != null ? request.getNickname() : request.getUsername());
         rider.setPassword(passwordEncoder.encode(request.getPassword()));
         rider.setPhone(request.getPhone());
-        rider.setStatus("active"); // 直接激活（测试用）
+        rider.setStatus("pending");
 
         riderMapper.insert(rider);
     }
@@ -191,6 +205,8 @@ public class AuthService {
      * 骑手登录
      */
     public LoginResponse loginRider(LoginRequest request) {
+        verifyCaptcha(request.getCaptchaKey(), request.getCaptchaCode());
+
         Rider rider = riderMapper.selectOne(new LambdaQueryWrapper<Rider>()
                 .eq(Rider::getPhone, request.getUsername())
                 .or()
@@ -200,17 +216,15 @@ public class AuthService {
             throw BusinessException.badRequest("手机号或密码错误");
         }
 
+        if (!passwordEncoder.matches(request.getPassword(), rider.getPassword())) {
+            throw BusinessException.badRequest("手机号或密码错误");
+        }
+
         if ("pending".equals(rider.getStatus())) {
-            // 自动激活
-            rider.setStatus("active");
-            riderMapper.updateById(rider);
+            throw BusinessException.badRequest("账号待管理员审核通过后才能登录");
         }
         if ("frozen".equals(rider.getStatus())) {
             throw BusinessException.badRequest("账号已被冻结，无法登录");
-        }
-
-        if (!passwordEncoder.matches(request.getPassword(), rider.getPassword())) {
-            throw BusinessException.badRequest("手机号或密码错误");
         }
 
         String token = jwtUtil.generateToken(rider.getId(), "rider", rider.getName());
@@ -234,6 +248,8 @@ public class AuthService {
      * 管理员登录
      */
     public LoginResponse loginAdmin(LoginRequest request) {
+        verifyCaptcha(request.getCaptchaKey(), request.getCaptchaCode());
+
         Admin admin = adminMapper.selectOne(new LambdaQueryWrapper<Admin>()
                 .eq(Admin::getUsername, request.getUsername()));
 
@@ -258,5 +274,15 @@ public class AuthService {
                 .accessToken(token)
                 .user(userInfo)
                 .build();
+    }
+
+    private void verifyCaptcha(String key, String code) {
+        if (!captchaEnabled) {
+            return;
+        }
+
+        if (StrUtil.isBlank(key) || StrUtil.isBlank(code) || !captchaService.verify(key, code)) {
+            throw BusinessException.badRequest("验证码错误或已过期");
+        }
     }
 }

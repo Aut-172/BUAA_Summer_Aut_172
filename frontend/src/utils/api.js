@@ -99,6 +99,12 @@ async function request(config) {
 }
 
 const api = {
+    captcha: {
+        get() {
+            return request({ url: '/captcha' })
+        }
+    },
+
     auth: {
         login(role, payload) {
             const pathMap = {

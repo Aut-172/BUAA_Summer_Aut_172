@@ -122,6 +122,10 @@ public class AdminService {
         if (merchant == null) {
             throw BusinessException.notFound("商家不存在");
         }
+        validateAuditStatus(status);
+        if (!"pending".equals(merchant.getStatus())) {
+            throw BusinessException.badRequest("仅待审核商家可执行审核");
+        }
         merchant.setStatus(status);
         merchantMapper.updateById(merchant);
     }
@@ -185,9 +189,19 @@ public class AdminService {
         if (rider == null) {
             throw BusinessException.notFound("骑手不存在");
         }
+        validateAuditStatus(status);
+        if (!"pending".equals(rider.getStatus())) {
+            throw BusinessException.badRequest("仅待审核骑手可执行审核");
+        }
         rider.setStatus(status);
         rider.setAuditOpinion(opinion);
         riderMapper.updateById(rider);
+    }
+
+    private void validateAuditStatus(String status) {
+        if (!"active".equals(status)) {
+            throw BusinessException.badRequest("审核状态仅支持 active");
+        }
     }
 
     /**

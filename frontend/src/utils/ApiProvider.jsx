@@ -89,20 +89,24 @@ export default function ApiProvider({ children }) {
         })
     }
 
-    async function login({ role, username, password }) {
-        const payload = await api.auth.login(role, { username, password })
+    async function login({ role, username, password, captchaKey, captchaCode }) {
+        const payload = await api.auth.login(role, { username, password, captchaKey, captchaCode })
         const nextSession = toSession(payload)
         commitSession(nextSession)
         notify('登录成功', 'success')
         return nextSession
     }
 
-    async function register({ role, username, phone, password, nickname }) {
-        await api.auth.register(role, { username, phone, password, nickname })
-        notify('注册成功，已为你自动登录', 'success')
+    async function register({ role, username, phone, password, nickname, captchaKey, captchaCode }) {
+        await api.auth.register(role, { username, phone, password, nickname, captchaKey, captchaCode })
 
-        const loginName = role === 'rider' ? (phone || username) : username
-        return login({ role, username: loginName, password })
+        if (role === 'merchant' || role === 'rider') {
+            notify('注册成功，请等待管理员审核通过后再登录', 'success')
+            return null
+        }
+
+        notify('注册成功，请使用新账号登录', 'success')
+        return null
     }
 
     function logout(message = '已退出当前账号') {

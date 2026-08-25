@@ -28,5 +28,7 @@ mybatis-plus:
     cache-enabled: false
 
 app:
+  auth:
+    captcha-enabled: false
   bootstrap-admin:
     enabled: false

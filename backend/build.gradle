@@ -25,6 +25,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.security:spring-security-crypto'
+    implementation 'org.apache.commons:commons-pool2'
 
     // MyBatis-Plus
     implementation 'com.baomidou:mybatis-plus-spring-boot3-starter:3.5.7'

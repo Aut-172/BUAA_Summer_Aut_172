@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useSession } from '../utils/ApiProvider'
 
@@ -32,21 +32,43 @@ function getRedirectByRole(role) {
 export default function Login() {
     const navigate = useNavigate()
     const location = useLocation()
-    const { login, register, notify } = useSession()
+    const { api, login, register, notify } = useSession()
     const [mode, setMode] = useState('login')
     const [role, setRole] = useState('consumer')
     const [form, setForm] = useState({
         username: DEMO_ACCOUNTS.consumer.username,
         phone: DEMO_ACCOUNTS.consumer.phone,
         password: DEMO_ACCOUNTS.consumer.password,
-        nickname: DEMO_ACCOUNTS.consumer.nickname
+        nickname: DEMO_ACCOUNTS.consumer.nickname,
+        captchaCode: ''
     })
+    const [captcha, setCaptcha] = useState({ key: '', image: '', loading: false })
     const [submitting, setSubmitting] = useState(false)
 
     const currentRole = useMemo(
         () => ROLE_OPTIONS.find((item) => item.value === role) || ROLE_OPTIONS[0],
         [role]
     )
+
+    async function refreshCaptcha() {
+        setCaptcha((current) => ({ ...current, loading: true }))
+        try {
+            const data = await api.captcha.get()
+            setCaptcha({
+                key: data?.key || '',
+                image: data?.image || '',
+                loading: false
+            })
+            setForm((current) => ({ ...current, captchaCode: '' }))
+        } catch (error) {
+            setCaptcha((current) => ({ ...current, loading: false }))
+            notify(error.message || '验证码加载失败', 'danger')
+        }
+    }
+
+    useEffect(() => {
+        refreshCaptcha()
+    }, [mode, role])
 
     function applyDemo(nextRole) {
         const demo = DEMO_ACCOUNTS[nextRole]
@@ -56,7 +78,8 @@ export default function Login() {
             username: demo.username || '',
             phone: demo.phone || '',
             password: demo.password || '',
-            nickname: demo.nickname || ''
+            nickname: demo.nickname || '',
+            captchaCode: ''
         })
     }
 
@@ -73,16 +96,22 @@ export default function Login() {
             username: demo?.username || current.username,
             phone: demo?.phone || current.phone,
             password: demo?.password || current.password,
-            nickname: demo?.nickname || current.nickname
+            nickname: demo?.nickname || current.nickname,
+            captchaCode: ''
         }))
     }
 
     async function handleSubmit(event) {
         event.preventDefault()
         setSubmitting(true)
+        let shouldRefreshCaptcha = true
 
         try {
             let nextSession
+
+            if (!captcha.key) {
+                throw new Error('请先获取验证码')
+            }
 
             if (mode === 'register') {
                 if (!currentRole.canRegister) {
@@ -94,22 +123,35 @@ export default function Login() {
                     username: form.username.trim(),
                     phone: form.phone.trim(),
                     password: form.password,
-                    nickname: form.nickname.trim()
+                    nickname: form.nickname.trim(),
+                    captchaKey: captcha.key,
+                    captchaCode: form.captchaCode.trim()
                 })
             } else {
                 nextSession = await login({
                     role,
                     username: form.username.trim(),
-                    password: form.password
+                    password: form.password,
+                    captchaKey: captcha.key,
+                    captchaCode: form.captchaCode.trim()
                 })
             }
 
+            if (!nextSession) {
+                setMode('login')
+                return
+            }
+
+            shouldRefreshCaptcha = false
             const from = location.state?.from
             navigate(from || getRedirectByRole(nextSession.role), { replace: true })
         } catch (error) {
             notify(error.message || (mode === 'register' ? '注册失败' : '登录失败'), 'danger')
         } finally {
             setSubmitting(false)
+            if (shouldRefreshCaptcha) {
+                refreshCaptcha()
+            }
         }
     }
 
@@ -223,8 +265,30 @@ export default function Login() {
                             />
                         </label>
 
+                        <label className="form-row">
+                            <span>验证码</span>
+                            <div className="captcha-row">
+                                <input
+                                    className="input"
+                                    value={form.captchaCode}
+                                    onChange={(event) => setForm((current) => ({ ...current, captchaCode: event.target.value }))}
+                                    placeholder="输入图形验证码"
+                                />
+                                <button
+                                    className="captcha-image"
+                                    type="button"
+                                    onClick={refreshCaptcha}
+                                    disabled={captcha.loading}
+                                    aria-label="刷新验证码"
+                                    title="刷新验证码"
+                                >
+                                    {captcha.image ? <img src={captcha.image} alt="验证码" /> : <span>{captcha.loading ? '加载中' : '刷新'}</span>}
+                                </button>
+                            </div>
+                        </label>
+
                         <button className="btn primary" type="submit" disabled={submitting}>
-                            {submitting ? (mode === 'register' ? '注册中...' : '登录中...') : (mode === 'register' ? '注册并进入' : '进入系统')}
+                            {submitting ? (mode === 'register' ? '注册中...' : '登录中...') : (mode === 'register' ? '注册账号' : '进入系统')}
                         </button>
                     </form>
 

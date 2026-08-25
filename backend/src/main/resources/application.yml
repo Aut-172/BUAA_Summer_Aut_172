@@ -20,20 +20,21 @@ spring:
       continue-on-error: true
 
   # Redis 配置
-#  data:
-#    redis:
-#      host: localhost
-#      port: 6379
-#      database: 0
-#      timeout: 3000ms
-#      connect-timeout: 3000ms
-#      lettuce:
-#        pool:
-#          max-active: 8
-#          max-idle: 8
-#          min-idle: 0
-#          max-wait: 3000ms
-#        shutdown-timeout: 100ms
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${REDIS_PASSWORD:13677640272lzt}
+      database: 0
+      timeout: 3000ms
+      connect-timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: 3000ms
+        shutdown-timeout: 100ms
 
   # Jackson 日期格式
   jackson:

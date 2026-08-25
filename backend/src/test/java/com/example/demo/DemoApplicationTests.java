@@ -1,6 +1,15 @@
 package com.example.demo;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.example.demo.admin.service.AdminService;
+import com.example.demo.auth.dto.LoginRequest;
+import com.example.demo.auth.dto.LoginResponse;
+import com.example.demo.auth.dto.RegisterRequest;
+import com.example.demo.auth.entity.Merchant;
+import com.example.demo.auth.entity.Rider;
+import com.example.demo.auth.mapper.MerchantMapper;
+import com.example.demo.auth.mapper.RiderMapper;
+import com.example.demo.auth.service.AuthService;
 import com.example.demo.common.BusinessException;
 import com.example.demo.coupon.entity.Coupon;
 import com.example.demo.coupon.entity.UserCoupon;
@@ -86,6 +95,69 @@ class DemoApplicationTests {
 
     @Autowired
     private ProductSpecMapper productSpecMapper;
+
+    @Autowired
+    private AuthService authService;
+
+    @Autowired
+    private AdminService adminService;
+
+    @Autowired
+    private MerchantMapper authMerchantMapper;
+
+    @Autowired
+    private RiderMapper authRiderMapper;
+
+    @Test
+    void merchantAndRiderRegistrationRequiresAdminAuditBeforeLogin() {
+        RegisterRequest merchantRequest = new RegisterRequest();
+        merchantRequest.setUsername("pendingMerchant");
+        merchantRequest.setPhone("13800138991");
+        merchantRequest.setPassword("123456");
+        merchantRequest.setNickname("Pending Merchant");
+
+        authService.registerMerchant(merchantRequest);
+
+        Merchant merchant = authMerchantMapper.selectOne(new LambdaQueryWrapper<Merchant>()
+                .eq(Merchant::getUsername, "pendingMerchant"));
+        assertNotNull(merchant);
+        assertEquals("pending", merchant.getStatus());
+
+        LoginRequest merchantLogin = new LoginRequest();
+        merchantLogin.setUsername("pendingMerchant");
+        merchantLogin.setPassword("123456");
+        BusinessException merchantPending = assertThrows(BusinessException.class,
+                () -> authService.loginMerchant(merchantLogin));
+        assertEquals(400, merchantPending.getCode());
+
+        adminService.auditMerchant(merchant.getId(), "active", "通过");
+        LoginResponse merchantResponse = authService.loginMerchant(merchantLogin);
+        assertEquals("merchant", merchantResponse.getUser().getRole());
+
+        RegisterRequest riderRequest = new RegisterRequest();
+        riderRequest.setUsername("pendingRider");
+        riderRequest.setPhone("13800138992");
+        riderRequest.setPassword("123456");
+        riderRequest.setNickname("Pending Rider");
+
+        authService.registerRider(riderRequest);
+
+        Rider rider = authRiderMapper.selectOne(new LambdaQueryWrapper<Rider>()
+                .eq(Rider::getPhone, "13800138992"));
+        assertNotNull(rider);
+        assertEquals("pending", rider.getStatus());
+
+        LoginRequest riderLogin = new LoginRequest();
+        riderLogin.setUsername("13800138992");
+        riderLogin.setPassword("123456");
+        BusinessException riderPending = assertThrows(BusinessException.class,
+                () -> authService.loginRider(riderLogin));
+        assertEquals(400, riderPending.getCode());
+
+        adminService.auditRider(rider.getId(), "active", "通过");
+        LoginResponse riderResponse = authService.loginRider(riderLogin);
+        assertEquals("rider", riderResponse.getUser().getRole());
+    }
 
     @Test
     void claimCouponRejectsEmptyInventoryAndNullLimit() {
