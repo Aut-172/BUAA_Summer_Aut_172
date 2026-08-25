@@ -1,5 +1,5 @@
 param(
-    [string]$MarkdownPath = "backend/软件需求规格说明书.md",
+    [string]$MarkdownPath = "frontend/参考文档/参考文档/软件详细设计说明书.md",
     [string]$OutputDir,
     [string]$PlantUmlJar,
     [string]$PlantUmlCommand = "plantuml",
@@ -45,7 +45,7 @@ $markdownDir = Split-Path -Parent $markdownFullPath
 $markdownBaseName = [IO.Path]::GetFileNameWithoutExtension($markdownFullPath)
 
 if ([string]::IsNullOrWhiteSpace($OutputDir)) {
-    $OutputDir = Join-Path $markdownDir "$markdownBaseName.assets\plantuml"
+    $OutputDir = Join-Path $markdownDir ("{0}.assets\plantuml" -f $markdownBaseName)
 }
 
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
