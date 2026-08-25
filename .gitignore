@@ -13,3 +13,7 @@ frontend/dist/
 backend/build/
 backup_*/
 *.bak
+gradle-9.5.1-bin.zip
+tools/plantuml.jar
+*.png
+*.puml

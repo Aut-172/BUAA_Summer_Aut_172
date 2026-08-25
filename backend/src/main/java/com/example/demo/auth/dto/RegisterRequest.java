@@ -24,4 +24,8 @@ public class RegisterRequest {
     private String password;
 
     private String nickname;
+
+    private String captchaKey;
+
+    private String captchaCode;
 }

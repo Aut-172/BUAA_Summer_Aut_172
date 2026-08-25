@@ -36,5 +36,6 @@ public class LoginResponse {
         private String nickname;
         private String phone;
         private String avatar;
+        private String status;
     }
 }

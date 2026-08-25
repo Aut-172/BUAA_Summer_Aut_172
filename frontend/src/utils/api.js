@@ -99,6 +99,12 @@ async function request(config) {
 }
 
 const api = {
+    captcha: {
+        get() {
+            return request({ url: '/captcha' })
+        }
+    },
+
     auth: {
         login(role, payload) {
             const pathMap = {
@@ -369,6 +375,10 @@ const api = {
     },
 
     rider: {
+        getProfile() {
+            return request({ url: '/rider/profile' })
+        },
+
         getTasks() {
             return request({ url: '/rider/tasks' })
         },

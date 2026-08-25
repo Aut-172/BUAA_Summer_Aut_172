@@ -35,6 +35,14 @@ public class RiderService {
     private final RiderMapper riderMapper;
     private final CouponService couponService;
 
+    public Rider getProfile(Long riderId) {
+        Rider rider = riderMapper.selectById(riderId);
+        if (rider == null) {
+            throw BusinessException.notFound("骑手不存在");
+        }
+        return rider;
+    }
+
     public Rider updateProfile(Long riderId, RiderProfileUpdateRequest request) {
         Rider rider = riderMapper.selectById(riderId);
         if (rider == null) {
@@ -102,6 +110,8 @@ public class RiderService {
 
     @Transactional
     public RiderTaskVO.TaskItem updateTask(Long riderId, Long orderId, RiderTaskUpdateRequest request) {
+        requireActiveRider(riderId);
+
         Orders order = ordersMapper.selectById(orderId);
         if (order == null) {
             throw BusinessException.notFound("订单不存在");
@@ -151,6 +161,16 @@ public class RiderService {
             couponService.confirmUseCoupon(order.getId());
         }
         return toTaskItem(order);
+    }
+
+    private void requireActiveRider(Long riderId) {
+        Rider rider = riderMapper.selectById(riderId);
+        if (rider == null) {
+            throw BusinessException.notFound("骑手不存在");
+        }
+        if (!"active".equals(rider.getStatus())) {
+            throw BusinessException.forbidden("骑手账号审核通过后才能使用该功能");
+        }
     }
 
     private String normalizeTaskStatus(String status) {
