@@ -1,0 +1,177 @@
+import React, { useEffect, useState } from 'react'
+import { useSession } from '../utils/ApiProvider'
+import { formatMoney, formatStatusText, getStatusTone } from '../utils/format'
+
+export default function RiderConsole() {
+    const { api, notify, updateSessionUser, user } = useSession()
+    const [dashboard, setDashboard] = useState(null)
+    const [tasks, setTasks] = useState(null)
+    const [profileForm, setProfileForm] = useState({
+        nickname: user?.nickname || user?.username || '',
+        phone: user?.phone || '',
+        serviceArea: ''
+    })
+    const [loading, setLoading] = useState(true)
+    const [savingProfile, setSavingProfile] = useState(false)
+    const [busyTaskId, setBusyTaskId] = useState(null)
+
+    async function loadData() {
+        setLoading(true)
+        try {
+            const [dashboardData, taskData] = await Promise.all([
+                api.dashboard.getMine(),
+                api.rider.getTasks()
+            ])
+
+            setDashboard(dashboardData?.rider || null)
+            setTasks(taskData || null)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        loadData()
+    }, [])
+
+    async function handleSaveProfile(event) {
+        event.preventDefault()
+        setSavingProfile(true)
+        try {
+            await api.rider.updateProfile(profileForm)
+            updateSessionUser({
+                nickname: profileForm.nickname,
+                phone: profileForm.phone
+            })
+            notify('骑手资料已更新', 'success')
+        } catch (error) {
+            notify(error.message || '更新骑手资料失败', 'danger')
+        } finally {
+            setSavingProfile(false)
+        }
+    }
+
+    async function updateTask(taskId, status) {
+        setBusyTaskId(taskId)
+        try {
+            await api.rider.updateTask(taskId, { status })
+            notify('任务状态已更新', 'success')
+            await loadData()
+        } catch (error) {
+            notify(error.message || '更新任务失败', 'danger')
+        } finally {
+            setBusyTaskId(null)
+        }
+    }
+
+    function renderTaskList(title, description, list, actionLabel, actionStatus) {
+        return (
+            <section className="panel">
+                <div className="panel-head">
+                    <div>
+                        <h2 className="section-title">{title}</h2>
+                        <p className="section-subtitle">{description}</p>
+                    </div>
+                </div>
+
+                <div className="stack">
+                    {(list || []).length === 0 ? (
+                        <div className="empty-state">暂无任务。</div>
+                    ) : (list || []).map((task) => (
+                        <article className="select-card" key={task.id}>
+                            <div className="stack tight grow">
+                                <strong>{task.orderNo}</strong>
+                                <span className="muted-text">{task.merchant} · {task.items}</span>
+                                <span className="muted-text">取餐点：{task.pickup || '未设置'}</span>
+                                <span className="muted-text">送达点：{task.destination || '未设置'}</span>
+                                <div className="badge-row">
+                                    <span className={`status-chip ${getStatusTone(task.status)}`}>{formatStatusText(task.status)}</span>
+                                    <span className="badge muted">{formatMoney(task.total)}</span>
+                                </div>
+                            </div>
+                            {actionLabel ? (
+                                <button
+                                    className="btn primary small"
+                                    type="button"
+                                    disabled={busyTaskId === task.id}
+                                    onClick={() => updateTask(task.id, actionStatus)}
+                                >
+                                    {busyTaskId === task.id ? '处理中...' : actionLabel}
+                                </button>
+                            ) : null}
+                        </article>
+                    ))}
+                </div>
+            </section>
+        )
+    }
+
+    return (
+        <section className="page">
+            <div className="panel-head">
+                <div>
+                    <h1 className="section-title">骑手工作台</h1>
+                    <p className="section-subtitle">可真实接单、完成配送，并更新当前骑手资料。</p>
+                </div>
+            </div>
+
+            {loading ? (
+                <div className="panel empty-state">正在加载骑手数据...</div>
+            ) : (
+                <>
+                    <div className="split-grid">
+                        <section className="panel">
+                            <div className="metric-grid">
+                                <div className="metric-card">
+                                    <span>今日配送</span>
+                                    <strong>{dashboard?.todayDeliveries || 0}</strong>
+                                </div>
+                                <div className="metric-card">
+                                    <span>今日收入</span>
+                                    <strong>{formatMoney(dashboard?.todayEarnings || 0)}</strong>
+                                </div>
+                                <div className="metric-card">
+                                    <span>在线状态</span>
+                                    <strong>{dashboard?.online ? '在线' : '离线'}</strong>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section className="panel">
+                            <div className="panel-head">
+                                <div>
+                                    <h2 className="section-title">骑手资料</h2>
+                                    <p className="section-subtitle">后端当前支持昵称、手机号和服务范围。</p>
+                                </div>
+                            </div>
+
+                            <form className="form-grid" onSubmit={handleSaveProfile}>
+                                <label className="form-row">
+                                    <span>昵称</span>
+                                    <input className="input" value={profileForm.nickname} onChange={(event) => setProfileForm((current) => ({ ...current, nickname: event.target.value }))} />
+                                </label>
+                                <label className="form-row">
+                                    <span>手机号</span>
+                                    <input className="input" value={profileForm.phone} onChange={(event) => setProfileForm((current) => ({ ...current, phone: event.target.value }))} />
+                                </label>
+                                <label className="form-row">
+                                    <span>服务范围</span>
+                                    <input className="input" value={profileForm.serviceArea} onChange={(event) => setProfileForm((current) => ({ ...current, serviceArea: event.target.value }))} />
+                                </label>
+                                <button className="btn primary" type="submit" disabled={savingProfile}>
+                                    {savingProfile ? '保存中...' : '保存资料'}
+                                </button>
+                            </form>
+                        </section>
+                    </div>
+
+                    <div className="stack">
+                        {renderTaskList('可接订单', '来源：`available` 列表', tasks?.available, '立即接单', '待取餐')}
+                        {renderTaskList('配送中订单', '接单后会进入这里', tasks?.assigned, '完成配送', '已完成')}
+                        {renderTaskList('已完成订单', '仅做只读展示', tasks?.completed, null, null)}
+                    </div>
+                </>
+            )}
+        </section>
+    )
+}
