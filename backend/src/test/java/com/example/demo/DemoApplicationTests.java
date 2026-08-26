@@ -16,6 +16,8 @@ import com.example.demo.coupon.entity.UserCoupon;
 import com.example.demo.coupon.mapper.CouponMapper;
 import com.example.demo.coupon.mapper.UserCouponMapper;
 import com.example.demo.coupon.service.CouponService;
+import com.example.demo.dashboard.dto.DashboardVO;
+import com.example.demo.dashboard.service.DashboardService;
 import com.example.demo.delivery.dto.DeliveryVO;
 import com.example.demo.delivery.service.DeliveryService;
 import com.example.demo.merchant.entity.Product;
@@ -27,10 +29,18 @@ import com.example.demo.order.entity.Orders;
 import com.example.demo.order.mapper.OrdersMapper;
 import com.example.demo.payment.entity.Payment;
 import com.example.demo.payment.mapper.PaymentMapper;
+import com.example.demo.recommend.dto.RecommendVO;
+import com.example.demo.recommend.service.RecommendService;
 import com.example.demo.rider.dto.RiderTaskUpdateRequest;
 import com.example.demo.rider.service.RiderService;
 import com.example.demo.review.entity.Review;
 import com.example.demo.review.mapper.ReviewMapper;
+import com.example.demo.search.dto.SearchResultVO;
+import com.example.demo.search.service.SearchService;
+import com.example.demo.user.dto.FavoriteMerchantVO;
+import com.example.demo.user.entity.UserFavoriteMerchant;
+import com.example.demo.user.mapper.UserFavoriteMerchantMapper;
+import com.example.demo.user.service.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -45,11 +55,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -78,16 +91,31 @@ class DemoApplicationTests {
     private CouponService couponService;
 
     @Autowired
+    private DashboardService dashboardService;
+
+    @Autowired
     private DeliveryService deliveryService;
 
     @Autowired
+    private RecommendService recommendService;
+
+    @Autowired
     private RiderService riderService;
+
+    @Autowired
+    private SearchService searchService;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private CouponMapper couponMapper;
 
     @Autowired
     private UserCouponMapper userCouponMapper;
+
+    @Autowired
+    private UserFavoriteMerchantMapper userFavoriteMerchantMapper;
 
     @Autowired
     private OrdersMapper ordersMapper;
@@ -570,6 +598,205 @@ class DemoApplicationTests {
         assertEquals("cancelled", cancelledOrder.getStatus());
         assertEquals(initialProductStock, productAfterCancel.getStock());
         assertEquals(initialSpecStock, specAfterCancel.getStock());
+    }
+
+    @Test
+    void searchAndRecommendOnlyExposeActiveMerchantsWithExpectedKeywordMatches() {
+        Merchant taggedMerchant = new Merchant();
+        taggedMerchant.setId(21001L);
+        taggedMerchant.setUsername("taggedMerchant");
+        taggedMerchant.setPassword("secret");
+        taggedMerchant.setName("Sunrise Breakfast");
+        taggedMerchant.setPhone("13800138101");
+        taggedMerchant.setAddress("East Gate");
+        taggedMerchant.setCategory("Food");
+        taggedMerchant.setDescription("Fresh breakfast");
+        taggedMerchant.setTags("breakfast,coffee");
+        taggedMerchant.setStatus("active");
+        taggedMerchant.setRating(new BigDecimal("4.8"));
+        taggedMerchant.setMonthlySales(800);
+        taggedMerchant.setDeliveryFee(new BigDecimal("3.00"));
+        taggedMerchant.setMinDeliveryFee(new BigDecimal("15.00"));
+        taggedMerchant.setLatitude(new BigDecimal("39.9800000"));
+        taggedMerchant.setLongitude(new BigDecimal("116.3500000"));
+        authMerchantMapper.insert(taggedMerchant);
+
+        Product taggedProduct = new Product();
+        taggedProduct.setId(31001L);
+        taggedProduct.setMerchantId(21001L);
+        taggedProduct.setCategoryId(1L);
+        taggedProduct.setName("Campus Bagel");
+        taggedProduct.setPrice(new BigDecimal("12.00"));
+        taggedProduct.setDescription("Warm bagel");
+        taggedProduct.setMonthlySales(90);
+        taggedProduct.setStock(20);
+        taggedProduct.setType("delivery");
+        taggedProduct.setStatus("active");
+        productMapper.insert(taggedProduct);
+
+        Merchant inactiveMerchant = new Merchant();
+        inactiveMerchant.setId(21002L);
+        inactiveMerchant.setUsername("inactiveMerchant");
+        inactiveMerchant.setPassword("secret");
+        inactiveMerchant.setName("Campus Bagel Closed");
+        inactiveMerchant.setPhone("13800138102");
+        inactiveMerchant.setAddress("West Gate");
+        inactiveMerchant.setCategory("Food");
+        inactiveMerchant.setTags("breakfast");
+        inactiveMerchant.setStatus("frozen");
+        inactiveMerchant.setRating(new BigDecimal("5.0"));
+        inactiveMerchant.setMonthlySales(9999);
+        inactiveMerchant.setDeliveryFee(BigDecimal.ZERO);
+        authMerchantMapper.insert(inactiveMerchant);
+
+        Product inactiveProduct = new Product();
+        inactiveProduct.setId(31002L);
+        inactiveProduct.setMerchantId(21002L);
+        inactiveProduct.setCategoryId(1L);
+        inactiveProduct.setName("Campus Bagel");
+        inactiveProduct.setPrice(new BigDecimal("1.00"));
+        inactiveProduct.setStock(99);
+        inactiveProduct.setType("delivery");
+        inactiveProduct.setStatus("active");
+        productMapper.insert(inactiveProduct);
+
+        List<SearchResultVO> productMatches = searchService.search("bagel", null, null, null, null);
+        assertTrue(productMatches.stream().anyMatch(result -> result.getId().equals(21001L)));
+        assertFalse(productMatches.stream().anyMatch(result -> result.getId().equals(21002L)));
+        SearchResultVO activeResult = productMatches.stream()
+                .filter(result -> result.getId().equals(21001L))
+                .findFirst()
+                .orElseThrow();
+        assertEquals(1, activeResult.getProducts().size());
+        assertEquals("Campus Bagel", activeResult.getProducts().get(0).getName());
+
+        List<SearchResultVO> tagMatches = searchService.search("coffee", null, null, null, null);
+        assertTrue(tagMatches.stream().anyMatch(result -> result.getId().equals(21001L)));
+
+        List<RecommendVO> recommendations = recommendService.getRecommendations(null, null);
+        assertTrue(recommendations.stream().anyMatch(result -> result.getId().equals(21001L)));
+        assertFalse(recommendations.stream().anyMatch(result -> result.getId().equals(21002L)));
+    }
+
+    @Test
+    void favoriteMerchantApiIsIdempotentAndDashboardCountsOnlyActiveFavorites() throws Exception {
+        String consumerToken = login("/api/auth/login", "demo", "123456");
+
+        mockMvc.perform(post("/api/user/favorites/{merchantId}", 20001L)
+                        .header("Authorization", bearer(consumerToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.merchantId").value("20001"));
+
+        mockMvc.perform(post("/api/user/favorites/{merchantId}", 20001L)
+                        .header("Authorization", bearer(consumerToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.merchantId").value("20001"));
+
+        assertEquals(1L, userFavoriteMerchantMapper.selectCount(
+                new LambdaQueryWrapper<UserFavoriteMerchant>()
+                        .eq(UserFavoriteMerchant::getUserId, 10001L)
+                        .eq(UserFavoriteMerchant::getMerchantId, 20001L)
+        ));
+
+        Merchant inactiveMerchant = new Merchant();
+        inactiveMerchant.setId(22001L);
+        inactiveMerchant.setUsername("inactiveFavoriteMerchant");
+        inactiveMerchant.setPassword("secret");
+        inactiveMerchant.setName("Inactive Favorite");
+        inactiveMerchant.setPhone("13800138201");
+        inactiveMerchant.setAddress("Hidden Street");
+        inactiveMerchant.setCategory("Food");
+        inactiveMerchant.setStatus("frozen");
+        inactiveMerchant.setRating(new BigDecimal("4.1"));
+        inactiveMerchant.setMonthlySales(10);
+        inactiveMerchant.setDeliveryFee(BigDecimal.ZERO);
+        authMerchantMapper.insert(inactiveMerchant);
+
+        UserFavoriteMerchant inactiveFavorite = new UserFavoriteMerchant();
+        inactiveFavorite.setId(71001L);
+        inactiveFavorite.setUserId(10001L);
+        inactiveFavorite.setMerchantId(22001L);
+        userFavoriteMerchantMapper.insert(inactiveFavorite);
+
+        List<FavoriteMerchantVO> favorites = userService.getFavoriteMerchants(10001L);
+        assertEquals(1, favorites.size());
+        assertEquals(20001L, favorites.get(0).getMerchantId());
+
+        DashboardVO.ConsumerData dashboard = dashboardService.getConsumerData(10001L);
+        assertEquals(1, dashboard.getFavoriteMerchants());
+
+        mockMvc.perform(get("/api/user/favorites/{merchantId}", 20001L)
+                        .header("Authorization", bearer(consumerToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").value(true));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/user/favorites/{merchantId}", 20001L)
+                        .header("Authorization", bearer(consumerToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+
+        DashboardVO.ConsumerData dashboardAfterDelete = dashboardService.getConsumerData(10001L);
+        assertEquals(0, dashboardAfterDelete.getFavoriteMerchants());
+    }
+
+    @Test
+    void dashboardMetricsUseCompletedAtDeliveryFeeAndRiderStatus() {
+        LocalDateTime now = LocalDateTime.now();
+
+        Orders completedToday = new Orders();
+        completedToday.setOrderNo("ORD-DASHBOARD-TODAY");
+        completedToday.setUserId(10001L);
+        completedToday.setMerchantId(20001L);
+        completedToday.setRiderId(40001L);
+        completedToday.setType("delivery");
+        completedToday.setTotalAmount(new BigDecimal("66.00"));
+        completedToday.setActualAmount(new BigDecimal("56.00"));
+        completedToday.setDeliveryFee(new BigDecimal("6.00"));
+        completedToday.setDiscount(new BigDecimal("10.00"));
+        completedToday.setStatus("completed");
+        completedToday.setAddressDetail("Today Address");
+        completedToday.setCompletedAt(now);
+        ordersMapper.insert(completedToday);
+
+        Orders completedYesterday = new Orders();
+        completedYesterday.setOrderNo("ORD-DASHBOARD-YESTERDAY");
+        completedYesterday.setUserId(10001L);
+        completedYesterday.setMerchantId(20001L);
+        completedYesterday.setRiderId(40001L);
+        completedYesterday.setType("delivery");
+        completedYesterday.setTotalAmount(new BigDecimal("88.00"));
+        completedYesterday.setActualAmount(new BigDecimal("78.00"));
+        completedYesterday.setDeliveryFee(new BigDecimal("8.00"));
+        completedYesterday.setDiscount(new BigDecimal("10.00"));
+        completedYesterday.setStatus("completed");
+        completedYesterday.setAddressDetail("Yesterday Address");
+        completedYesterday.setCompletedAt(now.minusDays(1));
+        ordersMapper.insert(completedYesterday);
+
+        Orders pending = new Orders();
+        pending.setOrderNo("ORD-DASHBOARD-PENDING");
+        pending.setUserId(10001L);
+        pending.setMerchantId(20001L);
+        pending.setType("delivery");
+        pending.setTotalAmount(new BigDecimal("20.00"));
+        pending.setActualAmount(new BigDecimal("20.00"));
+        pending.setDeliveryFee(new BigDecimal("5.00"));
+        pending.setDiscount(BigDecimal.ZERO);
+        pending.setStatus("pending_accept");
+        pending.setAddressDetail("Pending Address");
+        ordersMapper.insert(pending);
+
+        DashboardVO.MerchantData merchantDashboard = dashboardService.getMerchantData(20001L);
+        assertEquals(3, merchantDashboard.getTodayOrders());
+        assertEquals(1, merchantDashboard.getPendingOrders());
+        assertEquals(56.0, merchantDashboard.getTodayRevenue());
+
+        DashboardVO.RiderData riderDashboard = dashboardService.getRiderData(40001L);
+        assertEquals(1, riderDashboard.getTodayDeliveries());
+        assertEquals(6.0, riderDashboard.getTodayEarnings());
+        assertEquals("active", riderDashboard.getStatus());
     }
 
     private String login(String path, String username, String password) throws Exception {

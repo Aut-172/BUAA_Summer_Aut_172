@@ -1,10 +1,14 @@
 DROP TABLE IF EXISTS user_coupon;
+DROP TABLE IF EXISTS user_favorite_merchant;
+DROP TABLE IF EXISTS message;
 DROP TABLE IF EXISTS coupon;
 DROP TABLE IF EXISTS review;
 DROP TABLE IF EXISTS payment;
 DROP TABLE IF EXISTS cart;
 DROP TABLE IF EXISTS order_item;
 DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS address;
+DROP TABLE IF EXISTS spec_group;
 DROP TABLE IF EXISTS product_spec;
 DROP TABLE IF EXISTS product;
 DROP TABLE IF EXISTS category;
@@ -103,6 +107,28 @@ CREATE TABLE product_spec (
     label VARCHAR(50) NOT NULL,
     price DECIMAL(10, 2),
     stock INT,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE spec_group (
+    id BIGINT PRIMARY KEY,
+    product_id BIGINT NOT NULL,
+    name VARCHAR(50) NOT NULL,
+    "values" CLOB,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE address (
+    id BIGINT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    name VARCHAR(50) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    detail VARCHAR(255) NOT NULL,
+    longitude DECIMAL(10, 7),
+    latitude DECIMAL(10, 7),
+    is_default BOOLEAN,
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -206,6 +232,27 @@ CREATE TABLE user_coupon (
     claimed_at TIMESTAMP NOT NULL,
     used_at TIMESTAMP,
     order_id BIGINT,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_favorite_merchant (
+    id BIGINT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    merchant_id BIGINT NOT NULL,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE message (
+    id BIGINT PRIMARY KEY,
+    sender_id BIGINT NOT NULL,
+    sender_type VARCHAR(20) NOT NULL,
+    receiver_id BIGINT NOT NULL,
+    receiver_type VARCHAR(20) NOT NULL,
+    order_id BIGINT,
+    content VARCHAR(500) NOT NULL,
+    is_read BOOLEAN,
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
