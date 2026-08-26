@@ -154,4 +154,43 @@ public class UserController {
         userService.clearCart(getUserId(request));
         return Result.success();
     }
+
+    // ==================== 收藏商家 ====================
+
+    /**
+     * 获取当前用户收藏的正常营业商家列表。
+     * GET /api/user/favorites
+     */
+    @GetMapping("/favorites")
+    public Result<List<FavoriteMerchantVO>> getFavoriteMerchants(HttpServletRequest request) {
+        return Result.success(userService.getFavoriteMerchants(getUserId(request)));
+    }
+
+    /**
+     * 查询当前用户是否已收藏某商家。
+     * GET /api/user/favorites/{merchantId}
+     */
+    @GetMapping("/favorites/{merchantId}")
+    public Result<Boolean> isFavoriteMerchant(HttpServletRequest request, @PathVariable Long merchantId) {
+        return Result.success(userService.isFavoriteMerchant(getUserId(request), merchantId));
+    }
+
+    /**
+     * 收藏商家，重复收藏按幂等成功处理。
+     * POST /api/user/favorites/{merchantId}
+     */
+    @PostMapping("/favorites/{merchantId}")
+    public Result<FavoriteMerchantVO> addFavoriteMerchant(HttpServletRequest request, @PathVariable Long merchantId) {
+        return Result.success(userService.addFavoriteMerchant(getUserId(request), merchantId));
+    }
+
+    /**
+     * 取消收藏商家。
+     * DELETE /api/user/favorites/{merchantId}
+     */
+    @DeleteMapping("/favorites/{merchantId}")
+    public Result<Void> deleteFavoriteMerchant(HttpServletRequest request, @PathVariable Long merchantId) {
+        userService.deleteFavoriteMerchant(getUserId(request), merchantId);
+        return Result.success();
+    }
 }

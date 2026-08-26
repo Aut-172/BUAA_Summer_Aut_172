@@ -1,9 +1,15 @@
 package com.example.demo.dashboard.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.example.demo.auth.entity.Merchant;
+import com.example.demo.auth.entity.Rider;
+import com.example.demo.auth.mapper.MerchantMapper;
+import com.example.demo.auth.mapper.RiderMapper;
 import com.example.demo.dashboard.dto.DashboardVO;
 import com.example.demo.order.entity.Orders;
 import com.example.demo.order.mapper.OrdersMapper;
+import com.example.demo.user.entity.UserFavoriteMerchant;
+import com.example.demo.user.mapper.UserFavoriteMerchantMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -17,9 +23,16 @@ import java.time.LocalTime;
 public class DashboardService {
 
     private final OrdersMapper ordersMapper;
+    private final RiderMapper riderMapper;
+    private final MerchantMapper merchantMapper;
+    private final UserFavoriteMerchantMapper favoriteMerchantMapper;
 
-    public DashboardService(OrdersMapper ordersMapper) {
+    public DashboardService(OrdersMapper ordersMapper, RiderMapper riderMapper,
+                            MerchantMapper merchantMapper, UserFavoriteMerchantMapper favoriteMerchantMapper) {
         this.ordersMapper = ordersMapper;
+        this.riderMapper = riderMapper;
+        this.merchantMapper = merchantMapper;
+        this.favoriteMerchantMapper = favoriteMerchantMapper;
     }
 
     /**
@@ -34,7 +47,7 @@ public class DashboardService {
 
         return DashboardVO.ConsumerData.builder()
                 .orderCount(orderCount != null ? orderCount.intValue() : 0)
-                .favoriteMerchants(0) // 收藏功能暂未实现
+                .favoriteMerchants(countActiveFavoriteMerchants(userId))
                 .build();
     }
 
@@ -60,21 +73,14 @@ public class DashboardService {
                         .eq(Orders::getStatus, "pending_accept")
         );
 
-        // 今日收入（已完成订单）
-        Double todayRevenue = 0.0;
-        // 简化处理：查询今日已完成订单的总金额
         java.util.List<Orders> completedOrders = ordersMapper.selectList(
                 new LambdaQueryWrapper<Orders>()
                         .eq(Orders::getMerchantId, merchantId)
                         .eq(Orders::getStatus, "completed")
-                        .ge(Orders::getCreateTime, todayStart)
-                        .le(Orders::getCreateTime, todayEnd)
+                        .ge(Orders::getCompletedAt, todayStart)
+                        .le(Orders::getCompletedAt, todayEnd)
         );
-        if (completedOrders != null) {
-            todayRevenue = completedOrders.stream()
-                    .mapToDouble(o -> o.getActualAmount() != null ? o.getActualAmount().doubleValue() : 0.0)
-                    .sum();
-        }
+        double todayRevenue = sumActualAmount(completedOrders);
 
         return DashboardVO.MerchantData.builder()
                 .todayOrders(todayOrders != null ? todayOrders.intValue() : 0)
@@ -90,22 +96,59 @@ public class DashboardService {
         LocalDateTime todayStart = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
         LocalDateTime todayEnd = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
 
-        // 今日配送完成数
-        Long todayDeliveries = ordersMapper.selectCount(
+        java.util.List<Orders> completedOrders = ordersMapper.selectList(
                 new LambdaQueryWrapper<Orders>()
                         .eq(Orders::getRiderId, riderId)
                         .eq(Orders::getStatus, "completed")
-                        .ge(Orders::getCreateTime, todayStart)
-                        .le(Orders::getCreateTime, todayEnd)
+                        .ge(Orders::getCompletedAt, todayStart)
+                        .le(Orders::getCompletedAt, todayEnd)
         );
 
-        // 今日收入（简化：每单固定配送费5元）
-        double todayEarnings = (todayDeliveries != null ? todayDeliveries : 0) * 5.0;
+        Rider rider = riderMapper.selectById(riderId);
+        int todayDeliveries = completedOrders != null ? completedOrders.size() : 0;
+        double todayEarnings = sumDeliveryFee(completedOrders);
 
         return DashboardVO.RiderData.builder()
-                .todayDeliveries(todayDeliveries != null ? todayDeliveries.intValue() : 0)
+                .todayDeliveries(todayDeliveries)
                 .todayEarnings(todayEarnings)
-                .online(true) // 简化处理
+                .status(rider != null ? rider.getStatus() : null)
                 .build();
+    }
+
+    private double sumActualAmount(java.util.List<Orders> orders) {
+        if (orders == null) {
+            return 0.0;
+        }
+        return orders.stream()
+                .mapToDouble(order -> order.getActualAmount() != null ? order.getActualAmount().doubleValue() : 0.0)
+                .sum();
+    }
+
+    private double sumDeliveryFee(java.util.List<Orders> orders) {
+        if (orders == null) {
+            return 0.0;
+        }
+        return orders.stream()
+                .mapToDouble(order -> order.getDeliveryFee() != null ? order.getDeliveryFee().doubleValue() : 0.0)
+                .sum();
+    }
+
+    private int countActiveFavoriteMerchants(Long userId) {
+        java.util.List<UserFavoriteMerchant> favorites = favoriteMerchantMapper.selectList(
+                new LambdaQueryWrapper<UserFavoriteMerchant>()
+                        .eq(UserFavoriteMerchant::getUserId, userId)
+        );
+        if (favorites == null || favorites.isEmpty()) {
+            return 0;
+        }
+
+        int count = 0;
+        for (UserFavoriteMerchant favorite : favorites) {
+            Merchant merchant = merchantMapper.selectById(favorite.getMerchantId());
+            if (merchant != null && "active".equals(merchant.getStatus())) {
+                count++;
+            }
+        }
+        return count;
     }
 }

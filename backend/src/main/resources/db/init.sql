@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS `group_coupon`;
 DROP TABLE IF EXISTS `order_item`;
 DROP TABLE IF EXISTS `orders`;
 DROP TABLE IF EXISTS `cart`;
+DROP TABLE IF EXISTS `user_favorite_merchant`;
 DROP TABLE IF EXISTS `user_coupon`;
 DROP TABLE IF EXISTS `coupon`;
 DROP TABLE IF EXISTS `address`;
@@ -210,6 +211,18 @@ CREATE TABLE `cart` (
     KEY `idx_cart_merchant` (`merchant_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE `user_favorite_merchant` (
+    `id` BIGINT NOT NULL,
+    `user_id` BIGINT NOT NULL,
+    `merchant_id` BIGINT NOT NULL,
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_user_favorite_merchant` (`user_id`, `merchant_id`),
+    KEY `idx_user_favorite_user` (`user_id`),
+    KEY `idx_user_favorite_merchant` (`merchant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `orders` (
     `id` BIGINT NOT NULL,
     `order_no` VARCHAR(50) NOT NULL,
@@ -331,6 +344,9 @@ INSERT INTO `category` (`id`, `name`, `parent_id`, `sort_order`) VALUES
 INSERT INTO `merchant` (`id`, `username`, `password`, `name`, `phone`, `address`, `longitude`, `latitude`, `business_hours`, `category`, `description`, `avatar`, `tags`, `status`, `rating`, `monthly_sales`, `min_delivery_fee`, `delivery_fee`, `delivery_radius`) VALUES
 (20001, 'merchant1', '$2a$10$Eec47nxK3dPutEqDpCyCqOj3mJcOn31z3fCve3xGKSeI1rb4Je.dm', 'Campus Kitchen', '13800138002', 'No. 18 College Road', 116.4600000, 39.9100000, '09:00-22:00', 'Food', 'Fast meals and rice bowls for campus delivery.', 'https://picsum.photos/seed/m1/400/300', 'fast,hot', 'active', 4.5, 1280, 20.00, 5.00, 5),
 (20002, 'merchant2', '$2a$10$Eec47nxK3dPutEqDpCyCqOj3mJcOn31z3fCve3xGKSeI1rb4Je.dm', 'Tea Corner', '13800138003', 'No. 1 Science Park', 116.3100000, 39.9800000, '10:00-22:00', 'Cafe', 'Fresh tea, coffee and desserts.', 'https://picsum.photos/seed/m2/400/300', 'tea,dessert', 'active', 4.8, 2560, 15.00, 3.00, 3);
+
+INSERT INTO `user_favorite_merchant` (`id`, `user_id`, `merchant_id`) VALUES
+(70001, 10001, 20001);
 
 INSERT INTO `rider` (`id`, `name`, `password`, `phone`, `status`, `service_area`) VALUES
 (40001, 'rider01', '$2a$10$Eec47nxK3dPutEqDpCyCqOj3mJcOn31z3fCve3xGKSeI1rb4Je.dm', '13800138004', 'active', 'Campus and Science Park');

@@ -147,12 +147,12 @@ export default function RiderConsole() {
                                     <strong>{dashboard?.todayDeliveries || 0}</strong>
                                 </div>
                                 <div className="metric-card">
-                                    <span>今日收入</span>
+                                    <span>今日配送费收入</span>
                                     <strong>{formatMoney(dashboard?.todayEarnings || 0)}</strong>
                                 </div>
                                 <div className="metric-card">
-                                    <span>在线状态</span>
-                                    <strong>{dashboard?.online ? '在线' : '离线'}</strong>
+                                    <span>账号状态</span>
+                                    <strong>{formatStatusText(dashboard?.status || profile?.status)}</strong>
                                 </div>
                             </div>
                         </section>

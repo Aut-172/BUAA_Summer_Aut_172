@@ -44,6 +44,6 @@ public class DashboardVO {
     public static class RiderData {
         private Integer todayDeliveries;
         private Double todayEarnings;
-        private Boolean online;
+        private String status;
     }
 }

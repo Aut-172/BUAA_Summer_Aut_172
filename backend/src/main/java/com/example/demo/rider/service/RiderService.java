@@ -95,9 +95,9 @@ public class RiderService {
         );
 
         RiderTaskVO.RiderStats stats = RiderTaskVO.RiderStats.builder()
-                .totalEarnings(completedOrders.size() * 5.0)
+                .totalEarnings(sumDeliveryFee(completedOrders))
                 .completedOrders(completedOrders.size())
-                .totalDistance(completedOrders.size() * 2.0 + "km")
+                .totalDistance(null)
                 .build();
 
         return RiderTaskVO.builder()
@@ -184,6 +184,15 @@ public class RiderService {
             case "已完成" -> "completed";
             default -> status.trim();
         };
+    }
+
+    private double sumDeliveryFee(List<Orders> orders) {
+        if (orders == null) {
+            return 0.0;
+        }
+        return orders.stream()
+                .mapToDouble(order -> order.getDeliveryFee() != null ? order.getDeliveryFee().doubleValue() : 0.0)
+                .sum();
     }
 
     private RiderTaskVO.TaskItem toTaskItem(Orders order) {

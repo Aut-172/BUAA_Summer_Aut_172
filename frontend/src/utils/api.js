@@ -243,6 +243,28 @@ const api = {
                 url: '/user/cart',
                 method: 'delete'
             })
+        },
+
+        getFavoriteMerchants() {
+            return request({ url: '/user/favorites' })
+        },
+
+        isFavoriteMerchant(merchantId) {
+            return request({ url: `/user/favorites/${merchantId}` })
+        },
+
+        addFavoriteMerchant(merchantId) {
+            return request({
+                url: `/user/favorites/${merchantId}`,
+                method: 'post'
+            })
+        },
+
+        deleteFavoriteMerchant(merchantId) {
+            return request({
+                url: `/user/favorites/${merchantId}`,
+                method: 'delete'
+            })
         }
     },
 

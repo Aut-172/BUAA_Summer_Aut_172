@@ -11,8 +11,10 @@ import com.example.demo.merchant.mapper.ProductMapper;
 import com.example.demo.user.dto.*;
 import com.example.demo.user.entity.Address;
 import com.example.demo.user.entity.Cart;
+import com.example.demo.user.entity.UserFavoriteMerchant;
 import com.example.demo.user.mapper.AddressMapper;
 import com.example.demo.user.mapper.CartMapper;
+import com.example.demo.user.mapper.UserFavoriteMerchantMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +36,7 @@ public class UserService {
     private final CartMapper cartMapper;
     private final MerchantMapper merchantMapper;
     private final ProductMapper productMapper;
+    private final UserFavoriteMerchantMapper favoriteMerchantMapper;
 
     // ==================== 个人资料 ====================
 
@@ -310,6 +313,58 @@ public class UserService {
         );
     }
 
+    // ==================== 收藏商家 ====================
+
+    public List<FavoriteMerchantVO> getFavoriteMerchants(Long userId) {
+        List<UserFavoriteMerchant> favorites = favoriteMerchantMapper.selectList(
+                new LambdaQueryWrapper<UserFavoriteMerchant>()
+                        .eq(UserFavoriteMerchant::getUserId, userId)
+                        .orderByDesc(UserFavoriteMerchant::getCreateTime)
+        );
+
+        return favorites.stream()
+                .map(this::toFavoriteMerchantVO)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    public Boolean isFavoriteMerchant(Long userId, Long merchantId) {
+        return favoriteMerchantMapper.selectCount(
+                new LambdaQueryWrapper<UserFavoriteMerchant>()
+                        .eq(UserFavoriteMerchant::getUserId, userId)
+                        .eq(UserFavoriteMerchant::getMerchantId, merchantId)
+        ) > 0;
+    }
+
+    @Transactional
+    public FavoriteMerchantVO addFavoriteMerchant(Long userId, Long merchantId) {
+        Merchant merchant = requireActiveMerchant(merchantId);
+        UserFavoriteMerchant existing = favoriteMerchantMapper.selectOne(
+                new LambdaQueryWrapper<UserFavoriteMerchant>()
+                        .eq(UserFavoriteMerchant::getUserId, userId)
+                        .eq(UserFavoriteMerchant::getMerchantId, merchantId)
+                        .last("limit 1")
+        );
+
+        if (existing != null) {
+            return toFavoriteMerchantVO(existing, merchant);
+        }
+
+        UserFavoriteMerchant favorite = new UserFavoriteMerchant();
+        favorite.setUserId(userId);
+        favorite.setMerchantId(merchantId);
+        favoriteMerchantMapper.insert(favorite);
+        return toFavoriteMerchantVO(favorite, merchant);
+    }
+
+    public void deleteFavoriteMerchant(Long userId, Long merchantId) {
+        favoriteMerchantMapper.delete(
+                new LambdaQueryWrapper<UserFavoriteMerchant>()
+                        .eq(UserFavoriteMerchant::getUserId, userId)
+                        .eq(UserFavoriteMerchant::getMerchantId, merchantId)
+        );
+    }
+
     // ==================== 转换方法 ====================
 
     private AddressDTO toAddressDTO(Address address) {
@@ -347,6 +402,42 @@ public class UserService {
                 .quantity(cart.getQuantity())
                 .specLabel(cart.getSpecLabel())
                 .subtotal(subtotal)
+                .build();
+    }
+
+    private Merchant requireActiveMerchant(Long merchantId) {
+        Merchant merchant = merchantMapper.selectById(merchantId);
+        if (merchant == null) {
+            throw BusinessException.notFound("商家不存在");
+        }
+        if (!"active".equals(merchant.getStatus())) {
+            throw BusinessException.badRequest("只能收藏正常营业商家");
+        }
+        return merchant;
+    }
+
+    private FavoriteMerchantVO toFavoriteMerchantVO(UserFavoriteMerchant favorite) {
+        Merchant merchant = merchantMapper.selectById(favorite.getMerchantId());
+        if (merchant == null || !"active".equals(merchant.getStatus())) {
+            return null;
+        }
+        return toFavoriteMerchantVO(favorite, merchant);
+    }
+
+    private FavoriteMerchantVO toFavoriteMerchantVO(UserFavoriteMerchant favorite, Merchant merchant) {
+        return FavoriteMerchantVO.builder()
+                .favoriteId(favorite.getId())
+                .merchantId(merchant.getId())
+                .name(merchant.getName())
+                .category(merchant.getCategory())
+                .description(merchant.getDescription())
+                .avatar(merchant.getAvatar())
+                .tags(merchant.getTags())
+                .rating(merchant.getRating())
+                .monthlySales(merchant.getMonthlySales())
+                .minDeliveryFee(merchant.getMinDeliveryFee())
+                .deliveryFee(merchant.getDeliveryFee())
+                .favoritedAt(favorite.getCreateTime())
                 .build();
     }
 }

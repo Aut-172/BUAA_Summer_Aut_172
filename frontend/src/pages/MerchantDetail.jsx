@@ -11,6 +11,8 @@ export default function MerchantDetail() {
     const [merchant, setMerchant] = useState(null)
     const [selectedSpecs, setSelectedSpecs] = useState({})
     const [addingId, setAddingId] = useState(null)
+    const [favorite, setFavorite] = useState(false)
+    const [favoriteLoading, setFavoriteLoading] = useState(false)
     const [loading, setLoading] = useState(true)
 
     async function loadMerchant() {
@@ -18,6 +20,12 @@ export default function MerchantDetail() {
         try {
             const data = await api.public.getMerchant(merchantId)
             setMerchant(data)
+            if (isAuthenticated && role === 'consumer') {
+                const favoriteState = await api.user.isFavoriteMerchant(merchantId)
+                setFavorite(Boolean(favoriteState))
+            } else {
+                setFavorite(false)
+            }
         } finally {
             setLoading(false)
         }
@@ -71,6 +79,35 @@ export default function MerchantDetail() {
         }
     }
 
+    async function handleToggleFavorite() {
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: location.pathname } })
+            return
+        }
+
+        if (role !== 'consumer') {
+            notify('只有消费者账号可以收藏商家', 'warning')
+            return
+        }
+
+        setFavoriteLoading(true)
+        try {
+            if (favorite) {
+                await api.user.deleteFavoriteMerchant(merchant.id)
+                setFavorite(false)
+                notify('已取消收藏', 'success')
+            } else {
+                await api.user.addFavoriteMerchant(merchant.id)
+                setFavorite(true)
+                notify('商家已收藏', 'success')
+            }
+        } catch (error) {
+            notify(error.message || '更新收藏失败', 'danger')
+        } finally {
+            setFavoriteLoading(false)
+        }
+    }
+
     if (loading) {
         return <section className="page"><div className="panel empty-state">正在加载商家详情...</div></section>
     }
@@ -107,6 +144,14 @@ export default function MerchantDetail() {
                 </div>
 
                 <div className="card-actions">
+                    <button
+                        className={`btn ${favorite ? 'secondary' : 'primary'}`}
+                        type="button"
+                        disabled={favoriteLoading}
+                        onClick={handleToggleFavorite}
+                    >
+                        {favoriteLoading ? '处理中...' : favorite ? '已收藏' : '收藏商家'}
+                    </button>
                     <Link className="btn secondary" to="/cart">去购物车</Link>
                     <Link className="btn ghost" to="/">返回首页</Link>
                 </div>
