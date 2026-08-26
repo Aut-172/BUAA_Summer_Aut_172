@@ -6,7 +6,9 @@ import com.example.demo.review.dto.ReviewVO;
 import com.example.demo.review.service.ReviewService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -33,6 +35,15 @@ public class ReviewController {
     public Result<List<ReviewVO>> submitReview(HttpServletRequest request,
                                                 @RequestBody ReviewRequest body) {
         return Result.success(reviewService.submitReview(getUserId(request), body));
+    }
+
+    /**
+     * 上传评价图片
+     * POST /api/reviews/images
+     */
+    @PostMapping(value = "/reviews/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Result<List<String>> uploadReviewImages(@RequestParam("files") List<MultipartFile> files) {
+        return Result.success(reviewService.uploadReviewImages(files));
     }
 
     /**

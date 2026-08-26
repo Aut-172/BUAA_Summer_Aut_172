@@ -25,6 +25,7 @@ export default function Profile() {
     const [loading, setLoading] = useState(true)
     const [savingProfile, setSavingProfile] = useState(false)
     const [savingAddress, setSavingAddress] = useState(false)
+    const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
     async function loadProfile() {
         setLoading(true)
@@ -54,6 +55,11 @@ export default function Profile() {
 
     async function handleSaveProfile(event) {
         event.preventDefault()
+        if (uploadingAvatar) {
+            notify('头像上传完成后再保存资料', 'warning')
+            return
+        }
+
         setSavingProfile(true)
         try {
             const data = await api.user.updateProfile(profileForm)
@@ -68,6 +74,24 @@ export default function Profile() {
             notify(error.message || '更新资料失败', 'danger')
         } finally {
             setSavingProfile(false)
+        }
+    }
+
+    async function handleUploadAvatar(fileList) {
+        const file = Array.from(fileList || [])[0]
+        if (!file) {
+            return
+        }
+
+        setUploadingAvatar(true)
+        try {
+            const urls = await api.uploads.images([file], 'avatars')
+            setProfileForm((current) => ({ ...current, avatar: urls?.[0] || current.avatar }))
+            notify('头像上传成功', 'success')
+        } catch (error) {
+            notify(error.message || '头像上传失败', 'danger')
+        } finally {
+            setUploadingAvatar(false)
         }
     }
 
@@ -173,21 +197,26 @@ export default function Profile() {
                                     />
                                 </label>
 
-                                <label className="form-row">
-                                    <span>头像链接</span>
-                                    <input
-                                        className="input"
-                                        value={profileForm.avatar}
-                                        onChange={(event) => setProfileForm((current) => ({ ...current, avatar: event.target.value }))}
-                                        placeholder="可选，填写图片 URL"
-                                    />
-                                </label>
+                            <label className="form-row">
+                                <span>头像</span>
+                                <input
+                                    className="input"
+                                    type="file"
+                                    accept="image/*"
+                                    disabled={uploadingAvatar}
+                                    onChange={(event) => {
+                                        handleUploadAvatar(event.target.files)
+                                        event.target.value = ''
+                                    }}
+                                />
+                                {profileForm.avatar ? <small className="helper">已上传头像，可保存资料生效。</small> : null}
+                            </label>
 
-                                <button className="btn primary" type="submit" disabled={savingProfile}>
-                                    {savingProfile ? '保存中...' : '保存资料'}
-                                </button>
-                            </form>
-                        </section>
+                            <button className="btn primary" type="submit" disabled={savingProfile || uploadingAvatar}>
+                                {savingProfile ? '保存中...' : '保存资料'}
+                            </button>
+                        </form>
+                    </section>
 
                         <section className="panel">
                             <div className="panel-head">

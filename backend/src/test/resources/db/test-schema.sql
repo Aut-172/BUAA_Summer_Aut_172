@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS user_coupon;
 DROP TABLE IF EXISTS coupon;
+DROP TABLE IF EXISTS review;
 DROP TABLE IF EXISTS payment;
 DROP TABLE IF EXISTS cart;
 DROP TABLE IF EXISTS order_item;
@@ -180,6 +181,19 @@ CREATE TABLE coupon (
     claimed_count INT,
     limit_per_user INT,
     status VARCHAR(20) NOT NULL,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE review (
+    id BIGINT PRIMARY KEY,
+    order_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    merchant_id BIGINT NOT NULL,
+    product_id BIGINT,
+    rating TINYINT NOT NULL,
+    content VARCHAR(500),
+    images CLOB,
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

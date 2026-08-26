@@ -28,6 +28,8 @@ public class RiderTaskVO {
     public static class TaskItem {
         private Long id;
         private String orderNo;
+        private Long userId;
+        private Long merchantId;
         private String merchant;
         private String merchantAvatar;
         private String items;           // 商品摘要

@@ -28,6 +28,9 @@ mybatis-plus:
     cache-enabled: false
 
 app:
+  upload:
+    root-dir: build/test-uploads
+    review-dir: build/test-uploads/reviews
   auth:
     captcha-enabled: false
   bootstrap-admin:

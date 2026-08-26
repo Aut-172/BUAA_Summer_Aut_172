@@ -158,6 +158,20 @@ const api = {
             })
         },
 
+        search(params = {}) {
+            return request({
+                url: '/search',
+                params
+            })
+        },
+
+        recommend(params = {}) {
+            return request({
+                url: '/recommend',
+                params
+            })
+        },
+
         getProduct(id) {
             return request({
                 url: `/products/${id}`
@@ -339,6 +353,81 @@ const api = {
         getDelivery(id) {
             return request({
                 url: `/delivery/${id}`
+            })
+        }
+    },
+
+    reviews: {
+        submit(payload) {
+            return request({
+                url: '/reviews',
+                method: 'post',
+                data: payload
+            })
+        },
+
+        getProduct(productId) {
+            return request({ url: `/products/${productId}/reviews` })
+        },
+
+        getMerchant(merchantId) {
+            return request({ url: `/merchants/${merchantId}/reviews` })
+        },
+
+        getMerchantRating(merchantId) {
+            return request({ url: `/merchants/${merchantId}/rating` })
+        },
+
+        uploadImages(files) {
+            return api.uploads.images(files, 'reviews')
+        },
+
+        getMine() {
+            return request({ url: '/user/reviews' })
+        }
+    },
+
+    messages: {
+        getThreads() {
+            return request({ url: '/messages/threads' })
+        },
+
+        getUnreadCount() {
+            return request({ url: '/messages/unread-count' })
+        },
+
+        getOrder(orderId) {
+            return request({ url: `/messages/orders/${orderId}` })
+        },
+
+        list(params = {}) {
+            return request({
+                url: '/messages',
+                params
+            })
+        },
+
+        send(payload) {
+            return request({
+                url: '/messages',
+                method: 'post',
+                data: payload
+            })
+        }
+    },
+
+    uploads: {
+        images(files, scene = 'common') {
+            const formData = new FormData()
+            Array.from(files || []).forEach((file) => {
+                formData.append('files', file)
+            })
+            formData.append('scene', scene)
+
+            return request({
+                url: '/uploads/images',
+                method: 'post',
+                data: formData
             })
         }
     },

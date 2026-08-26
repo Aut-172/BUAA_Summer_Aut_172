@@ -18,3 +18,9 @@ tools/plantuml.jar
 *.png
 *.puml
 "gradle-9.5.1-bin.zip" 
+
+# Local startup environment overrides
+scripts/init-db.ps1
+backend/src/main/resources/application.yml
+backend/gradle/wrapper/gradle-wrapper.properties
+backend/build.gradle

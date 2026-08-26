@@ -429,6 +429,25 @@ textarea {
   padding: 14px 16px;
 }
 
+.search-hero {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(360px, 1.2fr);
+  gap: 18px;
+  align-items: end;
+}
+
+.search-toolbar {
+  justify-content: flex-end;
+}
+
+.search-toolbar .input {
+  min-width: 240px;
+}
+
+.search-toolbar .select {
+  min-width: 150px;
+}
+
 .toolbar {
   align-items: stretch;
 }
@@ -860,6 +879,146 @@ textarea {
   padding-top: 6px;
 }
 
+.review-product {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.review-thumb,
+.review-preview {
+  object-fit: cover;
+  background: #fff2c7;
+}
+
+.review-thumb {
+  width: 76px;
+  height: 76px;
+  border-radius: 18px;
+}
+
+.rating-row,
+.image-preview-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.rating-option {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 9px 12px;
+  background: #fff;
+  color: var(--muted);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.rating-option.active {
+  border-color: transparent;
+  background: var(--primary);
+  color: #3a2c00;
+  box-shadow: 0 10px 24px rgba(214, 162, 0, 0.18);
+}
+
+.review-preview {
+  width: 92px;
+  height: 92px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.review-preview-button {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.product-image-button,
+.lightbox-image-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.product-image-large.compact-preview {
+  max-width: 260px;
+  height: 150px;
+}
+
+.review-preview-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.review-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.review-list.compact-list {
+  grid-template-columns: 1fr;
+}
+
+.review-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.review-content {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.review-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  background: rgba(0, 0, 0, 0.72);
+  cursor: zoom-out;
+}
+
+.review-lightbox-image {
+  max-width: min(92vw, 1080px);
+  max-height: 86vh;
+  border-radius: 18px;
+  object-fit: contain;
+  background: #fff;
+  box-shadow: 0 22px 72px rgba(0, 0, 0, 0.36);
+  cursor: default;
+}
+
+.review-lightbox-close {
+  position: fixed;
+  top: 22px;
+  right: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 999px;
+  padding: 10px 14px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.42);
+  cursor: pointer;
+  font-weight: 700;
+}
+
 .login-card .form-grid {
   margin-top: 8px;
 }
@@ -996,6 +1155,182 @@ textarea {
   font-weight: 700;
 }
 
+.messages-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.34fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.thread-panel,
+.chat-panel {
+  min-height: 620px;
+}
+
+.thread-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.thread-item {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 12px;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.thread-item.active {
+  border-color: rgba(var(--primary-rgb), 0.62);
+  background: #fff8d9;
+}
+
+.thread-avatar {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(var(--primary-rgb), 0.18);
+  color: var(--primary-deep);
+  font-weight: 800;
+}
+
+.thread-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thread-main,
+.thread-title-row {
+  min-width: 0;
+}
+
+.thread-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.thread-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.thread-title-row strong,
+.thread-preview,
+.thread-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-title-row em {
+  min-width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.78rem;
+  font-style: normal;
+}
+
+.thread-meta,
+.thread-preview {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.message-list {
+  flex: 1;
+  min-height: 360px;
+  max-height: 520px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 2px;
+}
+
+.message-row {
+  display: flex;
+}
+
+.message-row.mine {
+  justify-content: flex-end;
+}
+
+.message-bubble {
+  max-width: min(68%, 620px);
+  padding: 10px 13px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+}
+
+.message-row.mine .message-bubble {
+  background: #ffe882;
+  border-color: rgba(var(--primary-rgb), 0.58);
+}
+
+.message-bubble p {
+  margin: 0;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.message-bubble span {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.message-compose {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.compose-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
 .wrap {
   flex-wrap: wrap;
 }
@@ -1027,7 +1362,9 @@ textarea {
 @media (max-width: 1120px) {
   .topbar-inner,
   .hero,
+  .search-hero,
   .auth-shell,
+  .messages-layout,
   .split-grid,
   .checkout-layout,
   .cart-layout {
@@ -1135,5 +1472,18 @@ textarea {
   .hero-points,
   .demo-block .stack {
     grid-template-columns: 1fr;
+  }
+
+  .thread-panel,
+  .chat-panel {
+    min-height: auto;
+  }
+
+  .message-list {
+    max-height: 58vh;
+  }
+
+  .message-bubble {
+    max-width: 88%;
   }
 }

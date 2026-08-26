@@ -1,6 +1,22 @@
 import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useSession } from '../utils/ApiProvider'
 import { formatMoney, formatStatusText, getStatusTone } from '../utils/format'
+
+function buildMessagePath({ targetId, targetType, orderId, targetName, orderNo }) {
+    const params = new URLSearchParams({
+        targetId: String(targetId),
+        targetType,
+        orderId: String(orderId)
+    })
+    if (targetName) {
+        params.set('targetName', targetName)
+    }
+    if (orderNo) {
+        params.set('orderNo', orderNo)
+    }
+    return `/messages?${params.toString()}`
+}
 
 export default function RiderConsole() {
     const { api, notify, updateSessionUser, user } = useSession()
@@ -81,6 +97,8 @@ export default function RiderConsole() {
     }
 
     function renderTaskList(title, description, list, actionLabel, actionStatus) {
+        const canOpenChat = actionStatus !== '待取餐'
+
         return (
             <section className="panel">
                 <div className="panel-head">
@@ -105,16 +123,48 @@ export default function RiderConsole() {
                                     <span className="badge muted">{formatMoney(task.total)}</span>
                                 </div>
                             </div>
-                            {actionLabel ? (
-                                <button
-                                    className="btn primary small"
-                                    type="button"
-                                    disabled={busyTaskId === task.id || featureLocked}
-                                    onClick={() => updateTask(task.id, actionStatus)}
-                                >
-                                    {busyTaskId === task.id ? '处理中...' : actionLabel}
-                                </button>
-                            ) : null}
+                            <div className="card-actions wrap">
+                                {actionLabel ? (
+                                    <button
+                                        className="btn primary small"
+                                        type="button"
+                                        disabled={busyTaskId === task.id || featureLocked}
+                                        onClick={() => updateTask(task.id, actionStatus)}
+                                    >
+                                        {busyTaskId === task.id ? '处理中...' : actionLabel}
+                                    </button>
+                                ) : null}
+
+                                {canOpenChat && task.merchantId ? (
+                                    <Link
+                                        className="btn ghost small"
+                                        to={buildMessagePath({
+                                            targetId: task.merchantId,
+                                            targetType: 'merchant',
+                                            orderId: task.id,
+                                            targetName: task.merchant,
+                                            orderNo: task.orderNo
+                                        })}
+                                    >
+                                        联系商家
+                                    </Link>
+                                ) : null}
+
+                                {canOpenChat && task.userId ? (
+                                    <Link
+                                        className="btn ghost small"
+                                        to={buildMessagePath({
+                                            targetId: task.userId,
+                                            targetType: 'user',
+                                            orderId: task.id,
+                                            targetName: '下单用户',
+                                            orderNo: task.orderNo
+                                        })}
+                                    >
+                                        联系用户
+                                    </Link>
+                                ) : null}
+                            </div>
                         </article>
                     ))}
                 </div>

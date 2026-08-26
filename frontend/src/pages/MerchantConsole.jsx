@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import ReviewImageGallery, { LightboxImage } from '../components/ReviewImageGallery'
 import { useSession } from '../utils/ApiProvider'
 import { formatDateTime, formatMoney, formatStatusText, getStatusTone } from '../utils/format'
 
@@ -13,6 +15,21 @@ const EMPTY_PRODUCT = {
     status: 'active'
 }
 
+function buildMessagePath({ targetId, targetType, orderId, targetName, orderNo }) {
+    const params = new URLSearchParams({
+        targetId: String(targetId),
+        targetType,
+        orderId: String(orderId)
+    })
+    if (targetName) {
+        params.set('targetName', targetName)
+    }
+    if (orderNo) {
+        params.set('orderNo', orderNo)
+    }
+    return `/messages?${params.toString()}`
+}
+
 export default function MerchantConsole() {
     const { api, notify } = useSession()
     const [dashboard, setDashboard] = useState(null)
@@ -20,6 +37,7 @@ export default function MerchantConsole() {
     const [categories, setCategories] = useState([])
     const [products, setProducts] = useState([])
     const [orders, setOrders] = useState([])
+    const [reviews, setReviews] = useState([])
     const [profileForm, setProfileForm] = useState({
         name: '',
         phone: '',
@@ -38,8 +56,14 @@ export default function MerchantConsole() {
     const [loading, setLoading] = useState(true)
     const [savingProfile, setSavingProfile] = useState(false)
     const [savingProduct, setSavingProduct] = useState(false)
+    const [uploadingProfileImage, setUploadingProfileImage] = useState(false)
+    const [uploadingProductImage, setUploadingProductImage] = useState(false)
     const [busyOrderId, setBusyOrderId] = useState(null)
     const featureLocked = profile?.status !== 'active'
+    const averageReviewRating = reviews.length === 0
+        ? Number(profile?.rating || 0)
+        : reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length
+    const recentReviews = reviews.slice(0, 3)
 
     async function loadData() {
         setLoading(true)
@@ -57,6 +81,17 @@ export default function MerchantConsole() {
             setCategories(categoryData || [])
             setProducts(productData || [])
             setOrders(orderData || [])
+            if (profileData?.id) {
+                try {
+                    const reviewData = await api.reviews.getMerchant(profileData.id)
+                    setReviews(Array.isArray(reviewData) ? reviewData : [])
+                } catch (error) {
+                    setReviews([])
+                    notify(error.message || '加载消费者评价失败', 'danger')
+                }
+            } else {
+                setReviews([])
+            }
             setProfileForm({
                 name: profileData?.name || '',
                 phone: profileData?.phone || '',
@@ -96,6 +131,42 @@ export default function MerchantConsole() {
             notify(error.message || '更新商家资料失败', 'danger')
         } finally {
             setSavingProfile(false)
+        }
+    }
+
+    async function handleUploadProfileImage(fileList) {
+        const file = Array.from(fileList || [])[0]
+        if (!file) {
+            return
+        }
+
+        setUploadingProfileImage(true)
+        try {
+            const urls = await api.uploads.images([file], 'avatars')
+            setProfileForm((current) => ({ ...current, avatar: urls?.[0] || current.avatar }))
+            notify('头像上传成功', 'success')
+        } catch (error) {
+            notify(error.message || '头像上传失败', 'danger')
+        } finally {
+            setUploadingProfileImage(false)
+        }
+    }
+
+    async function handleUploadProductImage(fileList) {
+        const file = Array.from(fileList || [])[0]
+        if (!file) {
+            return
+        }
+
+        setUploadingProductImage(true)
+        try {
+            const urls = await api.uploads.images([file], 'products')
+            setProductForm((current) => ({ ...current, image: urls?.[0] || current.image }))
+            notify('商品图片上传成功', 'success')
+        } catch (error) {
+            notify(error.message || '商品图片上传失败', 'danger')
+        } finally {
+            setUploadingProductImage(false)
         }
     }
 
@@ -209,6 +280,7 @@ export default function MerchantConsole() {
                 <button className={`tab ${activeTab === 'overview' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('overview')}>概览与资料</button>
                 <button className={`tab ${activeTab === 'products' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('products')}>商品管理</button>
                 <button className={`tab ${activeTab === 'orders' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('orders')}>订单处理</button>
+                <button className={`tab ${activeTab === 'reviews' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('reviews')}>消费者评价</button>
             </div>
 
             {loading ? (
@@ -235,7 +307,41 @@ export default function MerchantConsole() {
                                         <span>待处理订单</span>
                                         <strong>{dashboard?.pendingOrders || 0}</strong>
                                     </div>
+                                    <div className="metric-card">
+                                        <span>消费者评价</span>
+                                        <strong>{reviews.length}</strong>
+                                        <small>均分 {averageReviewRating.toFixed(1)}</small>
+                                    </div>
                                 </div>
+                            </section>
+
+                            <section className="panel">
+                                <div className="panel-head">
+                                    <div>
+                                        <h2 className="section-title">最近评价</h2>
+                                        <p className="section-subtitle">来自消费者已完成订单后的反馈。</p>
+                                    </div>
+                                    <button className="btn ghost small" type="button" onClick={() => setActiveTab('reviews')}>查看全部</button>
+                                </div>
+
+                                {recentReviews.length === 0 ? (
+                                    <div className="empty-state">当前还没有消费者评价。</div>
+                                ) : (
+                                    <div className="review-list compact-list">
+                                        {recentReviews.map((review) => (
+                                            <article className="review-card" key={String(review.id)}>
+                                                <div className="panel-head compact">
+                                                    <div>
+                                                        <strong>{review.userName || '匿名用户'}</strong>
+                                                        <p className="section-subtitle">{review.productName || '订单商品'} · {formatDateTime(review.createTime)}</p>
+                                                    </div>
+                                                    <span className="badge warning">{review.rating || 0}/5</span>
+                                                </div>
+                                                <p className="review-content">{review.content || '用户未填写文字评价。'}</p>
+                                            </article>
+                                        ))}
+                                    </div>
+                                )}
                             </section>
 
                             <section className="panel">
@@ -268,8 +374,21 @@ export default function MerchantConsole() {
                                         <input className="input" value={profileForm.category} onChange={(event) => setProfileForm((current) => ({ ...current, category: event.target.value }))} />
                                     </label>
                                     <label className="form-row">
-                                        <span>头像链接</span>
-                                        <input className="input" value={profileForm.avatar} onChange={(event) => setProfileForm((current) => ({ ...current, avatar: event.target.value }))} />
+                                        <span>头像</span>
+                                        {profileForm.avatar ? (
+                                            <img className="profile-avatar" src={profileForm.avatar} alt="商家头像预览" />
+                                        ) : null}
+                                        <input
+                                            className="input"
+                                            type="file"
+                                            accept="image/*"
+                                            disabled={uploadingProfileImage}
+                                            onChange={(event) => {
+                                                handleUploadProfileImage(event.target.files)
+                                                event.target.value = ''
+                                            }}
+                                        />
+                                        {profileForm.avatar ? <small className="helper">已上传头像，可保存资料生效。</small> : null}
                                     </label>
                                     <label className="form-row">
                                         <span>标签</span>
@@ -291,7 +410,7 @@ export default function MerchantConsole() {
                                         <span>商家介绍</span>
                                         <textarea className="textarea" rows="4" value={profileForm.description} onChange={(event) => setProfileForm((current) => ({ ...current, description: event.target.value }))} />
                                     </label>
-                                    <button className="btn primary" type="submit" disabled={savingProfile}>
+                                    <button className="btn primary" type="submit" disabled={savingProfile || uploadingProfileImage}>
                                         {savingProfile ? '保存中...' : '保存商家资料'}
                                     </button>
                                 </form>
@@ -331,8 +450,26 @@ export default function MerchantConsole() {
                                         <input className="input" type="number" min="0" value={productForm.stock} onChange={(event) => setProductForm((current) => ({ ...current, stock: event.target.value }))} />
                                     </label>
                                     <label className="form-row">
-                                        <span>图片链接</span>
-                                        <input className="input" value={productForm.image} onChange={(event) => setProductForm((current) => ({ ...current, image: event.target.value }))} />
+                                        <span>商品图片</span>
+                                        {productForm.image ? (
+                                            <LightboxImage
+                                                className="product-image-large compact-preview"
+                                                src={productForm.image}
+                                                alt="商品图片预览"
+                                                buttonClassName="product-image-button"
+                                            />
+                                        ) : null}
+                                        <input
+                                            className="input"
+                                            type="file"
+                                            accept="image/*"
+                                            disabled={uploadingProductImage}
+                                            onChange={(event) => {
+                                                handleUploadProductImage(event.target.files)
+                                                event.target.value = ''
+                                            }}
+                                        />
+                                        {productForm.image ? <small className="helper">已上传商品图片。</small> : null}
                                     </label>
                                     <label className="form-row">
                                         <span>状态</span>
@@ -345,7 +482,7 @@ export default function MerchantConsole() {
                                         <span>描述</span>
                                         <textarea className="textarea" rows="4" value={productForm.description} onChange={(event) => setProductForm((current) => ({ ...current, description: event.target.value }))} />
                                     </label>
-                                    <button className="btn primary" type="submit" disabled={savingProduct || featureLocked}>
+                                    <button className="btn primary" type="submit" disabled={savingProduct || uploadingProductImage || featureLocked}>
                                         {savingProduct ? '保存中...' : productForm.id ? '更新商品' : '新增商品'}
                                     </button>
                                 </form>
@@ -416,10 +553,75 @@ export default function MerchantConsole() {
                                                 标记已完成
                                             </button>
                                         ) : null}
+
+                                        {order.userId ? (
+                                            <Link
+                                                className="btn ghost small"
+                                                to={buildMessagePath({
+                                                    targetId: order.userId,
+                                                    targetType: 'user',
+                                                    orderId: order.id,
+                                                    targetName: '下单用户',
+                                                    orderNo: order.orderNo
+                                                })}
+                                            >
+                                                联系用户
+                                            </Link>
+                                        ) : null}
+
+                                        {order.riderId ? (
+                                            <Link
+                                                className="btn ghost small"
+                                                to={buildMessagePath({
+                                                    targetId: order.riderId,
+                                                    targetType: 'rider',
+                                                    orderId: order.id,
+                                                    targetName: order.riderName,
+                                                    orderNo: order.orderNo
+                                                })}
+                                            >
+                                                联系骑手
+                                            </Link>
+                                        ) : null}
                                     </div>
                                 </article>
                             ))}
                         </div>
+                    ) : null}
+
+                    {activeTab === 'reviews' ? (
+                        <section className="panel">
+                            <div className="panel-head">
+                                <div>
+                                    <h2 className="section-title">消费者评价</h2>
+                                    <p className="section-subtitle">共 {reviews.length} 条评价，平均 {averageReviewRating.toFixed(1)} 分。</p>
+                                </div>
+                            </div>
+
+                            {reviews.length === 0 ? (
+                                <div className="empty-state">当前还没有消费者评价。</div>
+                            ) : (
+                                <div className="review-list">
+                                    {reviews.map((review) => (
+                                        <article className="review-card" key={String(review.id)}>
+                                            <div className="panel-head compact">
+                                                <div>
+                                                    <strong>{review.userName || '匿名用户'}</strong>
+                                                    <p className="section-subtitle">
+                                                        {review.productName || '订单商品'} · 订单 #{review.orderId} · {formatDateTime(review.createTime)}
+                                                    </p>
+                                                </div>
+                                                <span className="badge warning">{review.rating || 0}/5</span>
+                                            </div>
+                                            <p className="review-content">{review.content || '用户未填写文字评价。'}</p>
+                                            {(review.images || []).length > 0 ? (
+                                                <ReviewImageGallery images={review.images} alt="评价图片" />
+                                            ) : null}
+                                        </article>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
                     ) : null}
                 </>
             )}

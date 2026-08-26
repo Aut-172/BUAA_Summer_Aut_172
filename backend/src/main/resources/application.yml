@@ -19,6 +19,11 @@ spring:
       schema-locations: classpath:db/init.sql
       continue-on-error: true
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 30MB
+
   # Redis 配置
   data:
     redis:

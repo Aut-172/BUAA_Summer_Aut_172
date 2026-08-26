@@ -226,6 +226,8 @@ public class RiderService {
         return RiderTaskVO.TaskItem.builder()
                 .id(order.getId())
                 .orderNo(order.getOrderNo())
+                .userId(order.getUserId())
+                .merchantId(order.getMerchantId())
                 .merchant(merchantName)
                 .merchantAvatar(merchantAvatar)
                 .items(itemsSummary)

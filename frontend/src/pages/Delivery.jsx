@@ -9,6 +9,7 @@ export default function Delivery() {
     const [delivery, setDelivery] = useState(null)
     const [loading, setLoading] = useState(true)
     const [message, setMessage] = useState('')
+    const canReview = delivery && formatStatusText(delivery.status) === '已完成'
 
     useEffect(() => {
         async function loadDelivery() {
@@ -35,7 +36,10 @@ export default function Delivery() {
                     <h1 className="section-title">配送详情</h1>
                     <p className="section-subtitle">数据来源：`GET /api/delivery/{id}`</p>
                 </div>
-                <Link className="btn ghost small" to="/orders">返回订单</Link>
+                <div className="card-actions">
+                    {canReview ? <Link className="btn primary small" to={`/reviews/${orderId}`}>评价订单</Link> : null}
+                    <Link className="btn ghost small" to="/orders">返回订单</Link>
+                </div>
             </div>
 
             {loading ? (

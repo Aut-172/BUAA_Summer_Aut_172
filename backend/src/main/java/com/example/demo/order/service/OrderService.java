@@ -85,6 +85,17 @@ public class OrderService {
         return toOrderVO(order);
     }
 
+    public OrderVO getParticipantOrderDetail(Long participantId, String participantType, Long orderId) {
+        Orders order = ordersMapper.selectById(orderId);
+        if (order == null) {
+            throw BusinessException.notFound("订单不存在");
+        }
+        if (!isOrderParticipant(order, participantId, participantType)) {
+            throw BusinessException.forbidden("无权访问该订单详情");
+        }
+        return toOrderVO(order);
+    }
+
     @Transactional
     public OrderVO checkout(Long userId, CheckoutRequest request) {
         if (request.getMerchantId() == null) {
@@ -321,6 +332,18 @@ public class OrderService {
         };
     }
 
+    private boolean isOrderParticipant(Orders order, Long participantId, String participantType) {
+        if (order == null || participantId == null || participantType == null) {
+            return false;
+        }
+        return switch (participantType) {
+            case "user" -> participantId.equals(order.getUserId());
+            case "merchant" -> participantId.equals(order.getMerchantId());
+            case "rider" -> participantId.equals(order.getRiderId());
+            default -> false;
+        };
+    }
+
     private String generateOrderNo() {
         String datePart = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         long id = snowflake.nextId();
@@ -450,6 +473,7 @@ public class OrderService {
         return OrderVO.builder()
                 .id(order.getId())
                 .orderNo(order.getOrderNo())
+                .userId(order.getUserId())
                 .merchantId(order.getMerchantId())
                 .merchant(merchantName)
                 .merchantAvatar(merchantAvatar)

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 评价视图对象
@@ -27,5 +28,6 @@ public class ReviewVO {
     private String productImage;   // 商品图片
     private Integer rating;        // 评分(1-5)
     private String content;        // 评价内容
+    private List<String> images;   // 评价图片URL列表
     private LocalDateTime createTime;
 }

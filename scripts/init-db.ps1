@@ -3,7 +3,7 @@ param(
     [string]$DbHost = "127.0.0.1",
     [int]$Port = 3306,
     [string]$Username = "root",
-    [string]$Password = "your_password"
+    [string]$Password = "13677640272lzt"
 )
 
 $root = Split-Path -Parent $PSScriptRoot

@@ -18,5 +18,6 @@ public class ReviewRequest {
         private Long productId;
         private Integer rating;     // 评分(1-5)
         private String content;     // 评价内容(可选，不超过200字)
+        private List<String> images; // 评价图片URL列表(可选)
     }
 }

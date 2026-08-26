@@ -11,10 +11,14 @@ import {
 } from 'react-router-dom'
 import Home from './pages/Home'
 import Login from './pages/Login'
+import Search from './pages/Search'
 import MerchantDetail from './pages/MerchantDetail'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import Orders from './pages/Orders'
+import Messages from './pages/Messages'
+import MessageOrderDetail from './pages/MessageOrderDetail'
+import Review from './pages/Review'
 import Coupons from './pages/Coupons'
 import Profile from './pages/Profile'
 import Delivery from './pages/Delivery'
@@ -77,10 +81,12 @@ function AppLayout() {
 
                     <nav className="nav-links">
                         <NavLink className="nav-link" to="/">首页</NavLink>
+                        <NavLink className="nav-link" to="/search">搜索</NavLink>
                         {showConsumerNav ? <NavLink className="nav-link" to="/cart">购物车</NavLink> : null}
                         {showConsumerNav ? <NavLink className="nav-link" to="/orders">订单</NavLink> : null}
                         {showConsumerNav ? <NavLink className="nav-link" to="/coupons">优惠券</NavLink> : null}
                         {showConsumerNav ? <NavLink className="nav-link" to="/profile">我的</NavLink> : null}
+                        {isAuthenticated && role !== 'admin' ? <NavLink className="nav-link" to="/messages">消息</NavLink> : null}
                         {role === 'merchant' ? <NavLink className="nav-link" to="/merchant-center">商家中心</NavLink> : null}
                         {role === 'rider' ? <NavLink className="nav-link" to="/rider-center">骑手中心</NavLink> : null}
                         {role === 'admin' ? <NavLink className="nav-link" to="/admin-center">管理中心</NavLink> : null}
@@ -108,6 +114,7 @@ function AppLayout() {
             <main className="shell">
                 <Routes>
                     <Route path="/" element={<Home />} />
+                    <Route path="/search" element={<Search />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/merchants/:merchantId" element={<MerchantDetail />} />
                     <Route
@@ -131,6 +138,30 @@ function AppLayout() {
                         element={(
                             <ProtectedRoute roles={['consumer']}>
                                 <Orders />
+                            </ProtectedRoute>
+                        )}
+                    />
+                    <Route
+                        path="/messages"
+                        element={(
+                            <ProtectedRoute roles={['consumer', 'merchant', 'rider']}>
+                                <Messages />
+                            </ProtectedRoute>
+                        )}
+                    />
+                    <Route
+                        path="/messages/orders/:orderId"
+                        element={(
+                            <ProtectedRoute roles={['consumer', 'merchant', 'rider']}>
+                                <MessageOrderDetail />
+                            </ProtectedRoute>
+                        )}
+                    />
+                    <Route
+                        path="/reviews/:orderId"
+                        element={(
+                            <ProtectedRoute roles={['consumer']}>
+                                <Review />
                             </ProtectedRoute>
                         )}
                     />

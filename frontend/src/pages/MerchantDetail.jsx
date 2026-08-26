@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import ReviewImageGallery, { LightboxImage } from '../components/ReviewImageGallery'
 import { useSession } from '../utils/ApiProvider'
-import { formatMoney, normalizeTags } from '../utils/format'
+import { formatDateTime, formatMoney, normalizeTags } from '../utils/format'
 
 export default function MerchantDetail() {
     const { merchantId } = useParams()
@@ -9,25 +10,40 @@ export default function MerchantDetail() {
     const location = useLocation()
     const { api, isAuthenticated, notify, role } = useSession()
     const [merchant, setMerchant] = useState(null)
+    const [reviews, setReviews] = useState([])
     const [selectedSpecs, setSelectedSpecs] = useState({})
     const [addingId, setAddingId] = useState(null)
     const [favorite, setFavorite] = useState(false)
     const [favoriteLoading, setFavoriteLoading] = useState(false)
     const [loading, setLoading] = useState(true)
+    const [reviewsLoading, setReviewsLoading] = useState(true)
 
     async function loadMerchant() {
         setLoading(true)
+        setReviewsLoading(true)
         try {
             const data = await api.public.getMerchant(merchantId)
             setMerchant(data)
+
             if (isAuthenticated && role === 'consumer') {
                 const favoriteState = await api.user.isFavoriteMerchant(merchantId)
                 setFavorite(Boolean(favoriteState))
             } else {
                 setFavorite(false)
             }
+
+            try {
+                const reviewData = await api.reviews.getMerchant(merchantId)
+                setReviews(Array.isArray(reviewData) ? reviewData : [])
+            } catch (error) {
+                setReviews([])
+                notify(error.message || '加载评价失败', 'danger')
+            } finally {
+                setReviewsLoading(false)
+            }
         } finally {
             setLoading(false)
+            setReviewsLoading(false)
         }
     }
 
@@ -117,6 +133,9 @@ export default function MerchantDetail() {
     }
 
     const tags = normalizeTags(merchant.tags)
+    const averageRating = reviews.length === 0
+        ? Number(merchant.rating || 0)
+        : reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length
 
     return (
         <section className="page">
@@ -132,6 +151,7 @@ export default function MerchantDetail() {
                         <p>{merchant.description || '暂无商家介绍'}</p>
                         <div className="badge-row">
                             <span className="badge info">{merchant.category || '未分类'}</span>
+                            <span className="badge success">评分 {averageRating.toFixed(1)}</span>
                             <span className="badge success">起送 {formatMoney(merchant.minDeliveryFee)}</span>
                             <span className="badge warning">配送 {formatMoney(merchant.deliveryFee)}</span>
                             <span className="badge muted">月售 {merchant.monthlySales || 0}</span>
@@ -153,6 +173,7 @@ export default function MerchantDetail() {
                         {favoriteLoading ? '处理中...' : favorite ? '已收藏' : '收藏商家'}
                     </button>
                     <Link className="btn secondary" to="/cart">去购物车</Link>
+                    <a className="btn ghost" href="#reviews">查看评价</a>
                     <Link className="btn ghost" to="/">返回首页</Link>
                 </div>
             </div>
@@ -180,10 +201,11 @@ export default function MerchantDetail() {
 
                                 return (
                                     <article className="product-card panel" key={product.id}>
-                                        <img
+                                        <LightboxImage
                                             className="product-image-large"
                                             src={product.image || 'https://picsum.photos/seed/default-product/360/240'}
                                             alt={product.name}
+                                            buttonClassName="product-image-button"
                                         />
                                         <div className="stack tight">
                                             <div className="card-line">
@@ -241,6 +263,40 @@ export default function MerchantDetail() {
                     </section>
                 ))}
             </div>
+
+            <section className="panel" id="reviews">
+                <div className="panel-head">
+                    <div>
+                        <h2 className="section-title">消费者评价</h2>
+                        <p className="section-subtitle">共 {reviews.length} 条评价，来自已完成订单。</p>
+                    </div>
+                    <span className="badge warning">{averageRating.toFixed(1)} 分</span>
+                </div>
+
+                {reviewsLoading ? (
+                    <div className="empty-state">正在加载评价...</div>
+                ) : reviews.length === 0 ? (
+                    <div className="empty-state">当前还没有消费者评价。</div>
+                ) : (
+                    <div className="review-list">
+                        {reviews.map((review) => (
+                            <article className="review-card" key={String(review.id)}>
+                                <div className="panel-head compact">
+                                    <div>
+                                        <strong>{review.userName || '匿名用户'}</strong>
+                                        <p className="section-subtitle">{review.productName || '订单商品'} · {formatDateTime(review.createTime)}</p>
+                                    </div>
+                                    <span className="badge warning">{review.rating || 0}/5</span>
+                                </div>
+                                <p className="review-content">{review.content || '用户未填写文字评价。'}</p>
+                                {(review.images || []).length > 0 ? (
+                                    <ReviewImageGallery images={review.images} alt="评价图片" />
+                                ) : null}
+                            </article>
+                        ))}
+                    </div>
+                )}
+            </section>
         </section>
     )
 }
