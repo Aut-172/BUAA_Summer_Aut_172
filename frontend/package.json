@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:ci": "vitest run --reporter=default --reporter=junit --outputFile=./test-results/vitest-results.xml",
     "test:watch": "vitest",
     "e2e": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/run-e2e.ps1",
     "e2e:direct": "playwright test",

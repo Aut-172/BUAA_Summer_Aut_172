@@ -25,7 +25,7 @@ test.describe('UC01-UC21 业务场景覆盖', () => {
     test('UC01 UC12 多角色注册、登录与会话分流', async ({ page }) => {
         await page.goto('/login')
 
-        await page.getByRole('button', { name: '注册' }).click()
+        await page.getByRole('button', { name: '注册', exact: true }).click()
         await fillFormRow(page, '用户名', 'new-consumer')
         await fillFormRow(page, '手机号', '13900000001')
         await fillFormRow(page, '昵称', '新消费者')
@@ -34,7 +34,7 @@ test.describe('UC01-UC21 业务场景覆盖', () => {
         await page.getByRole('button', { name: '注册账号' }).click()
         await expectToast(page, '注册成功')
 
-        await page.getByRole('button', { name: '注册' }).click()
+        await page.getByRole('button', { name: '注册', exact: true }).click()
         await page.getByRole('combobox').selectOption('merchant')
         await fillFormRow(page, '用户名', 'new-merchant')
         await fillFormRow(page, '手机号', '13900000011')
@@ -44,7 +44,7 @@ test.describe('UC01-UC21 业务场景覆盖', () => {
         await page.getByRole('button', { name: '注册账号' }).click()
         await expectToast(page, '注册成功')
 
-        await page.getByRole('button', { name: '注册' }).click()
+        await page.getByRole('button', { name: '注册', exact: true }).click()
         await page.getByRole('combobox').selectOption('rider')
         await fillFormRow(page, '用户名', 'new-rider')
         await fillFormRow(page, '手机号', '13900000021')
@@ -55,7 +55,7 @@ test.describe('UC01-UC21 业务场景覆盖', () => {
         await expectToast(page, '注册成功')
 
         await page.getByRole('combobox').selectOption('admin')
-        await expect(page.getByRole('button', { name: '注册' })).toBeDisabled()
+        await expect(page.getByRole('button', { name: '注册', exact: true })).toBeDisabled()
 
         for (const [role, path, heading] of [
             ['consumer', '/', '附近热门商家'],
