@@ -429,6 +429,25 @@ textarea {
   padding: 14px 16px;
 }
 
+.search-hero {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(360px, 1.2fr);
+  gap: 18px;
+  align-items: end;
+}
+
+.search-toolbar {
+  justify-content: flex-end;
+}
+
+.search-toolbar .input {
+  min-width: 240px;
+}
+
+.search-toolbar .select {
+  min-width: 150px;
+}
+
 .toolbar {
   align-items: stretch;
 }
@@ -1027,6 +1046,7 @@ textarea {
 @media (max-width: 1120px) {
   .topbar-inner,
   .hero,
+  .search-hero,
   .auth-shell,
   .split-grid,
   .checkout-layout,
