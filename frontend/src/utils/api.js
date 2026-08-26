@@ -158,6 +158,20 @@ const api = {
             })
         },
 
+        search(params = {}) {
+            return request({
+                url: '/search',
+                params
+            })
+        },
+
+        recommend(params = {}) {
+            return request({
+                url: '/recommend',
+                params
+            })
+        },
+
         getProduct(id) {
             return request({
                 url: `/products/${id}`

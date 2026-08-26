@@ -30,67 +30,47 @@ public class SearchService {
         this.productMapper = productMapper;
     }
 
-    /**
-     * 复合搜索：优先匹配商家名称，其次匹配商品名称
-     *
-     * @param keyword  搜索关键词
-     * @param category 商家类型筛选（可选）
-     * @param sort     排序方式：rating(好评优先)/sales(销量优先)/distance(距离优先)
-     * @param lat      用户纬度（用于距离计算）
-     * @param lng      用户经度（用于距离计算）
-     * @return 搜索结果列表
-     */
     public List<SearchResultVO> search(String keyword, String category, String sort,
                                        BigDecimal lat, BigDecimal lng) {
-        // 1. 查询所有活跃商家
-        List<Merchant> merchants = merchantMapper.selectList(null);
+        String normalizedKeyword = normalize(keyword);
+        String normalizedCategory = category == null ? "" : category.trim();
+        List<Merchant> merchants = merchantMapper.selectList(
+                new LambdaQueryWrapper<Merchant>()
+                        .eq(Merchant::getStatus, "active")
+                        .eq(!normalizedCategory.isEmpty(), Merchant::getCategory, normalizedCategory)
+        );
 
-        // 2. 按关键词过滤
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            String kw = keyword.trim().toLowerCase();
-            merchants = merchants.stream()
-                    .filter(m -> m.getName() != null && m.getName().toLowerCase().contains(kw))
-                    .collect(Collectors.toList());
-        }
-
-        // 3. 按分类过滤
-        if (category != null && !category.trim().isEmpty()) {
-            merchants = merchants.stream()
-                    .filter(m -> category.equals(m.getCategory()))
-                    .collect(Collectors.toList());
-        }
-
-        // 4. 构建结果
         List<SearchResultVO> result = new ArrayList<>();
         Map<Long, Integer> merchantSalesMap = new HashMap<>();
 
         for (Merchant merchant : merchants) {
-            // 查询该商家的商品
             List<Product> products = productMapper.selectList(
                     new LambdaQueryWrapper<Product>()
                             .eq(Product::getMerchantId, merchant.getId())
                             .eq(Product::getStatus, "active")
             );
 
-            // 如果有关键词，也匹配商品名称
-            List<Product> matchedProducts = products;
-            if (keyword != null && !keyword.trim().isEmpty()) {
-                String kw = keyword.trim().toLowerCase();
-                matchedProducts = products.stream()
-                        .filter(p -> p.getName() != null && p.getName().toLowerCase().contains(kw))
-                        .collect(Collectors.toList());
-            }
+            boolean hasKeyword = !normalizedKeyword.isEmpty();
+            boolean merchantMatched = !hasKeyword || matches(merchant.getName(), normalizedKeyword)
+                    || matches(merchant.getTags(), normalizedKeyword);
 
-            // 如果商家名和商品名都不匹配，跳过
-            if (keyword != null && !keyword.trim().isEmpty() && matchedProducts.isEmpty()) {
+            List<Product> matchedProducts = hasKeyword
+                    ? products.stream()
+                            .filter(p -> matches(p.getName(), normalizedKeyword))
+                            .collect(Collectors.toList())
+                    : products;
+
+            if (hasKeyword && !merchantMatched && matchedProducts.isEmpty()) {
                 continue;
             }
 
-            // 计算距离
+            List<Product> displayProducts = hasKeyword && merchantMatched && matchedProducts.isEmpty()
+                    ? products
+                    : matchedProducts;
+
             String distance = calculateDistance(merchant, lat, lng);
 
-            // 构建商品列表
-            List<SearchResultVO.ProductItem> productItems = matchedProducts.stream().map(p ->
+            List<SearchResultVO.ProductItem> productItems = displayProducts.stream().map(p ->
                     SearchResultVO.ProductItem.builder()
                             .id(p.getId())
                             .name(p.getName())
@@ -102,7 +82,6 @@ public class SearchService {
                             .build()
             ).collect(Collectors.toList());
 
-            // 构建商家标签
             List<String> tags = new ArrayList<>();
             if (merchant.getTags() != null && !merchant.getTags().isEmpty()) {
                 String[] tagArr = merchant.getTags().split(",");
@@ -111,7 +90,6 @@ public class SearchService {
                 }
             }
 
-            // 配送费文案
             String feeText;
             if (merchant.getDeliveryFee() != null && merchant.getDeliveryFee().compareTo(BigDecimal.ZERO) > 0) {
                 feeText = "配送费¥" + merchant.getDeliveryFee();
@@ -119,16 +97,12 @@ public class SearchService {
                 feeText = "免配送费";
             }
 
-            // 销量文案
             String salesText;
             if (merchant.getMonthlySales() != null) {
                 salesText = "月售" + merchant.getMonthlySales();
             } else {
                 salesText = "月售0";
             }
-
-            // 营业状态
-            boolean open = "active".equals(merchant.getStatus());
 
             SearchResultVO vo = SearchResultVO.builder()
                     .id(merchant.getId())
@@ -138,7 +112,7 @@ public class SearchService {
                     .sales(salesText)
                     .distance(distance)
                     .fee(feeText)
-                    .open(open)
+                    .open(true)
                     .description(merchant.getDescription())
                     .address(merchant.getAddress())
                     .phone(merchant.getPhone())
@@ -170,6 +144,14 @@ public class SearchService {
         }
 
         return result;
+    }
+
+    private String normalize(String value) {
+        return value == null ? "" : value.trim().toLowerCase();
+    }
+
+    private boolean matches(String value, String keyword) {
+        return value != null && value.toLowerCase().contains(keyword);
     }
 
     /**

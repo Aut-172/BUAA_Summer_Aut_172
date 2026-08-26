@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useSession } from '../utils/ApiProvider'
 import { formatMoney, normalizeTags } from '../utils/format'
 
@@ -11,6 +11,7 @@ const FLOW_STEPS = [
 
 export default function Home() {
     const { api, role, isAuthenticated } = useSession()
+    const navigate = useNavigate()
     const [categories, setCategories] = useState([])
     const [merchants, setMerchants] = useState([])
     const [keyword, setKeyword] = useState('')
@@ -43,7 +44,14 @@ export default function Home() {
 
     function handleSearch(event) {
         event.preventDefault()
-        loadMerchants(keyword, category)
+        const params = new URLSearchParams()
+        if (keyword.trim()) {
+            params.set('keyword', keyword.trim())
+        }
+        if (category) {
+            params.set('category', category)
+        }
+        navigate(`/search${params.toString() ? `?${params.toString()}` : ''}`)
     }
 
     const stats = useMemo(() => {

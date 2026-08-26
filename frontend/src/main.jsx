@@ -11,6 +11,7 @@ import {
 } from 'react-router-dom'
 import Home from './pages/Home'
 import Login from './pages/Login'
+import Search from './pages/Search'
 import MerchantDetail from './pages/MerchantDetail'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
@@ -77,6 +78,7 @@ function AppLayout() {
 
                     <nav className="nav-links">
                         <NavLink className="nav-link" to="/">首页</NavLink>
+                        <NavLink className="nav-link" to="/search">搜索</NavLink>
                         {showConsumerNav ? <NavLink className="nav-link" to="/cart">购物车</NavLink> : null}
                         {showConsumerNav ? <NavLink className="nav-link" to="/orders">订单</NavLink> : null}
                         {showConsumerNav ? <NavLink className="nav-link" to="/coupons">优惠券</NavLink> : null}
@@ -108,6 +110,7 @@ function AppLayout() {
             <main className="shell">
                 <Routes>
                     <Route path="/" element={<Home />} />
+                    <Route path="/search" element={<Search />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/merchants/:merchantId" element={<MerchantDetail />} />
                     <Route
