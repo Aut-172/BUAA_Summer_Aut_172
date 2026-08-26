@@ -29,6 +29,7 @@ mybatis-plus:
 
 app:
   upload:
+    root-dir: build/test-uploads
     review-dir: build/test-uploads/reviews
   auth:
     captcha-enabled: false

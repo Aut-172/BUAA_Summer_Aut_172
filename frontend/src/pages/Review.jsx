@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import ReviewImageGallery from '../components/ReviewImageGallery'
 import { useSession } from '../utils/ApiProvider'
 import { formatMoney, formatStatusText } from '../utils/format'
 
@@ -240,20 +241,11 @@ export default function Review() {
                                     </label>
 
                                     {previews.length > 0 ? (
-                                        <div className="image-preview-grid">
-                                            {previews.map((src) => (
-                                                <div className="review-preview-item" key={src}>
-                                                    <img className="review-preview" src={src} alt="评价图片预览" />
-                                                    <button
-                                                        className="btn ghost small"
-                                                        type="button"
-                                                        onClick={() => removeImage(item.productId, src)}
-                                                    >
-                                                        移除
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
+                                        <ReviewImageGallery
+                                            images={previews}
+                                            alt="评价图片预览"
+                                            onRemove={(src) => removeImage(item.productId, src)}
+                                        />
                                     ) : null}
 
                                     {draft.uploading ? <p className="helper">图片上传中...</p> : null}

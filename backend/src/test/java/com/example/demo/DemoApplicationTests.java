@@ -258,6 +258,25 @@ class DemoApplicationTests {
     }
 
     @Test
+    void authenticatedUsersCanUploadImagesForProfilesAndProducts() throws Exception {
+        String consumerToken = login("/api/auth/login", "demo", "123456");
+        MockMultipartFile avatar = new MockMultipartFile(
+                "files",
+                "avatar.png",
+                "image/png",
+                new byte[]{1, 2, 3}
+        );
+
+        mockMvc.perform(multipart("/api/uploads/images")
+                        .file(avatar)
+                        .param("scene", "avatars")
+                        .header("Authorization", bearer(consumerToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data[0]").value(org.hamcrest.Matchers.startsWith("/uploads/avatars/")));
+    }
+
+    @Test
     void riderCompletionMarksLockedCouponAsUsed() {
         Orders order = new Orders();
         order.setOrderNo("ORD-RIDER-1");

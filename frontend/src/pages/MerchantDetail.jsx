@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import ReviewImageGallery, { LightboxImage } from '../components/ReviewImageGallery'
 import { useSession } from '../utils/ApiProvider'
 import { formatDateTime, formatMoney, normalizeTags } from '../utils/format'
 
@@ -153,10 +154,11 @@ export default function MerchantDetail() {
 
                                 return (
                                     <article className="product-card panel" key={product.id}>
-                                        <img
+                                        <LightboxImage
                                             className="product-image-large"
                                             src={product.image || 'https://picsum.photos/seed/default-product/360/240'}
                                             alt={product.name}
+                                            buttonClassName="product-image-button"
                                         />
                                         <div className="stack tight">
                                             <div className="card-line">
@@ -241,11 +243,7 @@ export default function MerchantDetail() {
                                 </div>
                                 <p className="review-content">{review.content || '用户未填写文字评价。'}</p>
                                 {(review.images || []).length > 0 ? (
-                                    <div className="image-preview-grid">
-                                        {review.images.map((src) => (
-                                            <img className="review-preview" key={src} src={src} alt="评价图片" />
-                                        ))}
-                                    </div>
+                                    <ReviewImageGallery images={review.images} alt="评价图片" />
                                 ) : null}
                             </article>
                         ))}

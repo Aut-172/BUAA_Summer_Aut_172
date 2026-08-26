@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import ReviewImageGallery, { LightboxImage } from '../components/ReviewImageGallery'
 import { useSession } from '../utils/ApiProvider'
 import { formatDateTime, formatMoney, formatStatusText, getStatusTone } from '../utils/format'
 
@@ -39,6 +40,8 @@ export default function MerchantConsole() {
     const [loading, setLoading] = useState(true)
     const [savingProfile, setSavingProfile] = useState(false)
     const [savingProduct, setSavingProduct] = useState(false)
+    const [uploadingProfileImage, setUploadingProfileImage] = useState(false)
+    const [uploadingProductImage, setUploadingProductImage] = useState(false)
     const [busyOrderId, setBusyOrderId] = useState(null)
     const featureLocked = profile?.status !== 'active'
     const averageReviewRating = reviews.length === 0
@@ -112,6 +115,42 @@ export default function MerchantConsole() {
             notify(error.message || '更新商家资料失败', 'danger')
         } finally {
             setSavingProfile(false)
+        }
+    }
+
+    async function handleUploadProfileImage(fileList) {
+        const file = Array.from(fileList || [])[0]
+        if (!file) {
+            return
+        }
+
+        setUploadingProfileImage(true)
+        try {
+            const urls = await api.uploads.images([file], 'avatars')
+            setProfileForm((current) => ({ ...current, avatar: urls?.[0] || current.avatar }))
+            notify('头像上传成功', 'success')
+        } catch (error) {
+            notify(error.message || '头像上传失败', 'danger')
+        } finally {
+            setUploadingProfileImage(false)
+        }
+    }
+
+    async function handleUploadProductImage(fileList) {
+        const file = Array.from(fileList || [])[0]
+        if (!file) {
+            return
+        }
+
+        setUploadingProductImage(true)
+        try {
+            const urls = await api.uploads.images([file], 'products')
+            setProductForm((current) => ({ ...current, image: urls?.[0] || current.image }))
+            notify('商品图片上传成功', 'success')
+        } catch (error) {
+            notify(error.message || '商品图片上传失败', 'danger')
+        } finally {
+            setUploadingProductImage(false)
         }
     }
 
@@ -319,8 +358,21 @@ export default function MerchantConsole() {
                                         <input className="input" value={profileForm.category} onChange={(event) => setProfileForm((current) => ({ ...current, category: event.target.value }))} />
                                     </label>
                                     <label className="form-row">
-                                        <span>头像链接</span>
-                                        <input className="input" value={profileForm.avatar} onChange={(event) => setProfileForm((current) => ({ ...current, avatar: event.target.value }))} />
+                                        <span>头像</span>
+                                        {profileForm.avatar ? (
+                                            <img className="profile-avatar" src={profileForm.avatar} alt="商家头像预览" />
+                                        ) : null}
+                                        <input
+                                            className="input"
+                                            type="file"
+                                            accept="image/*"
+                                            disabled={uploadingProfileImage}
+                                            onChange={(event) => {
+                                                handleUploadProfileImage(event.target.files)
+                                                event.target.value = ''
+                                            }}
+                                        />
+                                        {profileForm.avatar ? <small className="helper">已上传头像，可保存资料生效。</small> : null}
                                     </label>
                                     <label className="form-row">
                                         <span>标签</span>
@@ -342,7 +394,7 @@ export default function MerchantConsole() {
                                         <span>商家介绍</span>
                                         <textarea className="textarea" rows="4" value={profileForm.description} onChange={(event) => setProfileForm((current) => ({ ...current, description: event.target.value }))} />
                                     </label>
-                                    <button className="btn primary" type="submit" disabled={savingProfile}>
+                                    <button className="btn primary" type="submit" disabled={savingProfile || uploadingProfileImage}>
                                         {savingProfile ? '保存中...' : '保存商家资料'}
                                     </button>
                                 </form>
@@ -382,8 +434,26 @@ export default function MerchantConsole() {
                                         <input className="input" type="number" min="0" value={productForm.stock} onChange={(event) => setProductForm((current) => ({ ...current, stock: event.target.value }))} />
                                     </label>
                                     <label className="form-row">
-                                        <span>图片链接</span>
-                                        <input className="input" value={productForm.image} onChange={(event) => setProductForm((current) => ({ ...current, image: event.target.value }))} />
+                                        <span>商品图片</span>
+                                        {productForm.image ? (
+                                            <LightboxImage
+                                                className="product-image-large compact-preview"
+                                                src={productForm.image}
+                                                alt="商品图片预览"
+                                                buttonClassName="product-image-button"
+                                            />
+                                        ) : null}
+                                        <input
+                                            className="input"
+                                            type="file"
+                                            accept="image/*"
+                                            disabled={uploadingProductImage}
+                                            onChange={(event) => {
+                                                handleUploadProductImage(event.target.files)
+                                                event.target.value = ''
+                                            }}
+                                        />
+                                        {productForm.image ? <small className="helper">已上传商品图片。</small> : null}
                                     </label>
                                     <label className="form-row">
                                         <span>状态</span>
@@ -396,7 +466,7 @@ export default function MerchantConsole() {
                                         <span>描述</span>
                                         <textarea className="textarea" rows="4" value={productForm.description} onChange={(event) => setProductForm((current) => ({ ...current, description: event.target.value }))} />
                                     </label>
-                                    <button className="btn primary" type="submit" disabled={savingProduct || featureLocked}>
+                                    <button className="btn primary" type="submit" disabled={savingProduct || uploadingProductImage || featureLocked}>
                                         {savingProduct ? '保存中...' : productForm.id ? '更新商品' : '新增商品'}
                                     </button>
                                 </form>
@@ -499,11 +569,7 @@ export default function MerchantConsole() {
                                             </div>
                                             <p className="review-content">{review.content || '用户未填写文字评价。'}</p>
                                             {(review.images || []).length > 0 ? (
-                                                <div className="image-preview-grid">
-                                                    {review.images.map((src) => (
-                                                        <img className="review-preview" key={src} src={src} alt="评价图片" />
-                                                    ))}
-                                                </div>
+                                                <ReviewImageGallery images={review.images} alt="评价图片" />
                                             ) : null}
                                         </article>
                                     ))}

@@ -357,20 +357,27 @@ const api = {
         },
 
         uploadImages(files) {
-            const formData = new FormData()
-            Array.from(files || []).forEach((file) => {
-                formData.append('files', file)
-            })
-
-            return request({
-                url: '/reviews/images',
-                method: 'post',
-                data: formData
-            })
+            return api.uploads.images(files, 'reviews')
         },
 
         getMine() {
             return request({ url: '/user/reviews' })
+        }
+    },
+
+    uploads: {
+        images(files, scene = 'common') {
+            const formData = new FormData()
+            Array.from(files || []).forEach((file) => {
+                formData.append('files', file)
+            })
+            formData.append('scene', scene)
+
+            return request({
+                url: '/uploads/images',
+                method: 'post',
+                data: formData
+            })
         }
     },
 

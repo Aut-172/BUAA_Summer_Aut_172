@@ -928,6 +928,29 @@ textarea {
   border-radius: 16px;
 }
 
+.review-preview-button {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.product-image-button,
+.lightbox-image-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.product-image-large.compact-preview {
+  max-width: 260px;
+  height: 150px;
+}
+
 .review-preview-item {
   display: flex;
   flex-direction: column;
@@ -959,6 +982,41 @@ textarea {
   margin: 0;
   color: var(--text);
   line-height: 1.6;
+}
+
+.review-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  background: rgba(0, 0, 0, 0.72);
+  cursor: zoom-out;
+}
+
+.review-lightbox-image {
+  max-width: min(92vw, 1080px);
+  max-height: 86vh;
+  border-radius: 18px;
+  object-fit: contain;
+  background: #fff;
+  box-shadow: 0 22px 72px rgba(0, 0, 0, 0.36);
+  cursor: default;
+}
+
+.review-lightbox-close {
+  position: fixed;
+  top: 22px;
+  right: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 999px;
+  padding: 10px 14px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.42);
+  cursor: pointer;
+  font-weight: 700;
 }
 
 .login-card .form-grid {
