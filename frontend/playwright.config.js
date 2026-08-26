@@ -9,7 +9,11 @@ export default defineConfig({
     fullyParallel: false,
     workers: 1,
     retries: process.env.CI ? 1 : 0,
-    reporter: [['list']],
+    reporter: [
+        ['list'],
+        ['html', { outputFolder: 'playwright-report', open: 'never' }],
+        ['json', { outputFile: 'test-results/e2e-results.json' }]
+    ],
     use: {
         baseURL: 'http://127.0.0.1:5173',
         trace: 'on-first-retry',
