@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 
 /**
  * 会话线程 VO
@@ -17,7 +19,24 @@ public class ThreadVO {
     /**
      * 对方ID（商家或用户）
      */
+    @JsonSerialize(using = ToStringSerializer.class)
     private Long targetId;
+
+    /**
+     * 对方类型: user/merchant/rider
+     */
+    private String targetType;
+
+    /**
+     * 关联订单ID
+     */
+    @JsonSerialize(using = ToStringSerializer.class)
+    private Long orderId;
+
+    /**
+     * 关联订单号
+     */
+    private String orderNo;
 
     /**
      * 对方名称

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import ReviewImageGallery, { LightboxImage } from '../components/ReviewImageGallery'
 import { useSession } from '../utils/ApiProvider'
 import { formatDateTime, formatMoney, formatStatusText, getStatusTone } from '../utils/format'
@@ -12,6 +13,21 @@ const EMPTY_PRODUCT = {
     image: '',
     description: '',
     status: 'active'
+}
+
+function buildMessagePath({ targetId, targetType, orderId, targetName, orderNo }) {
+    const params = new URLSearchParams({
+        targetId: String(targetId),
+        targetType,
+        orderId: String(orderId)
+    })
+    if (targetName) {
+        params.set('targetName', targetName)
+    }
+    if (orderNo) {
+        params.set('orderNo', orderNo)
+    }
+    return `/messages?${params.toString()}`
 }
 
 export default function MerchantConsole() {
@@ -536,6 +552,36 @@ export default function MerchantConsole() {
                                             <button className="btn primary small" type="button" disabled={busyOrderId === order.id || featureLocked} onClick={() => handleUpdateOrder(order.id, '已完成')}>
                                                 标记已完成
                                             </button>
+                                        ) : null}
+
+                                        {order.userId ? (
+                                            <Link
+                                                className="btn ghost small"
+                                                to={buildMessagePath({
+                                                    targetId: order.userId,
+                                                    targetType: 'user',
+                                                    orderId: order.id,
+                                                    targetName: '下单用户',
+                                                    orderNo: order.orderNo
+                                                })}
+                                            >
+                                                联系用户
+                                            </Link>
+                                        ) : null}
+
+                                        {order.riderId ? (
+                                            <Link
+                                                className="btn ghost small"
+                                                to={buildMessagePath({
+                                                    targetId: order.riderId,
+                                                    targetType: 'rider',
+                                                    orderId: order.id,
+                                                    targetName: order.riderName,
+                                                    orderNo: order.orderNo
+                                                })}
+                                            >
+                                                联系骑手
+                                            </Link>
                                         ) : null}
                                     </div>
                                 </article>

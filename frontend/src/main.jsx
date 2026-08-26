@@ -16,6 +16,8 @@ import MerchantDetail from './pages/MerchantDetail'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import Orders from './pages/Orders'
+import Messages from './pages/Messages'
+import MessageOrderDetail from './pages/MessageOrderDetail'
 import Review from './pages/Review'
 import Coupons from './pages/Coupons'
 import Profile from './pages/Profile'
@@ -84,6 +86,7 @@ function AppLayout() {
                         {showConsumerNav ? <NavLink className="nav-link" to="/orders">订单</NavLink> : null}
                         {showConsumerNav ? <NavLink className="nav-link" to="/coupons">优惠券</NavLink> : null}
                         {showConsumerNav ? <NavLink className="nav-link" to="/profile">我的</NavLink> : null}
+                        {isAuthenticated && role !== 'admin' ? <NavLink className="nav-link" to="/messages">消息</NavLink> : null}
                         {role === 'merchant' ? <NavLink className="nav-link" to="/merchant-center">商家中心</NavLink> : null}
                         {role === 'rider' ? <NavLink className="nav-link" to="/rider-center">骑手中心</NavLink> : null}
                         {role === 'admin' ? <NavLink className="nav-link" to="/admin-center">管理中心</NavLink> : null}
@@ -135,6 +138,22 @@ function AppLayout() {
                         element={(
                             <ProtectedRoute roles={['consumer']}>
                                 <Orders />
+                            </ProtectedRoute>
+                        )}
+                    />
+                    <Route
+                        path="/messages"
+                        element={(
+                            <ProtectedRoute roles={['consumer', 'merchant', 'rider']}>
+                                <Messages />
+                            </ProtectedRoute>
+                        )}
+                    />
+                    <Route
+                        path="/messages/orders/:orderId"
+                        element={(
+                            <ProtectedRoute roles={['consumer', 'merchant', 'rider']}>
+                                <MessageOrderDetail />
                             </ProtectedRoute>
                         )}
                     />

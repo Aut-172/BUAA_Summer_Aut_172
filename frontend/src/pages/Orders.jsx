@@ -13,6 +13,21 @@ import {
 
 const FILTERS = ['全部', '待支付', '待接单', '配送中', '已完成', '已取消']
 
+function buildMessagePath({ targetId, targetType, orderId, targetName, orderNo }) {
+    const params = new URLSearchParams({
+        targetId: String(targetId),
+        targetType,
+        orderId: String(orderId)
+    })
+    if (targetName) {
+        params.set('targetName', targetName)
+    }
+    if (orderNo) {
+        params.set('orderNo', orderNo)
+    }
+    return `/messages?${params.toString()}`
+}
+
 export default function Orders() {
     const { api, notify } = useSession()
     const [orders, setOrders] = useState([])
@@ -214,6 +229,36 @@ export default function Orders() {
                                     ) : null}
 
                                     {canReview ? <Link className="btn primary small" to={`/reviews/${orderKey}`}>评价订单</Link> : null}
+
+                                    {order.merchantId ? (
+                                        <Link
+                                            className="btn ghost small"
+                                            to={buildMessagePath({
+                                                targetId: order.merchantId,
+                                                targetType: 'merchant',
+                                                orderId: order.id,
+                                                targetName: order.merchant,
+                                                orderNo: order.orderNo
+                                            })}
+                                        >
+                                            联系商家
+                                        </Link>
+                                    ) : null}
+
+                                    {order.riderId ? (
+                                        <Link
+                                            className="btn ghost small"
+                                            to={buildMessagePath({
+                                                targetId: order.riderId,
+                                                targetType: 'rider',
+                                                orderId: order.id,
+                                                targetName: order.riderName,
+                                                orderNo: order.orderNo
+                                            })}
+                                        >
+                                            联系骑手
+                                        </Link>
+                                    ) : null}
 
                                     <Link className="btn ghost small" to={`/delivery/${orderKey}`}>查看配送</Link>
                                     <button className="btn ghost small" type="button" onClick={() => togglePayments(order.id)}>

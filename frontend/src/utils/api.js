@@ -365,6 +365,35 @@ const api = {
         }
     },
 
+    messages: {
+        getThreads() {
+            return request({ url: '/messages/threads' })
+        },
+
+        getUnreadCount() {
+            return request({ url: '/messages/unread-count' })
+        },
+
+        getOrder(orderId) {
+            return request({ url: `/messages/orders/${orderId}` })
+        },
+
+        list(params = {}) {
+            return request({
+                url: '/messages',
+                params
+            })
+        },
+
+        send(payload) {
+            return request({
+                url: '/messages',
+                method: 'post',
+                data: payload
+            })
+        }
+    },
+
     uploads: {
         images(files, scene = 'common') {
             const formData = new FormData()

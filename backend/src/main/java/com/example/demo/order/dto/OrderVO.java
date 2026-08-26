@@ -24,6 +24,8 @@ public class OrderVO {
     private Long id;
     private String orderNo;
     @JsonSerialize(using = ToStringSerializer.class)
+    private Long userId;
+    @JsonSerialize(using = ToStringSerializer.class)
     private Long merchantId;
     private String merchant;
     private String merchantAvatar;

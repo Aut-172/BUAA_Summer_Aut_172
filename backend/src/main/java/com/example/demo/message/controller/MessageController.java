@@ -1,10 +1,13 @@
 package com.example.demo.message.controller;
 
 import com.example.demo.common.Result;
+import com.example.demo.common.BusinessException;
 import com.example.demo.message.dto.MessageVO;
 import com.example.demo.message.dto.SendMessageRequest;
 import com.example.demo.message.dto.ThreadVO;
 import com.example.demo.message.service.MessageService;
+import com.example.demo.order.dto.OrderVO;
+import com.example.demo.order.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,9 +25,11 @@ import java.util.List;
 public class MessageController {
 
     private final MessageService messageService;
+    private final OrderService orderService;
 
-    public MessageController(MessageService messageService) {
+    public MessageController(MessageService messageService, OrderService orderService) {
         this.messageService = messageService;
+        this.orderService = orderService;
     }
 
     @Operation(summary = "发送消息")
@@ -48,6 +53,7 @@ public class MessageController {
     @GetMapping
     public Result<List<MessageVO>> getMessages(
             @RequestParam Long targetId,
+            @RequestParam String targetType,
             @RequestParam(required = false) Long orderId,
             HttpServletRequest httpRequest) {
         Long userId = (Long) httpRequest.getAttribute("userId");
@@ -57,7 +63,7 @@ public class MessageController {
         }
 
         String userType = mapRoleToType(role);
-        List<MessageVO> messages = messageService.getMessages(userId, userType, targetId, orderId);
+        List<MessageVO> messages = messageService.getMessages(userId, userType, targetId, targetType, orderId);
         return Result.success(messages);
     }
 
@@ -89,6 +95,20 @@ public class MessageController {
         return Result.success(count);
     }
 
+    @Operation(summary = "获取会话关联订单详情")
+    @GetMapping("/orders/{orderId}")
+    public Result<OrderVO> getConversationOrder(@PathVariable Long orderId,
+                                                HttpServletRequest httpRequest) {
+        Long userId = (Long) httpRequest.getAttribute("userId");
+        String role = (String) httpRequest.getAttribute("role");
+        if (userId == null || role == null) {
+            return Result.unauthorized("请先登录");
+        }
+
+        String userType = mapRoleToType(role);
+        return Result.success(orderService.getParticipantOrderDetail(userId, userType, orderId));
+    }
+
     /**
      * 将角色映射为消息系统中的类型
      */
@@ -101,7 +121,7 @@ public class MessageController {
             case "rider":
                 return "rider";
             default:
-                return "user";
+                throw BusinessException.forbidden("当前角色不支持消息功能");
         }
     }
 }
