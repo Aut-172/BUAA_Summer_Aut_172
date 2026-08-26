@@ -1,0 +1,28 @@
+@startuml
+title 生活助手综合服务平台追溯关系
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Microsoft YaHei
+
+rectangle "需求\nREQ01-REQ21" as req
+rectangle "用例\nUC01-UC21" as uc
+package "三层模型" {
+  rectangle "表现层\nReact Pages / Components" as view
+  rectangle "控制与业务层\nController / Service" as service
+  rectangle "数据访问层\nMapper / Entity / DTO / VO" as data
+}
+rectangle "代码模块\nauth / user / merchant / order / coupon / rider / admin / dashboard / review / message" as code
+rectangle "测试编号" as tests
+rectangle "测试结果\nBT: 26/26 通过\nFUT: 42/42 通过\nE2E: 7/7 通过" as result
+
+req --> uc
+uc --> view
+uc --> service
+uc --> data
+view --> code
+service --> code
+data --> code
+code --> tests
+tests --> result
+@enduml
