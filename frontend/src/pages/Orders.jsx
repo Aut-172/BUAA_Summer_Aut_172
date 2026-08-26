@@ -139,6 +139,8 @@ export default function Orders() {
                     {visibleOrders.map((order) => {
                         const orderKey = String(order.id)
                         const payments = paymentsMap[orderKey]
+                        const hasReviewableItems = (order.items || []).some((item) => !item.reviewed)
+                        const canReview = formatStatusText(order.status) === '已完成' && hasReviewableItems
 
                         return (
                             <article className="panel order-card" key={orderKey}>
@@ -210,6 +212,8 @@ export default function Orders() {
                                             确认收货
                                         </button>
                                     ) : null}
+
+                                    {canReview ? <Link className="btn primary small" to={`/reviews/${orderKey}`}>评价订单</Link> : null}
 
                                     <Link className="btn ghost small" to={`/delivery/${orderKey}`}>查看配送</Link>
                                     <button className="btn ghost small" type="button" onClick={() => togglePayments(order.id)}>

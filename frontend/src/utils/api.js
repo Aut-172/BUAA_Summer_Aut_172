@@ -335,6 +335,45 @@ const api = {
         }
     },
 
+    reviews: {
+        submit(payload) {
+            return request({
+                url: '/reviews',
+                method: 'post',
+                data: payload
+            })
+        },
+
+        getProduct(productId) {
+            return request({ url: `/products/${productId}/reviews` })
+        },
+
+        getMerchant(merchantId) {
+            return request({ url: `/merchants/${merchantId}/reviews` })
+        },
+
+        getMerchantRating(merchantId) {
+            return request({ url: `/merchants/${merchantId}/rating` })
+        },
+
+        uploadImages(files) {
+            const formData = new FormData()
+            Array.from(files || []).forEach((file) => {
+                formData.append('files', file)
+            })
+
+            return request({
+                url: '/reviews/images',
+                method: 'post',
+                data: formData
+            })
+        },
+
+        getMine() {
+            return request({ url: '/user/reviews' })
+        }
+    },
+
     merchant: {
         getProfile() {
             return request({ url: '/merchant/profile' })

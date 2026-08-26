@@ -29,6 +29,8 @@ import com.example.demo.payment.entity.Payment;
 import com.example.demo.payment.mapper.PaymentMapper;
 import com.example.demo.rider.dto.RiderTaskUpdateRequest;
 import com.example.demo.rider.service.RiderService;
+import com.example.demo.review.entity.Review;
+import com.example.demo.review.mapper.ReviewMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -38,6 +40,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -48,6 +51,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -90,6 +94,9 @@ class DemoApplicationTests {
 
     @Autowired
     private PaymentMapper paymentMapper;
+
+    @Autowired
+    private ReviewMapper reviewMapper;
 
     @Autowired
     private ProductMapper productMapper;
@@ -401,6 +408,50 @@ class DemoApplicationTests {
         UserCoupon usedCoupon = userCouponMapper.selectById(lockedCoupon.getId());
         assertEquals("used", usedCoupon.getStatus());
         assertNotNull(usedCoupon.getUsedAt());
+
+        MockMultipartFile image = new MockMultipartFile(
+                "files",
+                "review.png",
+                "image/png",
+                new byte[]{1, 2, 3}
+        );
+        JsonNode uploadResponse = readBody(mockMvc.perform(multipart("/api/reviews/images")
+                        .file(image)
+                        .header("Authorization", bearer(consumerToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andReturn().getResponse().getContentAsString());
+        String reviewImageUrl = uploadResponse.path("data").path(0).asText();
+
+        mockMvc.perform(post("/api/reviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "orderId": "%s",
+                                  "items": [
+                                    {
+                                      "productId": "30001",
+                                      "rating": 5,
+                                      "content": "味道很好，包装完整",
+                                      "images": ["%s"]
+                                    }
+                                  ]
+                                }
+                                """.formatted(orderId, reviewImageUrl))
+                        .header("Authorization", bearer(consumerToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data[0].rating").value(5))
+                .andExpect(jsonPath("$.data[0].images[0]").value(reviewImageUrl));
+
+        Review savedReview = reviewMapper.selectOne(
+                new LambdaQueryWrapper<Review>()
+                        .eq(Review::getOrderId, orderId)
+                        .eq(Review::getProductId, 30001L)
+        );
+        assertNotNull(savedReview);
+        assertEquals("味道很好，包装完整", savedReview.getContent());
+        assertEquals("[\"" + reviewImageUrl + "\"]", savedReview.getImages());
     }
 
     @Test

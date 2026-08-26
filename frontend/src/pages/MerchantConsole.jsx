@@ -20,6 +20,7 @@ export default function MerchantConsole() {
     const [categories, setCategories] = useState([])
     const [products, setProducts] = useState([])
     const [orders, setOrders] = useState([])
+    const [reviews, setReviews] = useState([])
     const [profileForm, setProfileForm] = useState({
         name: '',
         phone: '',
@@ -40,6 +41,10 @@ export default function MerchantConsole() {
     const [savingProduct, setSavingProduct] = useState(false)
     const [busyOrderId, setBusyOrderId] = useState(null)
     const featureLocked = profile?.status !== 'active'
+    const averageReviewRating = reviews.length === 0
+        ? Number(profile?.rating || 0)
+        : reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length
+    const recentReviews = reviews.slice(0, 3)
 
     async function loadData() {
         setLoading(true)
@@ -57,6 +62,17 @@ export default function MerchantConsole() {
             setCategories(categoryData || [])
             setProducts(productData || [])
             setOrders(orderData || [])
+            if (profileData?.id) {
+                try {
+                    const reviewData = await api.reviews.getMerchant(profileData.id)
+                    setReviews(Array.isArray(reviewData) ? reviewData : [])
+                } catch (error) {
+                    setReviews([])
+                    notify(error.message || '加载消费者评价失败', 'danger')
+                }
+            } else {
+                setReviews([])
+            }
             setProfileForm({
                 name: profileData?.name || '',
                 phone: profileData?.phone || '',
@@ -209,6 +225,7 @@ export default function MerchantConsole() {
                 <button className={`tab ${activeTab === 'overview' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('overview')}>概览与资料</button>
                 <button className={`tab ${activeTab === 'products' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('products')}>商品管理</button>
                 <button className={`tab ${activeTab === 'orders' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('orders')}>订单处理</button>
+                <button className={`tab ${activeTab === 'reviews' ? 'active' : ''}`} type="button" onClick={() => setActiveTab('reviews')}>消费者评价</button>
             </div>
 
             {loading ? (
@@ -235,7 +252,41 @@ export default function MerchantConsole() {
                                         <span>待处理订单</span>
                                         <strong>{dashboard?.pendingOrders || 0}</strong>
                                     </div>
+                                    <div className="metric-card">
+                                        <span>消费者评价</span>
+                                        <strong>{reviews.length}</strong>
+                                        <small>均分 {averageReviewRating.toFixed(1)}</small>
+                                    </div>
                                 </div>
+                            </section>
+
+                            <section className="panel">
+                                <div className="panel-head">
+                                    <div>
+                                        <h2 className="section-title">最近评价</h2>
+                                        <p className="section-subtitle">来自消费者已完成订单后的反馈。</p>
+                                    </div>
+                                    <button className="btn ghost small" type="button" onClick={() => setActiveTab('reviews')}>查看全部</button>
+                                </div>
+
+                                {recentReviews.length === 0 ? (
+                                    <div className="empty-state">当前还没有消费者评价。</div>
+                                ) : (
+                                    <div className="review-list compact-list">
+                                        {recentReviews.map((review) => (
+                                            <article className="review-card" key={String(review.id)}>
+                                                <div className="panel-head compact">
+                                                    <div>
+                                                        <strong>{review.userName || '匿名用户'}</strong>
+                                                        <p className="section-subtitle">{review.productName || '订单商品'} · {formatDateTime(review.createTime)}</p>
+                                                    </div>
+                                                    <span className="badge warning">{review.rating || 0}/5</span>
+                                                </div>
+                                                <p className="review-content">{review.content || '用户未填写文字评价。'}</p>
+                                            </article>
+                                        ))}
+                                    </div>
+                                )}
                             </section>
 
                             <section className="panel">
@@ -420,6 +471,45 @@ export default function MerchantConsole() {
                                 </article>
                             ))}
                         </div>
+                    ) : null}
+
+                    {activeTab === 'reviews' ? (
+                        <section className="panel">
+                            <div className="panel-head">
+                                <div>
+                                    <h2 className="section-title">消费者评价</h2>
+                                    <p className="section-subtitle">共 {reviews.length} 条评价，平均 {averageReviewRating.toFixed(1)} 分。</p>
+                                </div>
+                            </div>
+
+                            {reviews.length === 0 ? (
+                                <div className="empty-state">当前还没有消费者评价。</div>
+                            ) : (
+                                <div className="review-list">
+                                    {reviews.map((review) => (
+                                        <article className="review-card" key={String(review.id)}>
+                                            <div className="panel-head compact">
+                                                <div>
+                                                    <strong>{review.userName || '匿名用户'}</strong>
+                                                    <p className="section-subtitle">
+                                                        {review.productName || '订单商品'} · 订单 #{review.orderId} · {formatDateTime(review.createTime)}
+                                                    </p>
+                                                </div>
+                                                <span className="badge warning">{review.rating || 0}/5</span>
+                                            </div>
+                                            <p className="review-content">{review.content || '用户未填写文字评价。'}</p>
+                                            {(review.images || []).length > 0 ? (
+                                                <div className="image-preview-grid">
+                                                    {review.images.map((src) => (
+                                                        <img className="review-preview" key={src} src={src} alt="评价图片" />
+                                                    ))}
+                                                </div>
+                                            ) : null}
+                                        </article>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
                     ) : null}
                 </>
             )}

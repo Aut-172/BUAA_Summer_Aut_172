@@ -292,12 +292,14 @@ CREATE TABLE `review` (
     `product_id` BIGINT DEFAULT NULL,
     `rating` TINYINT NOT NULL DEFAULT 5,
     `content` VARCHAR(500) DEFAULT NULL,
+    `images` TEXT DEFAULT NULL,
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `idx_review_order` (`order_id`),
     KEY `idx_review_user` (`user_id`),
-    KEY `idx_review_merchant` (`merchant_id`)
+    KEY `idx_review_merchant` (`merchant_id`),
+    KEY `idx_review_product` (`product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `message` (

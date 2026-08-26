@@ -16,6 +16,7 @@ import MerchantDetail from './pages/MerchantDetail'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import Orders from './pages/Orders'
+import Review from './pages/Review'
 import Coupons from './pages/Coupons'
 import Profile from './pages/Profile'
 import Delivery from './pages/Delivery'
@@ -134,6 +135,14 @@ function AppLayout() {
                         element={(
                             <ProtectedRoute roles={['consumer']}>
                                 <Orders />
+                            </ProtectedRoute>
+                        )}
+                    />
+                    <Route
+                        path="/reviews/:orderId"
+                        element={(
+                            <ProtectedRoute roles={['consumer']}>
+                                <Review />
                             </ProtectedRoute>
                         )}
                     />

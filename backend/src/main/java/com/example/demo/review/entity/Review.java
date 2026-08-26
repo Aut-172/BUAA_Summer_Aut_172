@@ -19,4 +19,5 @@ public class Review extends BaseEntity {
     private Long productId;
     private Integer rating;      // 评分(1-5)
     private String content;      // 评价内容
+    private String images;       // 评价图片JSON数组
 }
