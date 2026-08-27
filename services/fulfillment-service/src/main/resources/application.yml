@@ -1,0 +1,55 @@
+server:
+  port: ${SERVER_PORT:8085}
+
+spring:
+  application:
+    name: fulfillment-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+    loadbalancer:
+      nacos:
+        enabled: true
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:${DB_URL:jdbc:mysql://127.0.0.1:3306/fulfillment_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:root}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:123456}}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  sql:
+    init:
+      mode: ${SPRING_SQL_INIT_MODE:never}
+      schema-locations: ${SPRING_SQL_INIT_SCHEMA_LOCATIONS:classpath:db/fulfillment-schema.sql}
+      continue-on-error: ${SPRING_SQL_INIT_CONTINUE_ON_ERROR:true}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: ${REDIS_TIMEOUT:3000ms}
+      connect-timeout: ${REDIS_CONNECT_TIMEOUT:3000ms}
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    default-property-inclusion: non_null
+
+mybatis-plus:
+  type-aliases-package: com.example.demo.**.entity
+  global-config:
+    db-config:
+      id-type: ASSIGN_ID
+    banner: false
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+
+jwt:
+  secret: ${JWT_SECRET:LifeAssistant2025SecretKeyForJWTTokenGenerationMustBe256BitsLong}
+  expiration: ${JWT_EXPIRATION:86400000}
+
+app:
+  auth:
+    captcha-enabled: ${APP_AUTH_CAPTCHA_ENABLED:true}
+  upload:
+    root-dir: ${APP_UPLOAD_ROOT_DIR:uploads}

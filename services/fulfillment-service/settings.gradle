@@ -1,0 +1,3 @@
+rootProject.name = 'fulfillment-service'
+
+includeBuild('../common-lib')
