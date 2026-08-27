@@ -15,7 +15,7 @@ const mockSession = {
     },
     notify: vi.fn(),
     role: 'consumer',
-    user: { id: 1, username: 'demo' }
+    user: { id: 1, username: 'student01' }
 }
 
 vi.mock('../utils/ApiProvider', () => ({

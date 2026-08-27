@@ -57,14 +57,16 @@ test.describe('UC01-UC21 业务场景覆盖', () => {
         await page.getByRole('combobox').selectOption('admin')
         await expect(page.getByRole('button', { name: '注册', exact: true })).toBeDisabled()
 
-        for (const [role, path, heading] of [
-            ['consumer', '/', '附近热门商家'],
-            ['merchant', '/merchant-center', '商家工作台'],
-            ['rider', '/rider-center', '骑手工作台'],
-            ['admin', '/admin-center', '管理员工作台']
+        for (const [role, username, password, path, heading] of [
+            ['consumer', 'student01', '123456', '/', '附近热门商家'],
+            ['merchant', 'merchant1', '123456', '/merchant-center', '商家工作台'],
+            ['rider', 'rider01', '123456', '/rider-center', '骑手工作台'],
+            ['admin', 'admin', 'admin123', '/admin-center', '管理员工作台']
         ]) {
             await page.goto('/login')
             await page.getByRole('combobox').selectOption(role)
+            await page.getByLabel(role === 'rider' ? '姓名或手机号' : '用户名').fill(username)
+            await page.getByLabel('密码').fill(password)
             await page.getByPlaceholder('输入图形验证码').fill('abcd')
             await page.getByRole('button', { name: '进入系统' }).click()
             await expect(page).toHaveURL(path)
@@ -85,7 +87,7 @@ test.describe('UC01-UC21 业务场景覆盖', () => {
 
         await page.getByRole('link', { name: '我的' }).click()
         await expect(page.getByRole('heading', { name: '个人资料' })).toBeVisible()
-        await fillFormRow(page, '昵称', '演示用户已更新')
+        await fillFormRow(page, '昵称', '校园用户已更新')
         await fillFormRow(page, '手机号', '13800000002')
         await page.getByRole('button', { name: '保存资料', exact: true }).click()
         await expectToast(page, '个人资料已更新')
@@ -151,11 +153,11 @@ test.describe('UC01-UC21 业务场景覆盖', () => {
         await expectToast(page, '订单已取消')
         await expect(cancelOrder).toContainText('已取消')
 
-        const deliveryOrder = page.locator('article.order-card').filter({ hasText: 'NO20260826003' })
-        await deliveryOrder.getByRole('button', { name: '确认收货' }).click()
+        const inProgressOrder = page.locator('article.order-card').filter({ hasText: 'NO20260826003' })
+        await inProgressOrder.getByRole('button', { name: '确认收货' }).click()
         await expectToast(page, '订单已确认完成')
-        await expect(deliveryOrder).toContainText('已完成')
-        await deliveryOrder.getByRole('link', { name: '评价订单' }).click()
+        await expect(inProgressOrder).toContainText('已完成')
+        await inProgressOrder.getByRole('link', { name: '评价订单' }).click()
         await fillFormRow(page, '评价内容', '很好吃，送达也及时。')
         await page.getByRole('button', { name: '提交图文评价' }).click()
         await expectToast(page, '评价提交成功')

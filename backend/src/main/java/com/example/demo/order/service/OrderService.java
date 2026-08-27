@@ -133,7 +133,8 @@ public class OrderService {
             }
 
             BigDecimal unitPrice = product.getPrice();
-            String specLabel = item.getSpecLabel();
+            String requestedSpecLabel = item.getSpecLabel();
+            String specLabel = normalizeSpecLabel(requestedSpecLabel);
             if (specLabel != null && !specLabel.isBlank()) {
                 ProductSpec spec = productSpecMapper.selectOne(
                         new LambdaQueryWrapper<ProductSpec>()
@@ -142,10 +143,10 @@ public class OrderService {
                                 .last("limit 1")
                 );
                 if (spec == null) {
-                    throw BusinessException.badRequest("商品规格不存在: " + specLabel);
+                    throw BusinessException.badRequest("商品规格不存在: " + requestedSpecLabel);
                 }
                 if (spec.getStock() != null && spec.getStock() < item.getQuantity()) {
-                    throw BusinessException.badRequest("商品规格库存不足: " + specLabel);
+                    throw BusinessException.badRequest("商品规格库存不足: " + requestedSpecLabel);
                 }
                 unitPrice = unitPrice.add(spec.getPrice() != null ? spec.getPrice() : BigDecimal.ZERO);
                 specLabel = spec.getLabel();
@@ -330,6 +331,17 @@ public class OrderService {
             case "待使用" -> STATUS_PENDING_USE;
             default -> status;
         };
+    }
+
+    private String normalizeSpecLabel(String specLabel) {
+        if (specLabel == null) {
+            return null;
+        }
+        String trimmed = specLabel.trim();
+        if (trimmed.isBlank()) {
+            return null;
+        }
+        return trimmed.replaceFirst("\\s*\\(\\+\\s*(?:￥|¥)?\\s*\\d+(?:\\.\\d+)?\\)\\s*$", "").trim();
     }
 
     private boolean isOrderParticipant(Orders order, Long participantId, String participantType) {

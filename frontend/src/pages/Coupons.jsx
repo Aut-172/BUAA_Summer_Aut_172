@@ -48,7 +48,7 @@ export default function Coupons() {
             <div className="panel-head">
                 <div>
                     <h1 className="section-title">优惠券中心</h1>
-                    <p className="section-subtitle">领取接口和我的优惠券列表都已经接通后端，不再保留前端假券包。</p>
+                    <p className="section-subtitle">领取可用优惠券，并查看当前账号的券包状态。</p>
                 </div>
             </div>
 
@@ -60,7 +60,7 @@ export default function Coupons() {
                         <div className="panel-head">
                             <div>
                                 <h2 className="section-title">可领取</h2>
-                                <p className="section-subtitle">来源：`GET /api/coupons/available`</p>
+                                <p className="section-subtitle">当前可用于后续下单的优惠活动。</p>
                             </div>
                         </div>
 
@@ -94,7 +94,7 @@ export default function Coupons() {
                         <div className="panel-head">
                             <div>
                                 <h2 className="section-title">我的优惠券</h2>
-                                <p className="section-subtitle">来源：`GET /api/coupons`</p>
+                                <p className="section-subtitle">已领取优惠券会在结算时自动参与筛选。</p>
                             </div>
                         </div>
 

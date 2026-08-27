@@ -32,7 +32,7 @@ vi.mock('../utils/ApiProvider', () => ({
 describe('AdminConsole page', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        mockSession.api.admin.getUsers.mockResolvedValue({ total: 1, items: [{ id: 1, username: 'demo', nickname: '演示用户', phone: '13800000001', status: 'active' }] })
+        mockSession.api.admin.getUsers.mockResolvedValue({ total: 1, items: [{ id: 1, username: 'student01', nickname: '校园用户', phone: '13800000001', status: 'active' }] })
         mockSession.api.admin.getMerchants.mockResolvedValue({ total: 1, items: [{ id: 10, name: '桂香米粉', category: '快餐', status: 'pending' }] })
         mockSession.api.admin.getRiders.mockResolvedValue({ total: 1, items: [{ id: 20, name: '一号骑手', phone: '13800000021', status: 'pending' }] })
         mockSession.api.admin.getOrders.mockResolvedValue({ total: 1, items: [{ id: 900, orderNo: 'NO20260826001', userId: 1, merchantId: 10, status: 'completed', actualAmount: 38, createTime: '2026-08-26 12:00:00' }] })
@@ -44,7 +44,7 @@ describe('AdminConsole page', () => {
     it('loads platform management totals and user table', async () => {
         renderWithRouter(<AdminConsole />)
 
-        expect(await screen.findByText('演示用户')).toBeInTheDocument()
+        expect(await screen.findByText('校园用户')).toBeInTheDocument()
         expect(mockSession.api.admin.getUsers).toHaveBeenCalledWith({ page: 1, pageSize: 20 })
         expect(screen.getByText('消费者')).toBeInTheDocument()
         expect(screen.getByRole('button', { name: '订单' })).toBeInTheDocument()
@@ -54,7 +54,7 @@ describe('AdminConsole page', () => {
         const user = userEvent.setup()
         renderWithRouter(<AdminConsole />)
 
-        await screen.findByText('演示用户')
+        await screen.findByText('校园用户')
         await user.click(screen.getByRole('button', { name: '冻结' }))
 
         await waitFor(() => {
@@ -68,7 +68,7 @@ describe('AdminConsole page', () => {
         const user = userEvent.setup()
         renderWithRouter(<AdminConsole />)
 
-        await screen.findByText('演示用户')
+        await screen.findByText('校园用户')
         await user.click(screen.getByRole('button', { name: '商家' }))
         await user.click(screen.getByRole('button', { name: '通过审核' }))
 
@@ -82,7 +82,7 @@ describe('AdminConsole page', () => {
         const user = userEvent.setup()
         renderWithRouter(<AdminConsole />)
 
-        await screen.findByText('演示用户')
+        await screen.findByText('校园用户')
         await user.click(screen.getByRole('button', { name: '订单' }))
 
         expect(screen.getByText('NO20260826001')).toBeInTheDocument()

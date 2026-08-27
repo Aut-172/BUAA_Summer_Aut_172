@@ -122,7 +122,7 @@ export default function Checkout() {
             <div className="panel-head">
                 <div>
                     <h1 className="section-title">结算</h1>
-                    <p className="section-subtitle">这里直接串起 `/api/checkout` 和 `/api/orders/{'{id}'}/pay`，确保支付流程真实可用。</p>
+                    <p className="section-subtitle">确认商品、收货地址、优惠券和支付方式。</p>
                 </div>
                 <Link className="btn ghost small" to="/cart">返回购物车</Link>
             </div>
@@ -216,7 +216,7 @@ export default function Checkout() {
                             <div className="panel-head">
                                 <div>
                                     <h2 className="section-title">优惠与支付</h2>
-                                    <p className="section-subtitle">优惠券列表来自 `/api/coupons`，支付方式发送到支付接口。</p>
+                                    <p className="section-subtitle">选择可用优惠券，并确认本次订单的支付方式。</p>
                                 </div>
                             </div>
 
@@ -259,7 +259,7 @@ export default function Checkout() {
                         <div className="summary-line"><span>预计优惠</span><strong>{formatMoney(estimatedDiscount)}</strong></div>
                         <div className="summary-total"><span>预计应付</span><strong>{formatMoney(estimatedTotal)}</strong></div>
                         <p className="helper">
-                            最终金额以后端结算结果为准。提交后会立即调用支付接口。
+                            最终金额以实际结算结果为准，提交后将进入支付流程。
                         </p>
                         <button className="btn primary" type="submit" disabled={submitting}>
                             {submitting ? '提交并支付中...' : '确认下单并支付'}

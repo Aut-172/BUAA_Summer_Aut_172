@@ -187,7 +187,7 @@ export default function AdminConsole() {
             <div className="panel-head">
                 <div>
                     <h1 className="section-title">管理员工作台</h1>
-                    <p className="section-subtitle">当前聚焦列表、审核、冻结与订单查看等后端已稳定支持的接口。</p>
+                    <p className="section-subtitle">集中处理用户、商家、骑手审核和平台订单查看。</p>
                 </div>
             </div>
 

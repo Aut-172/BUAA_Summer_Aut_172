@@ -168,7 +168,7 @@ export default function Search() {
                 {loading ? (
                     <div className="panel empty-state">正在加载商家...</div>
                 ) : primaryList.length === 0 ? (
-                    <div className="panel empty-state">没有找到符合条件的 active 商家。</div>
+                    <div className="panel empty-state">没有找到符合条件的营业中商家。</div>
                 ) : (
                     <div className="merchant-grid">
                         {primaryList.map((merchant) => (
@@ -184,7 +184,7 @@ export default function Search() {
                         <div>
                             <h2 className="section-title">{hasQuery ? '也可以看看' : '全部可搜索商家'}</h2>
                             <p className="section-subtitle">
-                                {hasQuery ? '推荐接口返回的其他 active 商家' : '搜索接口返回的 active 商家全集'}
+                                {hasQuery ? '根据当前搜索条件补充推荐的其他商家' : '当前可浏览的营业中商家'}
                             </p>
                         </div>
                     </div>

@@ -6,7 +6,7 @@ import { formatMoney, normalizeTags } from '../utils/format'
 const FLOW_STEPS = [
     { title: '挑选喜欢的店铺', detail: '按分类和关键词快速找到想吃的商家。' },
     { title: '下单并完成支付', detail: '把商品加入购物车，确认地址后即可结算。' },
-    { title: '等待配送送达', detail: '下单后可以随时查看订单进度和配送状态。' }
+    { title: '等待配送送达', detail: '下单后可以在订单页查看状态并确认完成。' }
 ]
 
 export default function Home() {
@@ -78,11 +78,11 @@ export default function Home() {
         <section className="page">
             <div className="hero hero-enhanced">
                 <div className="hero-card hero-primary panel">
-                    <p className="eyebrow">Campus Delivery</p>
+                    <p className="eyebrow">Campus Service</p>
                     <h1 className="hero-title">想吃什么，几分钟内就能从附近店铺下单到送达。</h1>
                     <p className="hero-copy">
                         从早餐、简餐到夜宵，都可以在这里快速找到合适的商家。
-                        收藏口味、填写地址、完成支付后，就能在订单页随时查看配送进度。
+                        收藏口味、填写地址、完成支付后，就能在订单页查看后续状态。
                     </p>
                     <div className="hero-actions">
                         <Link className="btn primary" to={isAuthenticated ? landingTarget : '/login'}>
@@ -108,12 +108,12 @@ export default function Home() {
                         <p className="eyebrow">今日推荐</p>
                         <h2 className="section-title">午饭、晚饭还是夜宵，都能在这里快速找到合适的选择。</h2>
                         <p className="section-subtitle">
-                            先按分类缩小范围，再打开店铺详情看商品和价格。下单后，订单状态和配送信息都会在同一处更新。
+                            先按分类缩小范围，再打开店铺详情看商品和价格。下单后，订单状态会在订单页持续更新。
                         </p>
                         <div className="spotlight-tags">
                             <span className="mini-chip">快速下单</span>
                             <span className="mini-chip">多角色协同</span>
-                            <span className="mini-chip">配送可追踪</span>
+                            <span className="mini-chip">订单可管理</span>
                         </div>
                     </div>
 

@@ -796,8 +796,7 @@ textarea {
 }
 
 .select-card,
-.cart-item-card,
-.demo-card {
+.cart-item-card {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -805,8 +804,7 @@ textarea {
   padding: 14px;
 }
 
-.select-card.active,
-.demo-card.active {
+.select-card.active {
   border-color: rgba(var(--primary-rgb), 0.6);
   box-shadow: 0 10px 26px rgba(182, 127, 0, 0.14);
 }
@@ -1023,23 +1021,6 @@ textarea {
   margin-top: 8px;
 }
 
-.demo-card {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  text-align: left;
-  cursor: pointer;
-}
-
-.demo-card strong {
-  font-size: 1rem;
-}
-
-.demo-card small {
-  color: var(--muted);
-  line-height: 1.5;
-}
-
 .auth-shell {
   display: grid;
   grid-template-columns: minmax(280px, 0.86fr) minmax(460px, 1.14fr);
@@ -1085,20 +1066,6 @@ textarea {
 .auth-feature span {
   color: var(--muted);
   line-height: 1.6;
-}
-
-.demo-block {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-top: 6px;
-  border-top: 1px solid var(--line);
-}
-
-.demo-block .stack {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
 }
 
 .compact {
@@ -1469,8 +1436,7 @@ textarea {
     flex-direction: column;
   }
 
-  .hero-points,
-  .demo-block .stack {
+  .hero-points {
     grid-template-columns: 1fr;
   }
 

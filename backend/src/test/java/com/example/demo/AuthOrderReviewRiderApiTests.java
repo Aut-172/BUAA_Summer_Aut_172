@@ -229,6 +229,43 @@ class AuthOrderReviewRiderApiTests extends BackendIntegrationTestSupport {
     }
 
     @Test
+    void checkoutApiAcceptsDisplaySpecLabelAndStoresCanonicalSpec() throws Exception {
+        String consumerToken = login("/api/auth/login", "demo", "123456");
+
+        String checkoutBody = mockMvc.perform(post("/api/checkout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "merchantId": 20001,
+                                  "address": "Dormitory",
+                                  "items": [
+                                    {
+                                      "productId": 30001,
+                                      "quantity": 1,
+                                      "specLabel": "Large(+3)"
+                                    }
+                                  ]
+                                }
+                                """)
+                        .header("Authorization", bearer(consumerToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.items[0].specLabel").value("Large"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        long orderId = readBody(checkoutBody).path("data").path("id").asLong();
+        OrderItem savedItem = orderItemMapper.selectOne(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<OrderItem>()
+                        .eq(OrderItem::getOrderId, orderId)
+        );
+        assertNotNull(savedItem);
+        assertEquals("Large", savedItem.getSpecLabel());
+        assertEquals(new BigDecimal("25.00"), savedItem.getPrice());
+    }
+
+    @Test
     void reviewApiRejectsIncompleteInvalidAndDuplicateReviews() throws Exception {
         String consumerToken = login("/api/auth/login", "demo", "123456");
 

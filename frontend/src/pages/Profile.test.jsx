@@ -30,8 +30,8 @@ vi.mock('../utils/ApiProvider', () => ({
 }))
 
 const profile = {
-    username: 'demo',
-    nickname: '演示用户',
+    username: 'student01',
+    nickname: '校园用户',
     phone: '13800000001',
     avatar: 'https://example.com/avatar.png'
 }
@@ -70,7 +70,7 @@ describe('Profile page', () => {
         renderWithRouter(<Profile />)
 
         expect(await screen.findByRole('heading', { name: '个人资料' })).toBeInTheDocument()
-        expect(screen.getByDisplayValue('演示用户')).toBeInTheDocument()
+        expect(screen.getByDisplayValue('校园用户')).toBeInTheDocument()
         expect(screen.getByText('测试用户 13800000001 宿舍 3 号楼 302 室')).toBeInTheDocument()
         expect(screen.getByRole('heading', { name: '桂香米粉' })).toBeInTheDocument()
     })

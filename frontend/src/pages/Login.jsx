@@ -9,13 +9,6 @@ const ROLE_OPTIONS = [
     { value: 'admin', label: '管理员', canRegister: false, loginHint: '管理员账号仅支持登录。' }
 ]
 
-const DEMO_ACCOUNTS = {
-    consumer: { username: 'demo', phone: '13800000001', password: '123456', nickname: '演示用户', note: '适合体验找店、下单、支付和收货流程。' },
-    merchant: { username: 'merchant1', phone: '13800000011', password: '123456', nickname: '校园食堂', note: '适合体验商品管理和订单处理。' },
-    rider: { username: 'rider01', phone: '13800000021', password: '123456', nickname: '一号骑手', note: '适合体验配送任务和接单流程。' },
-    admin: { username: 'gl1', password: 'gl1gl1gl1', nickname: '管理员', note: '适合体验平台侧查询和管理。' }
-}
-
 function getRedirectByRole(role) {
     if (role === 'merchant') {
         return '/merchant-center'
@@ -36,10 +29,10 @@ export default function Login() {
     const [mode, setMode] = useState('login')
     const [role, setRole] = useState('consumer')
     const [form, setForm] = useState({
-        username: DEMO_ACCOUNTS.consumer.username,
-        phone: DEMO_ACCOUNTS.consumer.phone,
-        password: DEMO_ACCOUNTS.consumer.password,
-        nickname: DEMO_ACCOUNTS.consumer.nickname,
+        username: '',
+        phone: '',
+        password: '',
+        nickname: '',
         captchaCode: ''
     })
     const [captcha, setCaptcha] = useState({ key: '', image: '', loading: false })
@@ -70,19 +63,6 @@ export default function Login() {
         refreshCaptcha()
     }, [mode, role])
 
-    function applyDemo(nextRole) {
-        const demo = DEMO_ACCOUNTS[nextRole]
-        setRole(nextRole)
-        setMode('login')
-        setForm({
-            username: demo.username || '',
-            phone: demo.phone || '',
-            password: demo.password || '',
-            nickname: demo.nickname || '',
-            captchaCode: ''
-        })
-    }
-
     function handleRoleChange(nextRole) {
         setRole(nextRole)
 
@@ -90,13 +70,8 @@ export default function Login() {
             setMode('login')
         }
 
-        const demo = DEMO_ACCOUNTS[nextRole]
         setForm((current) => ({
             ...current,
-            username: demo?.username || current.username,
-            phone: demo?.phone || current.phone,
-            password: demo?.password || current.password,
-            nickname: demo?.nickname || current.nickname,
             captchaCode: ''
         }))
     }
@@ -163,7 +138,7 @@ export default function Login() {
                     <h1 className="section-title">登录账号，继续点餐、管理店铺，或者处理配送任务。</h1>
                     <p className="section-subtitle">
                         选择你的身份后即可进入对应页面。
-                        如果你是第一次使用，也可以先注册一个新账号再开始体验。
+                        如果你是第一次使用，也可以先注册一个新账号。
                     </p>
 
                     <div className="auth-feature-list">
@@ -177,7 +152,7 @@ export default function Login() {
                         </div>
                         <div className="auth-feature">
                             <strong>新用户友好</strong>
-                            <span>支持直接注册，也保留了现成账号方便你快速体验。</span>
+                            <span>支持消费者、商家和骑手在线提交注册信息。</span>
                         </div>
                     </div>
                 </div>
@@ -292,31 +267,6 @@ export default function Login() {
                         </button>
                     </form>
 
-                    <div className="demo-block">
-                        <div className="panel-head compact">
-                            <div>
-                                <h3 className="section-title">快捷体验账号</h3>
-                                <p className="section-subtitle">如果你想先看看页面流程，可以直接填充下面的现成账号。</p>
-                            </div>
-                        </div>
-                        <div className="stack">
-                            {ROLE_OPTIONS.map((item) => {
-                                const account = DEMO_ACCOUNTS[item.value]
-                                return (
-                                    <button
-                                        key={item.value}
-                                        className={`demo-card ${role === item.value ? 'active' : ''}`}
-                                        type="button"
-                                        onClick={() => applyDemo(item.value)}
-                                    >
-                                        <strong>{item.label}</strong>
-                                        <span>{account?.username} / {account?.password}</span>
-                                        <small>{account?.note}</small>
-                                    </button>
-                                )
-                            })}
-                        </div>
-                    </div>
                 </div>
             </div>
         </section>

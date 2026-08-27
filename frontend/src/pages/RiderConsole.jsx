@@ -211,7 +211,7 @@ export default function RiderConsole() {
                             <div className="panel-head">
                                 <div>
                                     <h2 className="section-title">骑手资料</h2>
-                                    <p className="section-subtitle">后端当前支持昵称、手机号和服务范围。</p>
+                                    <p className="section-subtitle">维护昵称、手机号和服务范围。</p>
                                 </div>
                             </div>
 
@@ -236,7 +236,7 @@ export default function RiderConsole() {
                     </div>
 
                     <div className="stack">
-                        {renderTaskList('可接订单', '来源：`available` 列表', tasks?.available, '立即接单', '待取餐')}
+                        {renderTaskList('可接订单', '等待骑手接单的订单', tasks?.available, '立即接单', '待取餐')}
                         {renderTaskList('配送中订单', '接单后会进入这里', tasks?.assigned, '完成配送', '已完成')}
                         {renderTaskList('已完成订单', '仅做只读展示', tasks?.completed, null, null)}
                     </div>

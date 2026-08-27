@@ -348,12 +348,6 @@ const api = {
             return request({
                 url: `/payments/${id}`
             })
-        },
-
-        getDelivery(id) {
-            return request({
-                url: `/delivery/${id}`
-            })
         }
     },
 

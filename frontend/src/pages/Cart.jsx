@@ -65,7 +65,7 @@ export default function Cart() {
             <div className="panel-head">
                 <div>
                     <h1 className="section-title">购物车</h1>
-                    <p className="section-subtitle">购物车数据来自 `/api/user/cart`。如果存在多个商家，会拆成多个结算入口。</p>
+                    <p className="section-subtitle">按商家整理已选商品，确认后即可进入结算。</p>
                 </div>
                 <button className="btn ghost small" type="button" onClick={clearCart} disabled={items.length === 0}>
                     清空购物车

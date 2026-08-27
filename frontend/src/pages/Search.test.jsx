@@ -79,10 +79,10 @@ describe('Search page', () => {
         })
     })
 
-    it('shows an empty state when no active merchant matches the query', async () => {
+    it('shows an empty state when no open merchant matches the query', async () => {
         mockSession.api.public.search.mockResolvedValue([])
         renderWithRouter(<Search />, { route: '/search?keyword=不存在' })
 
-        expect(await screen.findByText('没有找到符合条件的 active 商家。')).toBeInTheDocument()
+        expect(await screen.findByText('没有找到符合条件的营业中商家。')).toBeInTheDocument()
     })
 })

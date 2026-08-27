@@ -272,7 +272,7 @@ export default function MerchantConsole() {
             <div className="panel-head">
                 <div>
                     <h1 className="section-title">商家工作台</h1>
-                    <p className="section-subtitle">只保留当前后端真正支持的概览、资料、商品和订单能力。</p>
+                    <p className="section-subtitle">查看经营概览，维护店铺资料、商品和订单。</p>
                 </div>
             </div>
 
@@ -348,7 +348,7 @@ export default function MerchantConsole() {
                                 <div className="panel-head">
                                     <div>
                                         <h2 className="section-title">商家资料</h2>
-                                        <p className="section-subtitle">直接调用 `/api/merchant/profile` 更新。</p>
+                                        <p className="section-subtitle">维护店铺基础信息、配送设置和营业介绍。</p>
                                     </div>
                                 </div>
 
@@ -424,7 +424,7 @@ export default function MerchantConsole() {
                                 <div className="panel-head">
                                     <div>
                                         <h2 className="section-title">{productForm.id ? '编辑商品' : '新增商品'}</h2>
-                                        <p className="section-subtitle">商品表单只包含当前后端真正持久化的字段。</p>
+                                        <p className="section-subtitle">维护商品名称、分类、价格、库存、图片和状态。</p>
                                     </div>
                                     {productForm.id ? <button className="btn ghost small" type="button" onClick={resetProductForm}>取消编辑</button> : null}
                                 </div>
@@ -492,7 +492,7 @@ export default function MerchantConsole() {
                                 <div className="panel-head">
                                     <div>
                                         <h2 className="section-title">当前商品</h2>
-                                        <p className="section-subtitle">支持编辑和删除。规格组相关的复杂管理入口暂不保留，避免前端能力超出后端链路。</p>
+                                        <p className="section-subtitle">查看已上架商品，并按需要编辑或删除。</p>
                                     </div>
                                 </div>
 

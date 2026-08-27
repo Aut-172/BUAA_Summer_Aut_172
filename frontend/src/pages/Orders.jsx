@@ -126,7 +126,7 @@ export default function Orders() {
             <div className="panel-head">
                 <div>
                     <h1 className="section-title">我的订单</h1>
-                    <p className="section-subtitle">这里会直接调用订单支付、取消、完成、配送详情和支付记录接口。</p>
+                    <p className="section-subtitle">管理订单支付、取消、确认完成和支付记录。</p>
                 </div>
             </div>
 
@@ -260,7 +260,6 @@ export default function Orders() {
                                         </Link>
                                     ) : null}
 
-                                    <Link className="btn ghost small" to={`/delivery/${orderKey}`}>查看配送</Link>
                                     <button className="btn ghost small" type="button" onClick={() => togglePayments(order.id)}>
                                         {payments ? '收起支付记录' : '查看支付记录'}
                                     </button>

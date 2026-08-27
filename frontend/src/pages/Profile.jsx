@@ -162,7 +162,7 @@ export default function Profile() {
                             <div className="panel-head">
                                 <div>
                                     <h1 className="section-title">个人资料</h1>
-                                    <p className="section-subtitle">这里仅保留后端 `profile` 和 `addresses` 已支持的编辑能力。</p>
+                                    <p className="section-subtitle">维护个人基础信息和常用收货地址。</p>
                                 </div>
                             </div>
 

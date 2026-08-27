@@ -134,6 +134,30 @@ describe('MerchantDetail page', () => {
         expect(mockSession.notify).toHaveBeenCalledWith('牛肉米粉 已加入购物车', 'success')
     })
 
+    it('submits the canonical spec label when the option name includes price text', async () => {
+        const user = userEvent.setup()
+        const merchantWithDisplaySpec = JSON.parse(JSON.stringify(merchant))
+        merchantWithDisplaySpec.categoryList[0].products[0].specGroups[0].specs = [
+            { id: 1, name: 'Large(+3)', extraPrice: 3 },
+            { id: 2, name: 'Standard', extraPrice: 0 }
+        ]
+        mockSession.api.public.getMerchant.mockResolvedValue(merchantWithDisplaySpec)
+        renderMerchantDetail()
+
+        await screen.findByText('牛肉米粉')
+        await user.selectOptions(screen.getByLabelText('可选规格'), 'Large')
+        await user.click(screen.getByRole('button', { name: '加入购物车' }))
+
+        await waitFor(() => {
+            expect(mockSession.api.user.addCart).toHaveBeenCalledWith({
+                merchantId: 10,
+                productId: 101,
+                quantity: 1,
+                specLabel: 'Large'
+            })
+        })
+    })
+
     it('favorites the merchant for an authenticated consumer', async () => {
         const user = userEvent.setup()
         renderMerchantDetail()

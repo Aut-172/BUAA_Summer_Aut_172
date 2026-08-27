@@ -59,13 +59,32 @@ export default function MerchantDetail() {
         return product.specGroups?.[0]?.specs || []
     }
 
+    function normalizeSpecLabel(label) {
+        return String(label || '').replace(/\s*\(\+\s*[￥¥]?\s*\d+(?:\.\d+)?\)\s*$/, '').trim()
+    }
+
+    function getSpecValue(option) {
+        return normalizeSpecLabel(option?.label || option?.name)
+    }
+
+    function getSpecDisplayName(option) {
+        const label = getSpecValue(option)
+        const extraPrice = Number(option?.extraPrice || 0)
+
+        if (extraPrice > 0) {
+            return `${label} (+${formatMoney(extraPrice).replace('￥', '')})`
+        }
+
+        return label
+    }
+
     function resolveSpecLabel(product) {
         const options = getSingleSpecOptions(product)
         if (options.length === 0) {
             return null
         }
 
-        return selectedSpecs[product.id] || options[0]?.name || null
+        return selectedSpecs[product.id] || getSpecValue(options[0]) || null
     }
 
     async function handleAddToCart(product) {
@@ -190,7 +209,7 @@ export default function MerchantDetail() {
                         <div className="panel-head">
                             <div>
                                 <h2 className="section-title">{category.name}</h2>
-                                <p className="section-subtitle">这里只展示后端真实返回的商品字段，不再拼接前端假数据。</p>
+                                <p className="section-subtitle">选择商品和规格后即可加入购物车。</p>
                             </div>
                         </div>
 
@@ -223,16 +242,15 @@ export default function MerchantDetail() {
                                                     <span>可选规格</span>
                                                     <select
                                                         className="select"
-                                                        value={selectedSpecs[product.id] || oneGroupOptions[0]?.name || ''}
+                                                        value={selectedSpecs[product.id] || getSpecValue(oneGroupOptions[0]) || ''}
                                                         onChange={(event) => setSelectedSpecs((current) => ({
                                                             ...current,
                                                             [product.id]: event.target.value
                                                         }))}
                                                     >
                                                         {oneGroupOptions.map((option) => (
-                                                            <option key={option.id} value={option.name}>
-                                                                {option.name}
-                                                                {option.extraPrice ? ` (+${formatMoney(option.extraPrice).replace('￥', '')})` : ''}
+                                                            <option key={option.id} value={getSpecValue(option)}>
+                                                                {getSpecDisplayName(option)}
                                                             </option>
                                                         ))}
                                                     </select>
@@ -241,7 +259,7 @@ export default function MerchantDetail() {
 
                                             {hasComplexSpecs ? (
                                                 <p className="helper">
-                                                    该商品存在多组规格，当前后端仅接收单个 `specLabel`，为保证链路稳定，此页面按基础款加入购物车。
+                                                    该商品存在多组规格，当前按基础款加入购物车。
                                                 </p>
                                             ) : null}
 

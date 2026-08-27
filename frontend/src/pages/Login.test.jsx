@@ -61,13 +61,15 @@ describe('Login page', () => {
         renderLogin()
 
         await screen.findByAltText('验证码')
+        await user.type(screen.getByLabelText('用户名'), 'student01')
+        await user.type(screen.getByLabelText('密码'), '123456')
         await user.type(screen.getByPlaceholderText('输入图形验证码'), 'abcd')
         await user.click(screen.getByRole('button', { name: '进入系统' }))
 
         await waitFor(() => {
             expect(mockSession.login).toHaveBeenCalledWith({
                 role: 'consumer',
-                username: 'demo',
+                username: 'student01',
                 password: '123456',
                 captchaKey: 'captcha-key',
                 captchaCode: 'abcd'

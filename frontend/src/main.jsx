@@ -21,7 +21,6 @@ import MessageOrderDetail from './pages/MessageOrderDetail'
 import Review from './pages/Review'
 import Coupons from './pages/Coupons'
 import Profile from './pages/Profile'
-import Delivery from './pages/Delivery'
 import MerchantConsole from './pages/MerchantConsole'
 import RiderConsole from './pages/RiderConsole'
 import AdminConsole from './pages/AdminConsole'
@@ -178,14 +177,6 @@ function AppLayout() {
                         element={(
                             <ProtectedRoute roles={['consumer']}>
                                 <Profile />
-                            </ProtectedRoute>
-                        )}
-                    />
-                    <Route
-                        path="/delivery/:orderId"
-                        element={(
-                            <ProtectedRoute roles={['consumer']}>
-                                <Delivery />
                             </ProtectedRoute>
                         )}
                     />

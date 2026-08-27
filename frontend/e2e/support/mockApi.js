@@ -171,8 +171,8 @@ function createBusinessState() {
         },
         consumerProfile: {
             id: 1,
-            username: 'demo',
-            nickname: '演示用户',
+            username: 'student01',
+            nickname: '校园用户',
             phone: '13800000001',
             avatar: image,
             status: 'active',
@@ -186,7 +186,7 @@ function createBusinessState() {
             status: 'active'
         },
         addresses: [
-            { id: 501, name: '演示用户', phone: '13800000001', detail: '宿舍 3 号楼 302 室', isDefault: true }
+            { id: 501, name: '校园用户', phone: '13800000001', detail: '宿舍 3 号楼 302 室', isDefault: true }
         ],
         favoriteMerchants: [],
         cart: [],
@@ -212,7 +212,7 @@ function createBusinessState() {
             { id: 701, senderId: 10, senderType: 'merchant', content: '订单马上出餐', createTime: nowText(), orderId: 900 }
         ],
         adminUsers: [
-            { id: 1, username: 'demo', nickname: '演示用户', phone: '13800000001', status: 'active' }
+            { id: 1, username: 'student01', nickname: '校园用户', phone: '13800000001', status: 'active' }
         ],
         adminMerchants: [
             { id: 10, name: '桂香米粉', category: '快餐', status: 'pending' }
@@ -521,22 +521,6 @@ export async function installBusinessScenarioMock(page) {
             const id = Number(path.split('/')[2])
             return fulfillJson(route, ok(state.payments[id] || []))
         }
-        if (/^\/delivery\/\d+$/.test(path)) {
-            const id = Number(path.split('/').at(-1))
-            const order = state.orders.find((item) => item.id === id)
-            return fulfillJson(route, ok(order ? {
-                orderId: id,
-                status: order.status,
-                riderName: order.riderName,
-                riderPhone: order.riderPhone,
-                eta: order.status === 'completed' ? '已送达' : '预计 20 分钟送达',
-                timeline: [
-                    { label: '已下单', time: nowText() },
-                    { label: order.status === 'completed' ? '已完成' : '配送中', time: nowText() }
-                ]
-            } : null))
-        }
-
         if (path === '/reviews' && method === 'POST') {
             const order = state.orders.find((item) => Number(item.id) === Number(payload.orderId))
             ;(payload.items || []).forEach((item) => {
@@ -694,8 +678,17 @@ export async function installBusinessScenarioMock(page) {
 }
 
 export async function loginAs(page, role = 'consumer') {
+    const credentials = {
+        consumer: { username: 'student01', password: '123456' },
+        merchant: { username: 'merchant1', password: '123456' },
+        rider: { username: 'rider01', password: '123456' },
+        admin: { username: 'admin', password: 'admin123' }
+    }
+
     await page.goto('/login')
     await page.getByRole('combobox').selectOption(role)
+    await page.getByLabel(role === 'rider' ? '姓名或手机号' : '用户名').fill(credentials[role]?.username || credentials.consumer.username)
+    await page.getByLabel('密码').fill(credentials[role]?.password || credentials.consumer.password)
     await page.getByPlaceholder('输入图形验证码').fill('abcd')
     await page.getByRole('button', { name: '进入系统' }).click()
 }
@@ -730,8 +723,8 @@ export async function mockLoginApi(page) {
         accessToken: 'consumer-token',
         user: {
             id: 1,
-            username: 'demo',
-            nickname: '演示用户',
+            username: 'student01',
+            nickname: '校园用户',
             phone: '13800000001',
             role: 'consumer'
         }
