@@ -17,10 +17,25 @@ repositories {
     mavenCentral()
 }
 
+ext {
+    set('springCloudVersion', '2024.0.1')
+    set('springCloudAlibabaVersion', '2023.0.3.3')
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        mavenBom "com.alibaba.cloud:spring-cloud-alibaba-dependencies:${springCloudAlibabaVersion}"
+    }
+}
+
 dependencies {
     implementation 'com.example:microservice-common:0.1.0-SNAPSHOT'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
+    implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery'
     implementation 'com.baomidou:mybatis-plus-spring-boot3-starter:3.5.7'
     implementation 'cn.hutool:hutool-all:5.8.28'
     runtimeOnly 'com.mysql:mysql-connector-j'

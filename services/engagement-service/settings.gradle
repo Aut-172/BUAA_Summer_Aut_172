@@ -1,0 +1,3 @@
+rootProject.name = 'engagement-service'
+
+includeBuild('../common-lib')

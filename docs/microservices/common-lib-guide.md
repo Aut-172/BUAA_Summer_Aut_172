@@ -31,7 +31,14 @@ implementation 'com.example:microservice-common:0.1.0-SNAPSHOT'
 | `com.example.demo.common.BaseEntity` | MyBatis-Plus 基础实体字段 |
 | `com.example.demo.common.MyBatisPlusConfig` | MyBatis-Plus 分页插件 |
 | `com.example.demo.common.MyMetaObjectHandler` | `createTime/updateTime` 自动填充 |
+| `com.example.demo.common.JwtUtil` | JWT 签发和解析工具 |
+| `com.example.demo.common.JwtAuthInterceptor` | 基于 JWT 的 API 访问拦截 |
+| `com.example.demo.common.WebMvcConfig` | 注册认证拦截器和静态资源映射 |
+| `com.example.demo.common.CorsConfig` | 统一跨域配置 |
+| `com.example.demo.common.LogAspect` | 统一请求日志切面 |
 | `com.example.demo.common.controller.HealthController` | 每个服务统一 `/api/health` |
+| `com.example.demo.common.controller.CaptchaController` | 需要验证码的认证服务复用 `/api/captcha` |
+| `com.example.demo.common.service.CaptchaService` | 验证码生成、校验和 Redis/内存降级存储 |
 | `com.example.demo.config.JacksonConfig` | Long ID 序列化为字符串 |
 | `com.example.demo.common.contract.ServiceNames` | Nacos/OpenFeign/Gateway 使用的服务名常量 |
 | `com.example.demo.common.contract.InternalHeaders` | 内部调用请求头常量 |
@@ -69,7 +76,13 @@ LoadBalancer
 | OpenFeign | 服务间 HTTP 调用 |
 | LoadBalancer | OpenFeign 根据 Nacos 服务实例做客户端负载均衡 |
 
-当前阶段只建立公共包和 `merchant-service` 小闭环，暂不强制引入 Nacos/Gateway/OpenFeign。等第二个业务服务开始调用 `merchant-service` 时，再添加 OpenFeign 和 LoadBalancer；等前端需要统一入口时，再添加 Gateway；本地和 CI 环境需要动态发现时，再接 Nacos。
+当前微服务项目统一按 `Gateway + Nacos + OpenFeign + LoadBalancer` 路线推进：
+
+1. 业务服务启动类启用 `@EnableDiscoveryClient`，并注册到 Nacos。
+2. 服务间调用统一使用 `@FeignClient(name = ServiceNames.XXX_SERVICE)`。
+3. OpenFeign 通过 Spring Cloud LoadBalancer 从 Nacos 实例列表中选择目标实例。
+4. 前端请求统一进入 Gateway，再由 Gateway 按服务名路由到业务服务。
+5. 不再使用固定 `localhost:端口` 做服务间调用。
 
 ## 5. 跨服务调用约定
 
