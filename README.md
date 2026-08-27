@@ -58,10 +58,14 @@ life-service/
 ```powershell
 copy .env.example .env
 $env:COMPOSE_PARALLEL_LIMIT=1
+docker compose up -d mysql redis nacos
+docker compose run --rm db-init
 docker compose up --build
 ```
 
 首次构建会优先使用根目录下与 Gradle wrapper 版本匹配的 `gradle-*-bin.zip`，未找到时才回退到 wrapper 原始网络地址。`COMPOSE_PARALLEL_LIMIT=1` 用于避免 Windows Docker Desktop 在多个服务并发解压 Gradle 发行包时出现 I/O 错误。
+
+`db-init` 会把完整初始化脚本转换为非破坏性执行：补齐缺失的 database/table/初始化数据，但不会 drop 已有表。已有旧 MySQL 卷缺少 `engagement_db` 时，单独执行 `docker compose run --rm db-init` 即可修复。
 
 启动后访问：
 

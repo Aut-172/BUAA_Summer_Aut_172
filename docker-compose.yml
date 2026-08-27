@@ -1,5 +1,6 @@
 x-business-service-env: &business-service-env
   NACOS_SERVER_ADDR: nacos:8848
+  NACOS_DISCOVERY_FAIL_FAST: ${NACOS_DISCOVERY_FAIL_FAST:-false}
   SPRING_DATASOURCE_USERNAME: root
   SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
   SPRING_SQL_INIT_MODE: never
@@ -34,6 +35,21 @@ services:
       retries: 10
       start_period: 30s
 
+  db-init:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      TZ: Asia/Shanghai
+    volumes:
+      - ./db/microservices/init-microservice-schemas.sql:/db/init-microservice-schemas.sql:ro
+      - ./db/microservices/ensure-microservice-schemas.sh:/db/ensure-microservice-schemas.sh:ro
+    entrypoint: ["sh", "/db/ensure-microservice-schemas.sh"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+
   redis:
     image: redis:7.4-alpine
     container_name: life-assistant-redis
@@ -61,6 +77,12 @@ services:
     ports:
       - "${NACOS_PORT:-8848}:8848"
       - "${NACOS_GRPC_PORT:-9848}:9848"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8848/nacos/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
 
   api-gateway:
     build:
@@ -71,13 +93,14 @@ services:
     environment:
       SERVER_PORT: 8080
       NACOS_SERVER_ADDR: nacos:8848
+      NACOS_DISCOVERY_FAIL_FAST: ${NACOS_DISCOVERY_FAIL_FAST:-false}
       GATEWAY_CORS_ALLOWED_ORIGINS: ${GATEWAY_CORS_ALLOWED_ORIGINS:-*}
       TZ: Asia/Shanghai
     ports:
       - "${GATEWAY_PORT:-8080}:8080"
     depends_on:
       nacos:
-        condition: service_started
+        condition: service_healthy
       merchant-service:
         condition: service_started
       user-service:
@@ -104,12 +127,12 @@ services:
     ports:
       - "${MERCHANT_SERVICE_PORT:-8081}:8081"
     depends_on:
-      mysql:
-        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       nacos:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - merchant-uploads:/app/uploads
 
@@ -126,12 +149,12 @@ services:
     ports:
       - "${USER_SERVICE_PORT:-8082}:8082"
     depends_on:
-      mysql:
-        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       nacos:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - user-uploads:/app/uploads
 
@@ -148,12 +171,12 @@ services:
     ports:
       - "${ORDER_SERVICE_PORT:-8083}:8083"
     depends_on:
-      mysql:
-        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       nacos:
-        condition: service_started
+        condition: service_healthy
 
   settlement-service:
     build:
@@ -168,12 +191,12 @@ services:
     ports:
       - "${SETTLEMENT_SERVICE_PORT:-8084}:8084"
     depends_on:
-      mysql:
-        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       nacos:
-        condition: service_started
+        condition: service_healthy
 
   fulfillment-service:
     build:
@@ -188,12 +211,12 @@ services:
     ports:
       - "${FULFILLMENT_SERVICE_PORT:-8085}:8085"
     depends_on:
-      mysql:
-        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       nacos:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - fulfillment-uploads:/app/uploads
 
@@ -211,12 +234,12 @@ services:
     ports:
       - "${ENGAGEMENT_SERVICE_PORT:-8086}:8086"
     depends_on:
-      mysql:
-        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       nacos:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - engagement-uploads:/app/uploads
 

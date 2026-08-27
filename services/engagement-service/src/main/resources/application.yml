@@ -8,6 +8,7 @@ spring:
     nacos:
       discovery:
         server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        fail-fast: ${NACOS_DISCOVERY_FAIL_FAST:false}
     loadbalancer:
       nacos:
         enabled: true
