@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .gradle/
+.gradle-user/
 build/
 out/
 *.out

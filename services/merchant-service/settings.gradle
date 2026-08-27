@@ -1,0 +1,2 @@
+rootProject.name = 'merchant-service'
+includeBuild '../common-lib'
