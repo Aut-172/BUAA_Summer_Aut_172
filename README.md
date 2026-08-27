@@ -24,6 +24,7 @@
 - Spring Boot 3
 - MyBatis-Plus
 - MySQL 8
+- Redis 7
 - Node.js 18+
 - Vite
 - React 18
@@ -35,7 +36,7 @@
 - Java 21
 - Node.js 18 或更高版本
 - npm
-- MySQL 8.0，或 Docker / Docker Compose
+- MySQL 8.0 和 Redis 7，或 Docker / Docker Compose
 - Windows PowerShell
 
 ## 3. 项目目录结构
@@ -55,10 +56,12 @@ life-service/
 项目默认使用环境变量读取运行配置。没有设置环境变量时，会使用适合本地开发的默认值：
 
 - 地址：`127.0.0.1`
-- 端口：`3306`
+- MySQL 端口：`3306`
 - 数据库名：`life_assistant`
 - 用户名：`root`
 - 密码：`123456`
+- Redis 地址：`localhost`
+- Redis 端口：`6379`
 
 如果你的本地 MySQL 账号密码不同，可以在启动后端前先设置环境变量：
 
@@ -94,7 +97,7 @@ powershell -ExecutionPolicy Bypass -File scripts\init-db.ps1 -DockerContainer �
 
 ## 6. Docker Compose 一键启动
 
-推荐在新机器上优先使用 Docker Compose，前端、后端、数据库会分别运行在容器中：
+推荐在新机器上优先使用 Docker Compose，前端、后端、MySQL、Redis 会分别运行在容器中：
 
 ```powershell
 copy .env.example .env
@@ -106,6 +109,7 @@ docker compose up --build
 ```text
 前端：http://localhost:5173
 后端健康检查：http://localhost:8081/api/health
+Redis：localhost:6379
 ```
 
 停止服务：

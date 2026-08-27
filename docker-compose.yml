@@ -21,6 +21,20 @@ services:
       retries: 10
       start_period: 30s
 
+  redis:
+    image: redis:7.4-alpine
+    container_name: life-assistant-redis
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
   backend:
     build:
       context: ./backend
@@ -35,6 +49,9 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
       SPRING_SQL_INIT_MODE: never
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DATABASE: ${REDIS_DATABASE:-0}
       JWT_SECRET: ${JWT_SECRET:-LifeAssistant2025SecretKeyForJWTTokenGenerationMustBe256BitsLong}
       APP_UPLOAD_ROOT_DIR: /app/uploads
       APP_UPLOAD_REVIEW_DIR: /app/uploads/reviews
@@ -46,6 +63,8 @@ services:
       - backend-uploads:/app/uploads
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8081/api/health || exit 1"]
@@ -72,4 +91,5 @@ services:
 
 volumes:
   mysql-data:
+  redis-data:
   backend-uploads:
