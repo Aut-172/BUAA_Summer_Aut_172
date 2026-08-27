@@ -1,9 +1,13 @@
 FROM eclipse-temurin:21-jdk AS build
+WORKDIR /workspace
+COPY . .
 WORKDIR /workspace/services/api-gateway
-COPY services/api-gateway/gradle ./gradle
-COPY services/api-gateway/gradlew services/api-gateway/gradlew.bat services/api-gateway/settings.gradle services/api-gateway/build.gradle ./
-COPY services/api-gateway/src ./src
-RUN chmod +x ./gradlew && ./gradlew clean bootJar --no-daemon
+RUN GRADLE_ZIP="$(tr -d '\r' < gradle/wrapper/gradle-wrapper.properties | sed -n 's#^distributionUrl=.*/\([^/]*\.zip\)$#\1#p')" \
+    && if [ -n "$GRADLE_ZIP" ] && [ -f "/workspace/$GRADLE_ZIP" ]; then \
+        sed -i "s#^distributionUrl=.*#distributionUrl=file:/workspace/$GRADLE_ZIP#" gradle/wrapper/gradle-wrapper.properties; \
+    fi \
+    && chmod +x ./gradlew \
+    && ./gradlew clean bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app

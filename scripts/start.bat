@@ -19,6 +19,7 @@ if errorlevel 1 (
 
 echo [1/2] Building and starting microservice stack...
 pushd "%ROOT_DIR%"
+set "COMPOSE_PARALLEL_LIMIT=1"
 docker compose up --build -d
 if errorlevel 1 (
     echo [ERROR] docker compose startup failed

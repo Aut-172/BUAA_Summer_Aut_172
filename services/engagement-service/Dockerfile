@@ -1,12 +1,13 @@
 FROM eclipse-temurin:21-jdk AS build
 WORKDIR /workspace
-COPY services/common-lib/settings.gradle services/common-lib/build.gradle ./services/common-lib/
-COPY services/common-lib/src ./services/common-lib/src
-COPY services/engagement-service/gradle ./services/engagement-service/gradle
-COPY services/engagement-service/gradlew services/engagement-service/gradlew.bat services/engagement-service/settings.gradle services/engagement-service/build.gradle ./services/engagement-service/
-COPY services/engagement-service/src ./services/engagement-service/src
+COPY . .
 WORKDIR /workspace/services/engagement-service
-RUN chmod +x ./gradlew && ./gradlew clean bootJar --no-daemon
+RUN GRADLE_ZIP="$(tr -d '\r' < gradle/wrapper/gradle-wrapper.properties | sed -n 's#^distributionUrl=.*/\([^/]*\.zip\)$#\1#p')" \
+    && if [ -n "$GRADLE_ZIP" ] && [ -f "/workspace/$GRADLE_ZIP" ]; then \
+        sed -i "s#^distributionUrl=.*#distributionUrl=file:/workspace/$GRADLE_ZIP#" gradle/wrapper/gradle-wrapper.properties; \
+    fi \
+    && chmod +x ./gradlew \
+    && ./gradlew clean bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app

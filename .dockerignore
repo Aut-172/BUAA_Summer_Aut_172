@@ -19,6 +19,7 @@ frontend/dist
 *.tmp
 *.bak
 *.swp
+!gradle-*-bin.zip
 
 uploads
 **/uploads
