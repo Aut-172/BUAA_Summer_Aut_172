@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: life-assistant-mysql
+  labels:
+    app: life-assistant-mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: life-assistant-mysql
+  template:
+    metadata:
+      labels:
+        app: life-assistant-mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.4
+          imagePullPolicy: IfNotPresent
+          args:
+            - --character-set-server=utf8mb4
+            - --collation-server=utf8mb4_unicode_ci
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: life-assistant-config
+                  key: mysql-database
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: life-assistant-secret
+                  key: mysql-root-password
+            - name: TZ
+              value: Asia/Shanghai
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -h 127.0.0.1 -uroot -p$MYSQL_ROOT_PASSWORD --silent
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 20
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -h 127.0.0.1 -uroot -p$MYSQL_ROOT_PASSWORD --silent
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 5
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+            - name: db-init
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+      volumes:
+        - name: mysql-data
+          emptyDir: {}
+        - name: db-init
+          configMap:
+            name: life-assistant-db-init
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  selector:
+    app: life-assistant-mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306

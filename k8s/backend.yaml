@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: life-assistant-backend
+  labels:
+    app: life-assistant-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: life-assistant-backend
+  template:
+    metadata:
+      labels:
+        app: life-assistant-backend
+    spec:
+      containers:
+        - name: backend
+          image: life-assistant-backend:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SERVER_PORT
+              value: "8081"
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: life-assistant-config
+                  key: spring-datasource-url
+            - name: SPRING_DATASOURCE_USERNAME
+              value: root
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: life-assistant-secret
+                  key: mysql-root-password
+            - name: SPRING_SQL_INIT_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: life-assistant-config
+                  key: spring-sql-init-mode
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: life-assistant-secret
+                  key: jwt-secret
+            - name: APP_UPLOAD_ROOT_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: life-assistant-config
+                  key: app-upload-root-dir
+            - name: APP_UPLOAD_REVIEW_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: life-assistant-config
+                  key: app-upload-review-dir
+            - name: APP_BOOTSTRAP_ADMIN_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: life-assistant-config
+                  key: app-bootstrap-admin-enabled
+            - name: TZ
+              value: Asia/Shanghai
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8081
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 20
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8081
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 5
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+      volumes:
+        - name: uploads
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: life-assistant-backend
+spec:
+  selector:
+    app: life-assistant-backend
+  ports:
+    - name: http
+      port: 8081
+      targetPort: 8081

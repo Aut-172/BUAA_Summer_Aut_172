@@ -1,6 +1,7 @@
 package com.example.demo.common;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -16,6 +17,9 @@ import java.nio.file.Paths;
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final JwtAuthInterceptor jwtAuthInterceptor;
+
+    @Value("${app.upload.root-dir:uploads}")
+    private String uploadRootDir;
 
     public WebMvcConfig(JwtAuthInterceptor jwtAuthInterceptor) {
         this.jwtAuthInterceptor = jwtAuthInterceptor;
@@ -42,7 +46,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        Path uploadRoot = Paths.get("uploads").toAbsolutePath().normalize();
+        Path uploadRoot = Paths.get(uploadRootDir).toAbsolutePath().normalize();
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations(uploadRoot.toUri().toString());
     }

@@ -1,0 +1,8 @@
+node_modules
+dist
+playwright-report
+test-results
+*.log
+*.out
+*.err
+参考文档

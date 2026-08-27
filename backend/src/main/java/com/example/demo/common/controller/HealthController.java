@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -35,12 +37,13 @@ public class HealthController {
 
     @GetMapping("/api/health")
     @Operation(summary = "服务健康检查")
-    public Result<Map<String, Object>> health() {
+    public ResponseEntity<Result<Map<String, Object>>> health() {
         Map<String, Object> info = new HashMap<>();
         info.put("status", "UP");
         info.put("application", env.getProperty("spring.application.name"));
         info.put("time", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         info.put("javaVersion", Runtime.version().toString());
+        boolean databaseUp = true;
 
         // 检查数据库连接
         try (Connection conn = dataSource.getConnection()) {
@@ -48,6 +51,8 @@ public class HealthController {
                     + " " + conn.getMetaData().getDatabaseProductVersion());
             info.put("databaseStatus", "UP");
         } catch (Exception e) {
+            databaseUp = false;
+            info.put("status", "DOWN");
             info.put("databaseStatus", "DOWN");
             info.put("databaseError", e.getMessage());
         }
@@ -65,6 +70,7 @@ public class HealthController {
             info.put("redisStatus", "NOT_CONFIGURED");
         }
 
-        return Result.success(info);
+        HttpStatus httpStatus = databaseUp ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE;
+        return ResponseEntity.status(httpStatus).body(Result.success(info));
     }
 }

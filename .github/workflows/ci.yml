@@ -139,3 +139,88 @@ jobs:
 
       - name: Build frontend
         run: npm run build
+
+  container-build-and-k8s-deploy:
+    name: Container Build and Kubernetes Deploy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs:
+      - backend-test
+      - frontend-test
+      - frontend-e2e
+      - frontend-build
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+      BACKEND_IMAGE: aquared/life-service-assistant:backend-${{ github.sha }}
+      FRONTEND_IMAGE: aquared/life-service-assistant:frontend-${{ github.sha }}
+      MYSQL_ROOT_PASSWORD: 123456
+      JWT_SECRET: LifeAssistant2025SecretKeyForJWTTokenGenerationMustBe256BitsLong
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v5
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: life-assistant-ci
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build backend image
+        run: docker build -t "${BACKEND_IMAGE}" ./backend
+
+      - name: Build frontend image
+        run: docker build -t "${FRONTEND_IMAGE}" ./frontend
+
+      - name: Push images
+        run: |
+          docker push "${BACKEND_IMAGE}"
+          docker push "${FRONTEND_IMAGE}"
+
+      - name: Load images into kind
+        run: |
+          kind load docker-image "${BACKEND_IMAGE}" --name life-assistant-ci
+          kind load docker-image "${FRONTEND_IMAGE}" --name life-assistant-ci
+
+      - name: Deploy to Kubernetes
+        run: bash scripts/deploy-kind.sh
+
+      - name: Health check
+        run: |
+          kubectl port-forward service/life-assistant-backend 18081:8081 > backend-port-forward.log 2>&1 &
+          kubectl port-forward service/life-assistant-frontend 18080:80 > frontend-port-forward.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:18081/api/health && curl -fsS http://127.0.0.1:18080/ > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Health check failed"
+          exit 1
+
+      - name: Collect Kubernetes diagnostics
+        if: always()
+        run: |
+          mkdir -p k8s-diagnostics
+          kubectl get all -o wide > k8s-diagnostics/resources.txt || true
+          kubectl describe pods > k8s-diagnostics/pods.txt || true
+          kubectl logs deployment/life-assistant-backend --tail=200 > k8s-diagnostics/backend.log 2>&1 || true
+          kubectl logs deployment/life-assistant-frontend --tail=200 > k8s-diagnostics/frontend.log 2>&1 || true
+          kubectl logs deployment/life-assistant-mysql --tail=200 > k8s-diagnostics/mysql.log 2>&1 || true
+          cp backend-port-forward.log k8s-diagnostics/backend-port-forward.log 2>/dev/null || true
+          cp frontend-port-forward.log k8s-diagnostics/frontend-port-forward.log 2>/dev/null || true
+
+      - name: Upload Kubernetes diagnostics
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: k8s-diagnostics
+          path: k8s-diagnostics/
+          if-no-files-found: warn

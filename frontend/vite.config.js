@@ -1,5 +1,7 @@
 import { defineConfig } from 'vite';
 
+const backendUrl = process.env.VITE_BACKEND_URL || 'http://localhost:8081';
+
 export default defineConfig({
   test: {
     environment: 'jsdom',
@@ -11,12 +13,12 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8081',
+        target: backendUrl,
         changeOrigin: true,
         secure: false
       },
       '/uploads': {
-        target: 'http://localhost:8081',
+        target: backendUrl,
         changeOrigin: true,
         secure: false
       }
