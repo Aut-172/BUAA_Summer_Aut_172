@@ -11,6 +11,7 @@ RUN chmod +x ./gradlew && ./gradlew clean bootJar --no-daemon
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 ENV SPRING_PROFILES_ACTIVE=prod
+ENV SERVER_PORT=8081
 COPY --from=build /workspace/services/merchant-service/build/libs/*.jar app.jar
 EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

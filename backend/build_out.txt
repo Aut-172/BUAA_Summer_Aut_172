@@ -1,4 +1,0 @@
-Exception in thread "main" java.lang.RuntimeException: Timeout of 120000 reached waiting for exclusive access to file: C:\Users\limohan\.gradle\wrapper\dists\gradle-9.5.1-bin\iq79hdu3mqx29lgffhp8bfmx\gradle-9.5.1-bin.zip
-	at org.gradle.wrapper.Install.createDist(SourceFile:26)
-	at org.gradle.wrapper.GradleWrapperMain.lambda$prepareWrapper$0(SourceFile:2)
-	at org.gradle.wrapper.GradleWrapperMain.main(SourceFile:2)

@@ -1,115 +1,71 @@
-# 生活服务项目
+# 生活服务微服务项目
 
-这是一个前后端分离的校园生活服务项目，当前版本已经可以跑通从找店、下单、支付、商家处理、骑手配送到用户确认完成的完整主流程。
+当前版本已移除旧单体后端源码，运行态由 `services/` 下的微服务实现。旧单体版本已经通过 Git tag 保留，不再放在主干目录中。
 
-- `frontend/`：基于 Vite + React 的电脑端前端
-- `backend/`：基于 Spring Boot + MyBatis-Plus 的后端
-- `scripts/`：数据库初始化、接口联调测试、基础数据维护脚本
-
-目前已经支持的核心功能：
-
-- 用户登录、注册
-- 浏览商家和商品
-- 加入购物车
-- 提交订单
-- 订单支付
-- 商家查看订单
-- 骑手接单与配送
-- 用户查看订单状态并确认完成
-- 管理员查看平台数据
-
-## 1. 技术栈
-
-- Java 21
-- Spring Boot 3
-- MyBatis-Plus
-- MySQL 8
-- Redis 7
-- Node.js 18+
-- Vite
-- React 18
-
-## 2. 本地运行环境
-
-请先确保本机已安装以下软件：
-
-- Java 21
-- Node.js 18 或更高版本
-- npm
-- MySQL 8.0 和 Redis 7，或 Docker / Docker Compose
-- Windows PowerShell
-
-## 3. 项目目录结构
+## 目录结构
 
 ```text
 life-service/
-├─ backend/
-├─ frontend/
-├─ scripts/
-└─ README.md
+├─ services/
+│  ├─ api-gateway/          # API 网关，统一前端入口
+│  ├─ common-lib/           # 微服务公共依赖
+│  ├─ merchant-service/     # 商家、商品、分类、搜索、推荐
+│  ├─ user-service/         # 用户、管理员账号、地址、购物车、收藏
+│  ├─ order-service/        # 订单主链路与订单内部接口
+│  ├─ settlement-service/   # 支付、优惠券锁定与核销
+│  ├─ fulfillment-service/  # 骑手、配送履约
+│  └─ engagement-service/   # 评价、消息
+├─ db/microservices/        # 多 schema 初始化 SQL
+├─ frontend/                # Vite + React 前端
+├─ k8s/                     # Kubernetes 示例部署清单
+├─ scripts/                 # 初始化、启动、验证脚本
+└─ docs/                    # 微服务边界与公共包说明
 ```
 
-## 4. 环境变量配置
+## 技术栈
 
-后端配置文件位于 [backend/src/main/resources/application.yml](backend/src/main/resources/application.yml)。
+- Java 21
+- Spring Boot 3.4
+- Spring Cloud Gateway
+- Nacos Discovery
+- OpenFeign
+- Spring Cloud LoadBalancer
+- MyBatis-Plus
+- MySQL 8
+- Redis 7
+- React 18 + Vite
 
-项目默认使用环境变量读取运行配置。没有设置环境变量时，会使用适合本地开发的默认值：
+## 服务与端口
 
-- 地址：`127.0.0.1`
-- MySQL 端口：`3306`
-- 数据库名：`life_assistant`
-- 用户名：`root`
-- 密码：`123456`
-- Redis 地址：`localhost`
-- Redis 端口：`6379`
+| 服务 | 容器内端口 | 默认宿主端口 | 说明 |
+| --- | ---: | ---: | --- |
+| api-gateway | 8080 | 8080 | 前端统一访问入口 |
+| merchant-service | 8081 | 8081 | 商家商品域 |
+| user-service | 8082 | 8082 | 用户域 |
+| order-service | 8083 | 8083 | 订单域 |
+| settlement-service | 8084 | 8084 | 结算域 |
+| fulfillment-service | 8085 | 8085 | 履约域 |
+| engagement-service | 8086 | 8086 | 互动域 |
+| frontend | 80 | 5173 | 静态前端，反向代理到 Gateway |
+| nacos | 8848/9848 | 8848/9848 | 注册中心 |
+| mysql | 3306 | 3306 | 多库数据服务器 |
+| redis | 6379 | 6379 | 验证码等公共缓存 |
 
-如果你的本地 MySQL 账号密码不同，可以在启动后端前先设置环境变量：
+## 本地启动
 
-```powershell
-$env:SPRING_DATASOURCE_URL="jdbc:mysql://127.0.0.1:3306/life_assistant?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true"
-$env:SPRING_DATASOURCE_USERNAME="root"
-$env:SPRING_DATASOURCE_PASSWORD="你的MySQL密码"
-```
-
-也可以复制 [.env.example](.env.example) 为 `.env`，按自己的机器修改其中的密码和端口。`.env` 属于本机私有配置，不应提交到仓库。
-
-## 5. 初始化数据库
-
-第一次启动前，请先执行：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\init-db.ps1
-```
-
-如果使用项目提供的 Docker Compose 启动 MySQL，初始化脚本会自动使用 `life-assistant-mysql` 容器。若你的容器名不同，可以这样指定：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\init-db.ps1 -DockerContainer 你的MySQL容器名
-```
-
-该脚本会自动完成：
-
-- 创建数据库（如果不存在）
-- 重建数据表
-- 插入基础业务数据
-
-注意：`init.sql` 会重建数据表，重新执行会清空已有本地数据。
-
-## 6. Docker Compose 一键启动
-
-推荐在新机器上优先使用 Docker Compose，前端、后端、MySQL、Redis 会分别运行在容器中：
+推荐使用 Docker Compose：
 
 ```powershell
 copy .env.example .env
 docker compose up --build
 ```
 
-启动完成后访问：
+启动后访问：
 
 ```text
 前端：http://localhost:5173
-后端健康检查：http://localhost:8081/api/health
-Redis：localhost:6379
+Gateway 健康检查：http://localhost:8080/actuator/health
+Nacos 控制台：http://localhost:8848/nacos
 ```
 
 停止服务：
@@ -118,266 +74,100 @@ Redis：localhost:6379
 docker compose down
 ```
 
-如果需要连同数据库数据一起清理：
+如需清空本地数据库卷：
 
 ```powershell
 docker compose down -v
 ```
 
-## 7. Kubernetes 部署
-
-项目提供了 Kubernetes 部署清单：
-
-- [k8s/configmap.yaml](k8s/configmap.yaml)：非敏感运行配置
-- [k8s/secret.example.yaml](k8s/secret.example.yaml)：Secret 示例，不要把真实密码写入仓库
-- [k8s/mysql.yaml](k8s/mysql.yaml)：MySQL Deployment 和 Service
-- [k8s/backend.yaml](k8s/backend.yaml)：后端 Deployment 和 Service
-- [k8s/frontend.yaml](k8s/frontend.yaml)：前端 Deployment 和 Service
-
-本地使用 Kind 或 Docker Desktop Kubernetes 时，可以先构建镜像：
+也可以执行 Windows 启动脚本：
 
 ```powershell
-$env:APP_VERSION=(git rev-parse --short HEAD)
-docker build -t life-assistant-backend:$env:APP_VERSION .\backend
-docker build -t life-assistant-frontend:$env:APP_VERSION .\frontend
+scripts\start.bat
 ```
 
-如果使用 Kind，需要把镜像加载到 Kind 集群：
+## 数据库初始化
 
-```powershell
-kind load docker-image life-assistant-backend:$env:APP_VERSION
-kind load docker-image life-assistant-frontend:$env:APP_VERSION
-```
+微服务版使用同一 MySQL 服务器上的多个 database/schema：
 
-然后部署：
+- `user_db`
+- `merchant_db`
+- `order_db`
+- `settlement_db`
+- `fulfillment_db`
+- `engagement_db`
 
-```powershell
-$env:IMAGE_TAG=$env:APP_VERSION
-bash scripts/deploy-kind.sh
-```
-
-部署脚本会创建数据库初始化 ConfigMap、Secret，依次部署 MySQL、后端和前端，并等待每个 Deployment 滚动完成。
-
-前端 NodePort 默认端口为：
+Docker Compose 首次创建 MySQL 卷时会自动执行：
 
 ```text
-http://localhost:30080
+db/microservices/init-microservice-schemas.sql
 ```
 
-## 8. CI/CD 流水线
-
-GitHub Actions 配置位于 [.github/workflows/ci.yml](.github/workflows/ci.yml)。向 `main` push 或向 `main` 发起 PR 时会自动执行：
-
-1. 后端单元/集成测试
-2. 前端单元测试
-3. 前端 E2E 测试
-4. 前端构建
-5. 前后端 Docker 镜像构建
-6. Kind Kubernetes 部署
-7. 前后端健康检查
-
-镜像版本号使用 Git commit SHA，例如：
-
-```text
-aquared/life-service-assistant:backend-<commit-sha>
-aquared/life-service-assistant:frontend-<commit-sha>
-```
-
-流水线使用 job 依赖关系控制顺序。任一测试或构建步骤失败，后续镜像构建、镜像推送、Kubernetes 部署和健康检查都会停止。测试报告和 Kubernetes 诊断信息会作为 GitHub Actions artifacts 保留。
-
-镜像推送到 Docker Hub 前，需要在 GitHub 仓库 Settings 中配置：
-
-- Actions secret：`DOCKERHUB_USERNAME`
-- Actions secret：`DOCKERHUB_TOKEN`
-
-不要把 Docker Hub token 写入 README、脚本、workflow 或提交记录。
-
-## 9. 补充商家与商品数据
-
-如果本地联调需要更完整的商家列表和商品展示数据，可以执行：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\seed-showcase-merchants.ps1
-```
-
-该脚本会通过项目接口自动注册一批商家，并为每个商家生成商品数据。
-
-## 10. 启动后端
-
-开发模式启动：
-
-```powershell
-cd backend
-.\gradlew.bat bootRun
-```
-
-或者先打包再启动：
-
-```powershell
-cd backend
-.\gradlew.bat bootJar
-java -jar build\libs\demo-0.0.1-SNAPSHOT.jar --server.port=8081
-```
-
-后端健康检查地址：
-
-```text
-http://localhost:8081/api/health
-```
-
-## 11. 启动前端
-
-```powershell
-cd frontend
-npm install
-npm.cmd run dev
-```
-
-浏览器访问：
-
-```text
-http://localhost:5173
-```
-
-如需让 Vite 开发代理转发到其他后端地址，可以设置：
-
-```powershell
-$env:VITE_BACKEND_URL="http://localhost:8081"
-npm.cmd run dev
-```
-
-## 12. 推荐启动顺序
-
-建议按下面顺序启动：
-
-1. 启动 MySQL
-2. 执行 `scripts\init-db.ps1`
-3. 如需更多商家和商品数据，执行 `scripts\seed-showcase-merchants.ps1`
-4. 启动后端：`backend\gradlew.bat bootRun`
-5. 启动前端：`frontend\npm.cmd run dev`
-6. 打开 `http://localhost:5173`
-
-如果使用 Docker Compose，只需执行 `docker compose up --build`。
-
-## 13. 账号准备
-
-项目不再提供前端预置账号填充入口。普通用户、商家和骑手可在登录页注册账号；商家和骑手账号注册后需要管理员审核通过，才能使用对应工作台功能。
-
-管理员账号由部署环境或数据库初始化流程配置。请按团队当前环境准备管理员登录信息，不要在仓库文档中公开通用口令。
-
-## 14. 如何验证业务流程
-
-### 浏览器手动验证
-
-1. 使用普通用户登录
-2. 打开任意商家
-3. 添加商品到购物车
-4. 进入购物车并提交订单
-5. 完成支付
-6. 切换为骑手账号登录
-7. 接单并更新配送状态
-8. 切回普通用户账号
-9. 在订单页查看订单状态并确认完成
-
-说明：用户侧不再提供独立的“查看配送情况”页面，也不再展示与地图定位绑定的配送追踪功能；骑手接单和配送状态流转仍然保留。
-
-### 后端接口联调测试
-
-执行：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\e2e-backend-test.ps1
-```
-
-这个脚本会自动验证以下关键流程：
-
-- 登录
-- 加入购物车
-- 提交订单
-- 支付
-- 商家订单查询
-- 骑手任务状态更新
-- 订单完成
-- 支付记录查询
-- 管理员用户查询
-
-## 15. 构建与测试
-
-### 后端测试
-
-```powershell
-cd backend
-.\gradlew.bat test
-```
-
-### 前端打包
-
-```powershell
-cd frontend
-npm.cmd run build
-```
-
-### 前端单元测试
-
-```powershell
-cd frontend
-npm.cmd test
-```
-
-### 前端 E2E 测试
-
-```powershell
-cd frontend
-npm.cmd run e2e:direct
-```
-
-## 16. 常见问题
-
-### 前端无法请求后端
-
-请检查：
-
-- 后端是否实际运行在 `8081` 端口
-- 前端是否通过 `npm run dev` 启动
-- [frontend/vite.config.js](frontend/vite.config.js) 中的 `VITE_BACKEND_URL` 是否指向正确后端地址
-
-### 数据库连接失败
-
-请检查：
-
-- MySQL 是否已启动
-- 用户名和密码是否正确
-- `DB_URL`、`DB_USERNAME`、`DB_PASSWORD` 是否设置正确
-
-### 想重置本地数据
-
-重新执行：
+如果需要手动重建本地数据：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\init-db.ps1
 ```
 
-### PowerShell 中骑手状态文字乱码
+注意：初始化 SQL 会重建业务表，重复执行会清空已有本地数据。
 
-这通常是终端编码问题，不是后端逻辑错误。
+## 鉴权与服务间调用
 
-项目内的接口联调脚本已经使用稳定状态值进行验证，不影响实际功能测试。
+- 前端请求进入 `api-gateway`，Gateway 根据路径转发到业务服务。
+- 用户鉴权由业务服务通过 `common-lib` 中的 JWT 拦截器完成。
+- Gateway 和前端 Nginx 会保留并转发 `Authorization` 请求头。
+- 服务间调用只使用 OpenFeign + Nacos 服务名，例如 `lb://merchant-service` 或 `@FeignClient(name = ServiceNames.MERCHANT_SERVICE)`。
+- 服务不能直接读取其他服务数据库表，跨服务数据访问必须走内部接口。
 
-## 17. 提交到 GitHub 前建议检查
+核心配置项见 [.env.example](.env.example)。
 
-建议至少执行以下命令：
+## 构建与测试
+
+验证全部微服务：
 
 ```powershell
-cd backend
+powershell -ExecutionPolicy Bypass -File scripts\test-microservices.ps1
+```
+
+验证 B 侧边界与服务构建：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\test-b-side-services.ps1
+```
+
+单个服务也可以独立测试：
+
+```powershell
+cd services\merchant-service
 .\gradlew.bat test
 ```
 
-```powershell
-cd frontend
-npm.cmd run build
-```
+前端：
 
 ```powershell
-cd ..
-powershell -ExecutionPolicy Bypass -File scripts\e2e-backend-test.ps1
+cd frontend
+npm install
+npm.cmd run build
+npm.cmd run test:ci
 ```
+
+## Kubernetes
+
+K8s 示例清单位于 `k8s/`：
+
+- `configmap.yaml`
+- `secret.example.yaml`
+- `mysql.yaml`
+- `redis.yaml`
+- `nacos.yaml`
+- `business-services.yaml`
+- `api-gateway.yaml`
+- `frontend.yaml`
+
+Kind 部署脚本：
+
+```bash
+bash scripts/deploy-kind.sh
+```
+
+脚本会创建多库初始化 ConfigMap、Secret，依次部署 MySQL、Redis、Nacos、六个业务服务、Gateway 和前端。

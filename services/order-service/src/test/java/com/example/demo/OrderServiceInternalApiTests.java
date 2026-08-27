@@ -23,7 +23,7 @@ class OrderServiceInternalApiTests {
 
     @Test
     void getInternalOrderReturnsSnapshotAndItems() throws Exception {
-        mockMvc.perform(get("/internal/orders/70001"))
+        mockMvc.perform(get("/internal/orders/70002"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.status").value("pending_payment"))

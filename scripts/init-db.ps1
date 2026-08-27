@@ -8,7 +8,7 @@ param(
 )
 
 $root = Split-Path -Parent $PSScriptRoot
-$sqlFile = Join-Path $root "backend\src\main\resources\db\init.sql"
+$sqlFile = Join-Path $root "db\microservices\init-microservice-schemas.sql"
 $composeFile = Join-Path $root "docker-compose.yml"
 
 if (-not $DbHost) { $DbHost = if ($env:MYSQL_HOST) { $env:MYSQL_HOST } else { "127.0.0.1" } }
@@ -18,7 +18,7 @@ if (-not $Password) { $Password = if ($env:MYSQL_ROOT_PASSWORD) { $env:MYSQL_ROO
 if (-not $DockerContainer) { $DockerContainer = if ($env:MYSQL_DOCKER_CONTAINER) { $env:MYSQL_DOCKER_CONTAINER } else { "life-assistant-mysql" } }
 
 if (-not (Test-Path $sqlFile)) {
-    throw "init.sql not found: $sqlFile"
+    throw "Microservice schema SQL not found: $sqlFile"
 }
 
 if ($MysqlExe -and (Test-Path $MysqlExe)) {

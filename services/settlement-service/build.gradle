@@ -18,12 +18,14 @@ repositories {
 }
 
 ext {
-    set('springCloudVersion', '2024.0.0')
+    set('springCloudVersion', '2024.0.1')
+    set('springCloudAlibabaVersion', '2023.0.3.3')
 }
 
 dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        mavenBom "com.alibaba.cloud:spring-cloud-alibaba-dependencies:${springCloudAlibabaVersion}"
     }
 }
 
@@ -34,6 +36,7 @@ dependencies {
     implementation 'com.baomidou:mybatis-plus-spring-boot3-starter:3.5.7'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
+    implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery'
     runtimeOnly 'com.mysql:mysql-connector-j'
 
     compileOnly 'org.projectlombok:lombok:1.18.46'

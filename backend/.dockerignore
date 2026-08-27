@@ -1,7 +1,0 @@
-.gradle
-build
-bin
-*.log
-*.out
-*.err
-backup_*

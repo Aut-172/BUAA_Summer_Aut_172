@@ -2,19 +2,31 @@
 set -euo pipefail
 
 IMAGE_TAG="${IMAGE_TAG:-$(git rev-parse --short HEAD 2>/dev/null || echo dev)}"
-BACKEND_IMAGE="${BACKEND_IMAGE:-life-assistant-backend:${IMAGE_TAG}}"
-FRONTEND_IMAGE="${FRONTEND_IMAGE:-life-assistant-frontend:${IMAGE_TAG}}"
 NAMESPACE="${K8S_NAMESPACE:-default}"
 MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-123456}"
 JWT_SECRET="${JWT_SECRET:-LifeAssistant2025SecretKeyForJWTTokenGenerationMustBe256BitsLong}"
 
-apply_manifest_with_image() {
-  local manifest="$1"
-  local default_image="$2"
-  local target_image="$3"
+API_GATEWAY_IMAGE="${API_GATEWAY_IMAGE:-life-assistant-api-gateway:${IMAGE_TAG}}"
+MERCHANT_SERVICE_IMAGE="${MERCHANT_SERVICE_IMAGE:-life-assistant-merchant-service:${IMAGE_TAG}}"
+USER_SERVICE_IMAGE="${USER_SERVICE_IMAGE:-life-assistant-user-service:${IMAGE_TAG}}"
+ORDER_SERVICE_IMAGE="${ORDER_SERVICE_IMAGE:-life-assistant-order-service:${IMAGE_TAG}}"
+SETTLEMENT_SERVICE_IMAGE="${SETTLEMENT_SERVICE_IMAGE:-life-assistant-settlement-service:${IMAGE_TAG}}"
+FULFILLMENT_SERVICE_IMAGE="${FULFILLMENT_SERVICE_IMAGE:-life-assistant-fulfillment-service:${IMAGE_TAG}}"
+ENGAGEMENT_SERVICE_IMAGE="${ENGAGEMENT_SERVICE_IMAGE:-life-assistant-engagement-service:${IMAGE_TAG}}"
+FRONTEND_IMAGE="${FRONTEND_IMAGE:-life-assistant-frontend:${IMAGE_TAG}}"
 
-  sed "s|image: ${default_image}|image: ${target_image}|g" "$manifest" \
-    | kubectl apply -n "$NAMESPACE" -f -
+apply_manifest_with_images() {
+  local manifest="$1"
+  sed \
+    -e "s|image: life-assistant-api-gateway:dev|image: ${API_GATEWAY_IMAGE}|g" \
+    -e "s|image: life-assistant-merchant-service:dev|image: ${MERCHANT_SERVICE_IMAGE}|g" \
+    -e "s|image: life-assistant-user-service:dev|image: ${USER_SERVICE_IMAGE}|g" \
+    -e "s|image: life-assistant-order-service:dev|image: ${ORDER_SERVICE_IMAGE}|g" \
+    -e "s|image: life-assistant-settlement-service:dev|image: ${SETTLEMENT_SERVICE_IMAGE}|g" \
+    -e "s|image: life-assistant-fulfillment-service:dev|image: ${FULFILLMENT_SERVICE_IMAGE}|g" \
+    -e "s|image: life-assistant-engagement-service:dev|image: ${ENGAGEMENT_SERVICE_IMAGE}|g" \
+    -e "s|image: life-assistant-frontend:dev|image: ${FRONTEND_IMAGE}|g" \
+    "$manifest" | kubectl apply -n "$NAMESPACE" -f -
 }
 
 kubectl apply -n "$NAMESPACE" -f k8s/configmap.yaml
@@ -28,15 +40,27 @@ kubectl create secret generic life-assistant-secret \
 
 kubectl create configmap life-assistant-db-init \
   --namespace "$NAMESPACE" \
-  --from-file=01-init.sql=backend/src/main/resources/db/init.sql \
+  --from-file=01-init-microservice-schemas.sql=db/microservices/init-microservice-schemas.sql \
   --dry-run=client \
   -o yaml | kubectl apply -f -
 
 kubectl apply -n "$NAMESPACE" -f k8s/mysql.yaml
+kubectl apply -n "$NAMESPACE" -f k8s/redis.yaml
+kubectl apply -n "$NAMESPACE" -f k8s/nacos.yaml
 kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-mysql --timeout=240s
+kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-redis --timeout=120s
+kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-nacos --timeout=240s
 
-apply_manifest_with_image k8s/backend.yaml life-assistant-backend:dev "${BACKEND_IMAGE}"
-kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-backend --timeout=240s
+apply_manifest_with_images k8s/business-services.yaml
+kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-merchant-service --timeout=240s
+kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-user-service --timeout=240s
+kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-order-service --timeout=240s
+kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-settlement-service --timeout=240s
+kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-fulfillment-service --timeout=240s
+kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-engagement-service --timeout=240s
 
-apply_manifest_with_image k8s/frontend.yaml life-assistant-frontend:dev "${FRONTEND_IMAGE}"
+apply_manifest_with_images k8s/api-gateway.yaml
+kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-api-gateway --timeout=240s
+
+apply_manifest_with_images k8s/frontend.yaml
 kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-frontend --timeout=180s

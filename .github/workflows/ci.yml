@@ -12,12 +12,30 @@ permissions:
   contents: read
 
 jobs:
-  backend-test:
-    name: Backend Tests
+  microservice-test:
+    name: Microservice Tests
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api-gateway
+            path: services/api-gateway
+          - name: merchant-service
+            path: services/merchant-service
+          - name: user-service
+            path: services/user-service
+          - name: order-service
+            path: services/order-service
+          - name: settlement-service
+            path: services/settlement-service
+          - name: fulfillment-service
+            path: services/fulfillment-service
+          - name: engagement-service
+            path: services/engagement-service
     defaults:
       run:
-        working-directory: backend
+        working-directory: ${{ matrix.path }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -29,19 +47,19 @@ jobs:
           java-version: '21'
           cache: gradle
 
-      - name: Run backend tests
+      - name: Run service tests
         run: |
           chmod +x ./gradlew
           ./gradlew --no-daemon test
 
-      - name: Upload backend test reports
+      - name: Upload service test reports
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: backend-test-reports
+          name: test-reports-${{ matrix.name }}
           path: |
-            backend/build/reports/tests/test/
-            backend/build/test-results/test/
+            ${{ matrix.path }}/build/reports/tests/test/
+            ${{ matrix.path }}/build/test-results/test/
           if-no-files-found: warn
 
   frontend-test:
@@ -117,7 +135,7 @@ jobs:
     name: Frontend Build
     runs-on: ubuntu-latest
     needs:
-      - backend-test
+      - microservice-test
       - frontend-test
       - frontend-e2e
     defaults:
@@ -145,13 +163,19 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs:
-      - backend-test
+      - microservice-test
       - frontend-test
       - frontend-e2e
       - frontend-build
     env:
       IMAGE_TAG: ${{ github.sha }}
-      BACKEND_IMAGE: aquared/life-service-assistant:backend-${{ github.sha }}
+      API_GATEWAY_IMAGE: aquared/life-service-assistant:api-gateway-${{ github.sha }}
+      MERCHANT_SERVICE_IMAGE: aquared/life-service-assistant:merchant-service-${{ github.sha }}
+      USER_SERVICE_IMAGE: aquared/life-service-assistant:user-service-${{ github.sha }}
+      ORDER_SERVICE_IMAGE: aquared/life-service-assistant:order-service-${{ github.sha }}
+      SETTLEMENT_SERVICE_IMAGE: aquared/life-service-assistant:settlement-service-${{ github.sha }}
+      FULFILLMENT_SERVICE_IMAGE: aquared/life-service-assistant:fulfillment-service-${{ github.sha }}
+      ENGAGEMENT_SERVICE_IMAGE: aquared/life-service-assistant:engagement-service-${{ github.sha }}
       FRONTEND_IMAGE: aquared/life-service-assistant:frontend-${{ github.sha }}
       MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -173,20 +197,37 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build backend image
-        run: docker build -t "${BACKEND_IMAGE}" ./backend
-
-      - name: Build frontend image
-        run: docker build -t "${FRONTEND_IMAGE}" ./frontend
+      - name: Build images
+        run: |
+          docker build -t "${API_GATEWAY_IMAGE}" -f services/api-gateway/Dockerfile .
+          docker build -t "${MERCHANT_SERVICE_IMAGE}" -f services/merchant-service/Dockerfile .
+          docker build -t "${USER_SERVICE_IMAGE}" -f services/user-service/Dockerfile .
+          docker build -t "${ORDER_SERVICE_IMAGE}" -f services/order-service/Dockerfile .
+          docker build -t "${SETTLEMENT_SERVICE_IMAGE}" -f services/settlement-service/Dockerfile .
+          docker build -t "${FULFILLMENT_SERVICE_IMAGE}" -f services/fulfillment-service/Dockerfile .
+          docker build -t "${ENGAGEMENT_SERVICE_IMAGE}" -f services/engagement-service/Dockerfile .
+          docker build -t "${FRONTEND_IMAGE}" ./frontend
 
       - name: Push images
         run: |
-          docker push "${BACKEND_IMAGE}"
+          docker push "${API_GATEWAY_IMAGE}"
+          docker push "${MERCHANT_SERVICE_IMAGE}"
+          docker push "${USER_SERVICE_IMAGE}"
+          docker push "${ORDER_SERVICE_IMAGE}"
+          docker push "${SETTLEMENT_SERVICE_IMAGE}"
+          docker push "${FULFILLMENT_SERVICE_IMAGE}"
+          docker push "${ENGAGEMENT_SERVICE_IMAGE}"
           docker push "${FRONTEND_IMAGE}"
 
       - name: Load images into kind
         run: |
-          kind load docker-image "${BACKEND_IMAGE}" --name life-assistant-ci
+          kind load docker-image "${API_GATEWAY_IMAGE}" --name life-assistant-ci
+          kind load docker-image "${MERCHANT_SERVICE_IMAGE}" --name life-assistant-ci
+          kind load docker-image "${USER_SERVICE_IMAGE}" --name life-assistant-ci
+          kind load docker-image "${ORDER_SERVICE_IMAGE}" --name life-assistant-ci
+          kind load docker-image "${SETTLEMENT_SERVICE_IMAGE}" --name life-assistant-ci
+          kind load docker-image "${FULFILLMENT_SERVICE_IMAGE}" --name life-assistant-ci
+          kind load docker-image "${ENGAGEMENT_SERVICE_IMAGE}" --name life-assistant-ci
           kind load docker-image "${FRONTEND_IMAGE}" --name life-assistant-ci
 
       - name: Deploy to Kubernetes
@@ -194,13 +235,13 @@ jobs:
 
       - name: Health check
         run: |
-          kubectl port-forward service/life-assistant-backend 18081:8081 > backend-port-forward.log 2>&1 &
-          kubectl port-forward service/life-assistant-frontend 18080:80 > frontend-port-forward.log 2>&1 &
-          for i in {1..30}; do
-            if curl -fsS http://127.0.0.1:18081/api/health && curl -fsS http://127.0.0.1:18080/ > /dev/null; then
+          kubectl port-forward service/api-gateway 18080:8080 > gateway-port-forward.log 2>&1 &
+          kubectl port-forward service/life-assistant-frontend 18081:80 > frontend-port-forward.log 2>&1 &
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:18080/actuator/health && curl -fsS http://127.0.0.1:18081/ > /dev/null; then
               exit 0
             fi
-            sleep 2
+            sleep 3
           done
           echo "Health check failed"
           exit 1
@@ -211,10 +252,10 @@ jobs:
           mkdir -p k8s-diagnostics
           kubectl get all -o wide > k8s-diagnostics/resources.txt || true
           kubectl describe pods > k8s-diagnostics/pods.txt || true
-          kubectl logs deployment/life-assistant-backend --tail=200 > k8s-diagnostics/backend.log 2>&1 || true
-          kubectl logs deployment/life-assistant-frontend --tail=200 > k8s-diagnostics/frontend.log 2>&1 || true
-          kubectl logs deployment/life-assistant-mysql --tail=200 > k8s-diagnostics/mysql.log 2>&1 || true
-          cp backend-port-forward.log k8s-diagnostics/backend-port-forward.log 2>/dev/null || true
+          for deployment in life-assistant-api-gateway life-assistant-merchant-service life-assistant-user-service life-assistant-order-service life-assistant-settlement-service life-assistant-fulfillment-service life-assistant-engagement-service life-assistant-frontend life-assistant-mysql life-assistant-redis life-assistant-nacos; do
+            kubectl logs deployment/${deployment} --tail=200 > k8s-diagnostics/${deployment}.log 2>&1 || true
+          done
+          cp gateway-port-forward.log k8s-diagnostics/gateway-port-forward.log 2>/dev/null || true
           cp frontend-port-forward.log k8s-diagnostics/frontend-port-forward.log 2>/dev/null || true
 
       - name: Upload Kubernetes diagnostics

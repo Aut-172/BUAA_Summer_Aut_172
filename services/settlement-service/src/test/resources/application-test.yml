@@ -11,12 +11,26 @@ spring:
   cloud:
     discovery:
       enabled: false
+    nacos:
+      discovery:
+        enabled: false
+    service-registry:
+      auto-registration:
+        enabled: false
     openfeign:
       client:
         config:
           default:
             connect-timeout: 1000
             read-timeout: 1000
+
+jwt:
+  secret: LifeAssistant2025SecretKeyForJWTTokenGenerationMustBe256BitsLong
+  expiration: 86400000
+
+app:
+  upload:
+    root-dir: uploads
 
 mybatis-plus:
   type-aliases-package: com.example.demo.**.entity

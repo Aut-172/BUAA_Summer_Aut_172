@@ -1,10 +1,23 @@
+x-business-service-env: &business-service-env
+  NACOS_SERVER_ADDR: nacos:8848
+  SPRING_DATASOURCE_USERNAME: root
+  SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
+  SPRING_SQL_INIT_MODE: never
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  REDIS_DATABASE: ${REDIS_DATABASE:-0}
+  JWT_SECRET: ${JWT_SECRET:-LifeAssistant2025SecretKeyForJWTTokenGenerationMustBe256BitsLong}
+  JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+  APP_AUTH_CAPTCHA_ENABLED: ${APP_AUTH_CAPTCHA_ENABLED:-true}
+  APP_UPLOAD_ROOT_DIR: /app/uploads
+  TZ: Asia/Shanghai
+
 services:
   mysql:
     image: mysql:8.4
     container_name: life-assistant-mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-life_assistant}
       TZ: Asia/Shanghai
     ports:
       - "${MYSQL_PORT:-3306}:3306"
@@ -13,7 +26,7 @@ services:
       - --collation-server=utf8mb4_unicode_ci
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./backend/src/main/resources/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./db/microservices/init-microservice-schemas.sql:/docker-entrypoint-initdb.d/01-init-microservice-schemas.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
       interval: 10s
@@ -35,53 +48,188 @@ services:
       retries: 10
       start_period: 10s
 
-  backend:
-    build:
-      context: ./backend
-    image: life-assistant-backend:${APP_VERSION:-dev}
-    networks:
-      default:
-        aliases:
-          - life-assistant-backend
+  nacos:
+    image: nacos/nacos-server:v2.4.3
+    container_name: life-assistant-nacos
     environment:
-      SERVER_PORT: 8081
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-life_assistant}?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
-      SPRING_SQL_INIT_MODE: never
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_DATABASE: ${REDIS_DATABASE:-0}
-      JWT_SECRET: ${JWT_SECRET:-LifeAssistant2025SecretKeyForJWTTokenGenerationMustBe256BitsLong}
-      APP_UPLOAD_ROOT_DIR: /app/uploads
-      APP_UPLOAD_REVIEW_DIR: /app/uploads/reviews
-      APP_BOOTSTRAP_ADMIN_ENABLED: ${APP_BOOTSTRAP_ADMIN_ENABLED:-true}
+      MODE: standalone
+      NACOS_AUTH_ENABLE: "false"
+      JVM_XMS: 256m
+      JVM_XMX: 512m
+      JVM_XMN: 128m
       TZ: Asia/Shanghai
     ports:
-      - "${BACKEND_PORT:-8081}:8081"
-    volumes:
-      - backend-uploads:/app/uploads
+      - "${NACOS_PORT:-8848}:8848"
+      - "${NACOS_GRPC_PORT:-9848}:9848"
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    image: life-assistant-api-gateway:${APP_VERSION:-dev}
+    container_name: life-assistant-api-gateway
+    environment:
+      SERVER_PORT: 8080
+      NACOS_SERVER_ADDR: nacos:8848
+      GATEWAY_CORS_ALLOWED_ORIGINS: ${GATEWAY_CORS_ALLOWED_ORIGINS:-*}
+      TZ: Asia/Shanghai
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    depends_on:
+      nacos:
+        condition: service_started
+      merchant-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+      settlement-service:
+        condition: service_started
+      fulfillment-service:
+        condition: service_started
+      engagement-service:
+        condition: service_started
+
+  merchant-service:
+    build:
+      context: .
+      dockerfile: services/merchant-service/Dockerfile
+    image: life-assistant-merchant-service:${APP_VERSION:-dev}
+    container_name: life-assistant-merchant-service
+    environment:
+      <<: *business-service-env
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/merchant_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    ports:
+      - "${MERCHANT_SERVICE_PORT:-8081}:8081"
     depends_on:
       mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8081/api/health || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 10
-      start_period: 60s
+      nacos:
+        condition: service_started
+    volumes:
+      - merchant-uploads:/app/uploads
+
+  user-service:
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
+    image: life-assistant-user-service:${APP_VERSION:-dev}
+    container_name: life-assistant-user-service
+    environment:
+      <<: *business-service-env
+      SERVER_PORT: 8082
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/user_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true&allowPublicKeyRetrieval=true
+    ports:
+      - "${USER_SERVICE_PORT:-8082}:8082"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+    volumes:
+      - user-uploads:/app/uploads
+
+  order-service:
+    build:
+      context: .
+      dockerfile: services/order-service/Dockerfile
+    image: life-assistant-order-service:${APP_VERSION:-dev}
+    container_name: life-assistant-order-service
+    environment:
+      <<: *business-service-env
+      SERVER_PORT: 8083
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/order_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    ports:
+      - "${ORDER_SERVICE_PORT:-8083}:8083"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+
+  settlement-service:
+    build:
+      context: .
+      dockerfile: services/settlement-service/Dockerfile
+    image: life-assistant-settlement-service:${APP_VERSION:-dev}
+    container_name: life-assistant-settlement-service
+    environment:
+      <<: *business-service-env
+      SERVER_PORT: 8084
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/settlement_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    ports:
+      - "${SETTLEMENT_SERVICE_PORT:-8084}:8084"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+
+  fulfillment-service:
+    build:
+      context: .
+      dockerfile: services/fulfillment-service/Dockerfile
+    image: life-assistant-fulfillment-service:${APP_VERSION:-dev}
+    container_name: life-assistant-fulfillment-service
+    environment:
+      <<: *business-service-env
+      SERVER_PORT: 8085
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/fulfillment_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true&allowPublicKeyRetrieval=true
+    ports:
+      - "${FULFILLMENT_SERVICE_PORT:-8085}:8085"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+    volumes:
+      - fulfillment-uploads:/app/uploads
+
+  engagement-service:
+    build:
+      context: .
+      dockerfile: services/engagement-service/Dockerfile
+    image: life-assistant-engagement-service:${APP_VERSION:-dev}
+    container_name: life-assistant-engagement-service
+    environment:
+      <<: *business-service-env
+      SERVER_PORT: 8086
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/engagement_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true&allowPublicKeyRetrieval=true
+      APP_UPLOAD_REVIEW_DIR: /app/uploads/reviews
+    ports:
+      - "${ENGAGEMENT_SERVICE_PORT:-8086}:8086"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+    volumes:
+      - engagement-uploads:/app/uploads
 
   frontend:
     build:
       context: ./frontend
     image: life-assistant-frontend:${APP_VERSION:-dev}
+    container_name: life-assistant-frontend
     ports:
       - "${FRONTEND_PORT:-5173}:80"
     depends_on:
-      backend:
-        condition: service_healthy
+      api-gateway:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
       interval: 15s
@@ -92,4 +240,7 @@ services:
 volumes:
   mysql-data:
   redis-data:
-  backend-uploads:
+  merchant-uploads:
+  user-uploads:
+  fulfillment-uploads:
+  engagement-uploads:

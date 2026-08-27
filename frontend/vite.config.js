@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 
-const backendUrl = process.env.VITE_BACKEND_URL || 'http://localhost:8081';
+const gatewayUrl = process.env.VITE_GATEWAY_URL || 'http://localhost:8080';
 
 export default defineConfig({
   test: {
@@ -13,12 +13,12 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: backendUrl,
+        target: gatewayUrl,
         changeOrigin: true,
         secure: false
       },
       '/uploads': {
-        target: backendUrl,
+        target: gatewayUrl,
         changeOrigin: true,
         secure: false
       }
