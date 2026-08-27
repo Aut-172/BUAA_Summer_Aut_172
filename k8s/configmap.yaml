@@ -15,4 +15,7 @@ data:
   redis-port: "6379"
   app-upload-root-dir: /app/uploads
   app-upload-review-dir: /app/uploads/reviews
+  app-upload-max-image-size-bytes: "20971520"
+  spring-servlet-multipart-max-file-size: 20MB
+  spring-servlet-multipart-max-request-size: 120MB
   app-auth-captcha-enabled: "true"

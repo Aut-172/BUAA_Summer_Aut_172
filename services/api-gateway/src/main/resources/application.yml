@@ -63,7 +63,7 @@ spring:
         - id: engagement-service
           uri: lb://engagement-service
           predicates:
-            - Path=/api/reviews/**,/api/messages/**,/uploads/**
+            - Path=/api/reviews/**,/api/messages/**,/api/uploads/**,/uploads/**
 
         - id: order-service
           uri: lb://order-service

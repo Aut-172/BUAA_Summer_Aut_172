@@ -304,6 +304,12 @@ spec:
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-upload-root-dir } }
             - name: APP_UPLOAD_REVIEW_DIR
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-upload-review-dir } }
+            - name: APP_UPLOAD_MAX_IMAGE_SIZE_BYTES
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-upload-max-image-size-bytes } }
+            - name: SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: spring-servlet-multipart-max-file-size } }
+            - name: SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: spring-servlet-multipart-max-request-size } }
             - { name: TZ, value: Asia/Shanghai }
           readinessProbe: { httpGet: { path: /api/health, port: 8086 }, initialDelaySeconds: 20, periodSeconds: 5, timeoutSeconds: 3, failureThreshold: 20 }
           livenessProbe: { httpGet: { path: /api/health, port: 8086 }, initialDelaySeconds: 60, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 5 }

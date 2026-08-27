@@ -231,6 +231,9 @@ services:
       SERVER_PORT: 8086
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/engagement_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true&allowPublicKeyRetrieval=true
       APP_UPLOAD_REVIEW_DIR: /app/uploads/reviews
+      APP_UPLOAD_MAX_IMAGE_SIZE_BYTES: ${APP_UPLOAD_MAX_IMAGE_SIZE_BYTES:-20971520}
+      SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:-20MB}
+      SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:-120MB}
     ports:
       - "${ENGAGEMENT_SERVICE_PORT:-8086}:8086"
     depends_on:

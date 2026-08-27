@@ -47,6 +47,16 @@ public class ReviewController {
     }
 
     /**
+     * 上传通用图片
+     * POST /api/uploads/images
+     */
+    @PostMapping(value = "/uploads/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Result<List<String>> uploadImages(@RequestParam("files") List<MultipartFile> files,
+                                             @RequestParam(value = "scene", defaultValue = "common") String scene) {
+        return Result.success(reviewService.uploadImages(files, scene));
+    }
+
+    /**
      * 获取商品评价列表
      * GET /api/products/{id}/reviews
      */

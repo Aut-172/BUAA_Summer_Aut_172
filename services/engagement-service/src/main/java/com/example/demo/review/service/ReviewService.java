@@ -39,7 +39,7 @@ public class ReviewService {
     private static final int MAX_CONTENT_LENGTH = 200;
     private static final int MAX_IMAGE_COUNT = 6;
     private static final int MAX_IMAGE_URL_LENGTH = 500;
-    private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024L;
+    private static final long DEFAULT_MAX_IMAGE_SIZE = 20 * 1024 * 1024L;
 
     private final ReviewMapper reviewMapper;
     private final OrderClient orderClient;
@@ -50,6 +50,12 @@ public class ReviewService {
 
     @Value("${app.upload.review-dir:uploads/reviews}")
     private String reviewUploadDir;
+
+    @Value("${app.upload.root-dir:uploads}")
+    private String uploadRootDir;
+
+    @Value("${app.upload.max-image-size-bytes:20971520}")
+    private long maxImageSizeBytes;
 
     @Transactional
     public List<ReviewVO> submitReview(Long userId, ReviewRequest request) {
@@ -158,18 +164,23 @@ public class ReviewService {
     }
 
     public List<String> uploadReviewImages(List<MultipartFile> files) {
+        return uploadImages(files, "reviews");
+    }
+
+    public List<String> uploadImages(List<MultipartFile> files, String scene) {
         if (files == null || files.isEmpty()) {
-            throw BusinessException.badRequest("请选择要上传的评价图片");
+            throw BusinessException.badRequest("请选择要上传的图片");
         }
         if (files.size() > MAX_IMAGE_COUNT) {
-            throw BusinessException.badRequest("评价图片不能超过" + MAX_IMAGE_COUNT + "张");
+            throw BusinessException.badRequest("图片不能超过" + MAX_IMAGE_COUNT + "张");
         }
 
-        Path uploadDir = Paths.get(reviewUploadDir).toAbsolutePath().normalize();
+        String safeScene = normalizeUploadScene(scene);
+        Path uploadDir = resolveUploadDir(safeScene);
         try {
             Files.createDirectories(uploadDir);
         } catch (IOException e) {
-            throw BusinessException.badRequest("评价图片目录创建失败");
+            throw BusinessException.badRequest("图片目录创建失败");
         }
 
         List<String> urls = new ArrayList<>();
@@ -177,8 +188,9 @@ public class ReviewService {
             if (file == null || file.isEmpty()) {
                 continue;
             }
-            if (file.getSize() > MAX_IMAGE_SIZE) {
-                throw BusinessException.badRequest("单张评价图片不能超过5MB");
+            long maxSize = maxImageSizeBytes > 0 ? maxImageSizeBytes : DEFAULT_MAX_IMAGE_SIZE;
+            if (file.getSize() > maxSize) {
+                throw BusinessException.badRequest("单张图片不能超过" + (maxSize / 1024 / 1024) + "MB");
             }
             String contentType = file.getContentType();
             if (contentType == null || !contentType.toLowerCase().startsWith("image/")) {
@@ -193,15 +205,35 @@ public class ReviewService {
             try {
                 Files.copy(file.getInputStream(), target);
             } catch (IOException e) {
-                throw BusinessException.badRequest("评价图片上传失败");
+                throw BusinessException.badRequest("图片上传失败");
             }
-            urls.add("/uploads/reviews/" + fileName);
+            urls.add("/uploads/" + safeScene + "/" + fileName);
         }
 
         if (urls.isEmpty()) {
-            throw BusinessException.badRequest("请选择有效的评价图片");
+            throw BusinessException.badRequest("请选择有效的图片");
         }
         return urls;
+    }
+
+    private String normalizeUploadScene(String scene) {
+        String value = scene == null || scene.isBlank() ? "common" : scene.trim().toLowerCase();
+        if (!value.matches("[a-z0-9_-]{1,32}")) {
+            throw BusinessException.badRequest("图片场景不合法");
+        }
+        return value;
+    }
+
+    private Path resolveUploadDir(String scene) {
+        if ("reviews".equals(scene)) {
+            return Paths.get(reviewUploadDir).toAbsolutePath().normalize();
+        }
+        Path root = Paths.get(uploadRootDir).toAbsolutePath().normalize();
+        Path uploadDir = root.resolve(scene).normalize();
+        if (!uploadDir.startsWith(root)) {
+            throw BusinessException.badRequest("图片目录不合法");
+        }
+        return uploadDir;
     }
 
     private List<ReviewVO> buildReviewVOs(List<Review> reviews) {
