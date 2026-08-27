@@ -1,10 +1,10 @@
 # 生活服务项目
 
-这是一个前后端分离的校园生活服务/外卖演示项目，当前版本已经可以跑通从找店、下单、支付到履约完成的完整主流程。
+这是一个前后端分离的校园生活服务项目，当前版本已经可以跑通从找店、下单、支付、商家处理、骑手配送到用户确认完成的完整主流程。
 
 - `frontend/`：基于 Vite + React 的电脑端前端
 - `backend/`：基于 Spring Boot + MyBatis-Plus 的后端
-- `scripts/`：数据库初始化、接口联调测试、演示数据生成脚本
+- `scripts/`：数据库初始化、接口联调测试、基础数据维护脚本
 
 目前已经支持的核心功能：
 
@@ -15,7 +15,7 @@
 - 订单支付
 - 商家查看订单
 - 骑手接单与配送
-- 用户查看配送状态并确认完成
+- 用户查看订单状态并确认完成
 - 管理员查看平台数据
 
 ## 1. 技术栈
@@ -91,9 +91,9 @@ powershell -ExecutionPolicy Bypass -File scripts\init-db.ps1 -DockerContainer �
 
 - 创建数据库（如果不存在）
 - 重建数据表
-- 插入基础演示数据
+- 插入基础业务数据
 
-注意：`init.sql` 会重建数据表，重新执行会清空已有演示数据。
+注意：`init.sql` 会重建数据表，重新执行会清空已有本地数据。
 
 ## 6. Docker Compose 一键启动
 
@@ -192,15 +192,15 @@ aquared/life-service-assistant:frontend-<commit-sha>
 
 不要把 Docker Hub token 写入 README、脚本、workflow 或提交记录。
 
-## 9. 补充演示商家与商品数据
+## 9. 补充商家与商品数据
 
-如果希望首页、商家列表、商品展示更饱满一些，可以执行：
+如果本地联调需要更完整的商家列表和商品展示数据，可以执行：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\seed-showcase-merchants.ps1
 ```
 
-该脚本会通过项目接口自动注册一批演示商家，并为每个商家生成展示商品。
+该脚本会通过项目接口自动注册一批商家，并为每个商家生成商品数据。
 
 ## 10. 启动后端
 
@@ -252,23 +252,18 @@ npm.cmd run dev
 
 1. 启动 MySQL
 2. 执行 `scripts\init-db.ps1`
-3. 如需更多展示数据，执行 `scripts\seed-showcase-merchants.ps1`
+3. 如需更多商家和商品数据，执行 `scripts\seed-showcase-merchants.ps1`
 4. 启动后端：`backend\gradlew.bat bootRun`
 5. 启动前端：`frontend\npm.cmd run dev`
 6. 打开 `http://localhost:5173`
 
 如果使用 Docker Compose，只需执行 `docker compose up --build`。
 
-## 13. 演示账号
+## 13. 账号准备
 
-项目内置测试账号如下：
+项目不再提供前端预置账号填充入口。普通用户、商家和骑手可在登录页注册账号；商家和骑手账号注册后需要管理员审核通过，才能使用对应工作台功能。
 
-- 普通用户：`demo / 123456`
-- 商家：`merchant1 / 123456`
-- 骑手：`rider01 / 123456`
-- 管理员：`gl1 / gl1gl1gl1`
-
-前端也支持直接注册新的普通用户、商家和骑手账号，用于实际测试。
+管理员账号由部署环境或数据库初始化流程配置。请按团队当前环境准备管理员登录信息，不要在仓库文档中公开通用口令。
 
 ## 14. 如何验证业务流程
 
@@ -282,7 +277,9 @@ npm.cmd run dev
 6. 切换为骑手账号登录
 7. 接单并更新配送状态
 8. 切回普通用户账号
-9. 打开配送页面并确认完成
+9. 在订单页查看订单状态并确认完成
+
+说明：用户侧不再提供独立的“查看配送情况”页面，也不再展示与地图定位绑定的配送追踪功能；骑手接单和配送状态流转仍然保留。
 
 ### 后端接口联调测试
 
@@ -300,7 +297,6 @@ powershell -ExecutionPolicy Bypass -File scripts\e2e-backend-test.ps1
 - 支付
 - 商家订单查询
 - 骑手任务状态更新
-- 配送单查询
 - 订单完成
 - 支付记录查询
 - 管理员用户查询
@@ -353,18 +349,12 @@ npm.cmd run e2e:direct
 - 用户名和密码是否正确
 - `DB_URL`、`DB_USERNAME`、`DB_PASSWORD` 是否设置正确
 
-### 想重置演示数据
+### 想重置本地数据
 
 重新执行：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\init-db.ps1
-```
-
-如需补充展示数据，再执行：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\seed-showcase-merchants.ps1
 ```
 
 ### PowerShell 中骑手状态文字乱码
@@ -390,10 +380,4 @@ npm.cmd run build
 ```powershell
 cd ..
 powershell -ExecutionPolicy Bypass -File scripts\e2e-backend-test.ps1
-```
-
-如果还需要给组内同学演示前端页面效果，建议额外执行：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\seed-showcase-merchants.ps1
 ```
