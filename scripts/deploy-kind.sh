@@ -8,6 +8,15 @@ NAMESPACE="${K8S_NAMESPACE:-default}"
 MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-123456}"
 JWT_SECRET="${JWT_SECRET:-LifeAssistant2025SecretKeyForJWTTokenGenerationMustBe256BitsLong}"
 
+apply_manifest_with_image() {
+  local manifest="$1"
+  local default_image="$2"
+  local target_image="$3"
+
+  sed "s|image: ${default_image}|image: ${target_image}|g" "$manifest" \
+    | kubectl apply -n "$NAMESPACE" -f -
+}
+
 kubectl apply -n "$NAMESPACE" -f k8s/configmap.yaml
 
 kubectl create secret generic life-assistant-secret \
@@ -26,10 +35,8 @@ kubectl create configmap life-assistant-db-init \
 kubectl apply -n "$NAMESPACE" -f k8s/mysql.yaml
 kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-mysql --timeout=240s
 
-kubectl apply -n "$NAMESPACE" -f k8s/backend.yaml
-kubectl set image -n "$NAMESPACE" deployment/life-assistant-backend backend="${BACKEND_IMAGE}"
+apply_manifest_with_image k8s/backend.yaml life-assistant-backend:dev "${BACKEND_IMAGE}"
 kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-backend --timeout=240s
 
-kubectl apply -n "$NAMESPACE" -f k8s/frontend.yaml
-kubectl set image -n "$NAMESPACE" deployment/life-assistant-frontend frontend="${FRONTEND_IMAGE}"
+apply_manifest_with_image k8s/frontend.yaml life-assistant-frontend:dev "${FRONTEND_IMAGE}"
 kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-frontend --timeout=180s
