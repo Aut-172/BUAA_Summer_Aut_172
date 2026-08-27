@@ -1,4 +1,4 @@
-package com.example.demo.merchant.dto;
+package com.example.demo.common.contract.merchant;
 
 import lombok.Data;
 

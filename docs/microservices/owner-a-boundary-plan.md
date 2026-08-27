@@ -245,6 +245,25 @@ LoadBalancer
 
 当前阶段不引入额外消息队列、注册中心或配置中心技术。跨服务调用统一按 OpenFeign + LoadBalancer 规划，服务注册发现按 Nacos 规划，统一前端入口按 Gateway 规划。
 
+本分支已新增 `order-service` 骨架：
+
+1. 使用 `services/common-lib` 作为公共依赖。
+2. 独立拥有 `orders`、`order_item`、`group_coupon` 三张表。
+3. 提供 `GET /internal/orders/{orderId}` 内部订单快照接口。
+4. 提供 `POST /internal/orders/{orderId}/mark-paid` 支付成功推进接口。
+5. 通过 `MerchantProductClient` 预留 OpenFeign 调用 `merchant-service /internal/products/quote` 的模板。
+6. 暂不开放用户端订单接口，也不替换单体 `backend/` 中的下单流程。
+
+本分支已新增 `settlement-service` 骨架：
+
+1. 使用 `services/common-lib` 作为公共依赖。
+2. 独立拥有 `coupon`、`user_coupon`、`payment` 三张表。
+3. 提供 `POST /internal/coupon-locks` 优惠券锁定接口。
+4. 提供 `POST /internal/coupon-locks/{orderId}/release` 优惠券释放接口。
+5. 提供 `POST /internal/coupon-locks/{orderId}/confirm` 优惠券核销接口。
+6. 提供 `POST /internal/payments/mock-success` 模拟支付成功接口，并通过 OpenFeign 调用 `order-service /internal/orders/{orderId}/mark-paid`。
+7. 暂不开放用户端领券/支付页面接口，也不替换单体 `backend/` 中的支付和优惠券流程。
+
 建议账号：
 
 | 服务 | schema | 数据库账号 |
@@ -294,3 +313,45 @@ services/merchant-service
 | `GET /api/search` | 商家名、标签、商品名搜索，只返回 active 商家 |
 | `GET /api/recommend` | 按评分、销量、距离权重推荐 active 商家 |
 | `POST /internal/products/quote` | 面向订单/用户服务的商品报价和库存校验 |
+
+## 11. 第二轮服务目录
+
+```text
+services/order-service
+```
+
+当前内部接口：
+
+| 接口 | 说明 |
+| --- | --- |
+| `GET /internal/orders/{orderId}` | 返回订单状态、金额、参与人 ID、地址快照和订单明细快照 |
+| `POST /internal/orders/{orderId}/mark-paid` | 结算服务支付成功后推进 `pending_payment -> pending_accept`，校验支付金额并保持已支付订单幂等 |
+
+当前 OpenFeign 调用模板：
+
+| Client | 目标服务 | 目标接口 | 用途 |
+| --- | --- | --- | --- |
+| `MerchantProductClient` | `merchant-service` | `POST /internal/products/quote` | 下单前获取商品价格、规格、库存和可购买状态 |
+
+## 12. 第三轮服务目录
+
+```text
+services/settlement-service
+```
+
+当前内部接口：
+
+| 接口 | 说明 |
+| --- | --- |
+| `POST /internal/coupon-locks` | 下单时锁定用户优惠券，校验券状态、有效期和门槛 |
+| `POST /internal/coupon-locks/{orderId}/release` | 订单取消或下单失败时释放已锁定优惠券 |
+| `POST /internal/coupon-locks/{orderId}/confirm` | 订单完成时将锁定优惠券核销为 used |
+| `POST /internal/payments/mock-success` | 写入模拟支付成功流水，并调用订单服务推进订单状态 |
+
+当前 OpenFeign 调用模板：
+
+| Client | 目标服务 | 目标接口 | 用途 |
+| --- | --- | --- | --- |
+| `OrderClient` | `order-service` | `POST /internal/orders/{orderId}/mark-paid` | 支付成功后推进订单为待接单 |
+
+至此，当前分支已经形成 3 个业务微服务骨架：`merchant-service`、`order-service`、`settlement-service`。每个服务都可以独立构建，且只管理自己的业务表。

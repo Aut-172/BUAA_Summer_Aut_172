@@ -35,6 +35,13 @@ implementation 'com.example:microservice-common:0.1.0-SNAPSHOT'
 | `com.example.demo.config.JacksonConfig` | Long ID 序列化为字符串 |
 | `com.example.demo.common.contract.ServiceNames` | Nacos/OpenFeign/Gateway 使用的服务名常量 |
 | `com.example.demo.common.contract.InternalHeaders` | 内部调用请求头常量 |
+| `com.example.demo.common.contract.merchant.ProductQuoteRequest` | 商家商品报价内部接口请求契约 |
+| `com.example.demo.common.contract.merchant.ProductQuoteResponse` | 商家商品报价内部接口响应契约 |
+| `com.example.demo.common.contract.order.MarkPaidRequest` | 订单支付成功推进内部接口请求契约 |
+| `com.example.demo.common.contract.order.OrderInternalResponse` | 订单内部查询响应契约 |
+| `com.example.demo.common.contract.settlement.CouponLockRequest` | 优惠券锁定内部接口请求契约 |
+| `com.example.demo.common.contract.settlement.CouponLockResponse` | 优惠券锁定/释放/核销响应契约 |
+| `com.example.demo.common.contract.settlement.MockPayRequest` | 模拟支付成功请求契约 |
 
 ## 3. 不放入公共包的内容
 
@@ -47,7 +54,9 @@ implementation 'com.example:microservice-common:0.1.0-SNAPSHOT'
 | `Merchant`、`Product`、`Orders`、`User` 等业务实体 | 实体代表表归属，必须留在 Owner 服务 |
 | Mapper/Repository | 其他服务不能通过公共包绕过 Owner 服务直接查表 |
 | 下单、支付、评价等业务规则 | 业务规则属于对应服务，不应共享成隐式耦合 |
-| 具体 Feign Client 接口 | Client 应放在调用方或独立 contract 包中，避免公共包反向依赖业务服务 |
+| 具体 Feign Client 接口 | Client 应放在调用方，避免公共包反向依赖业务服务 |
+
+允许放入公共包的业务相关内容只有 `/internal/**` 跨服务接口契约 DTO，并且必须放在 `com.example.demo.common.contract.<owner-service>` 下。它们只能描述请求/响应结构，不能携带数据库注解、Mapper 或业务计算逻辑。
 
 ## 4. 技术栈约束
 
@@ -70,6 +79,8 @@ LoadBalancer
 | LoadBalancer | OpenFeign 根据 Nacos 服务实例做客户端负载均衡 |
 
 当前阶段只建立公共包和 `merchant-service` 小闭环，暂不强制引入 Nacos/Gateway/OpenFeign。等第二个业务服务开始调用 `merchant-service` 时，再添加 OpenFeign 和 LoadBalancer；等前端需要统一入口时，再添加 Gateway；本地和 CI 环境需要动态发现时，再接 Nacos。
+
+当前 `order-service` 和 `settlement-service` 已加入 OpenFeign 和 LoadBalancer 依赖。`order-service` 通过 `MerchantProductClient` 定义了调用 `merchant-service` 商品报价接口的模板；`settlement-service` 通过 `OrderClient` 定义了支付成功后推进订单状态的模板。由于本地还没有 Gateway/Nacos 运行环境，服务注册发现仍留到后续部署阶段接入。
 
 ## 5. 跨服务调用约定
 

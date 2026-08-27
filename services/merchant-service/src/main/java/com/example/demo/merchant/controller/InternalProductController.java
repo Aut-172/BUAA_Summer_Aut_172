@@ -1,8 +1,8 @@
 package com.example.demo.merchant.controller;
 
 import com.example.demo.common.Result;
-import com.example.demo.merchant.dto.ProductQuoteRequest;
-import com.example.demo.merchant.dto.ProductQuoteResponse;
+import com.example.demo.common.contract.merchant.ProductQuoteRequest;
+import com.example.demo.common.contract.merchant.ProductQuoteResponse;
 import com.example.demo.merchant.service.MerchantProductInternalService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
