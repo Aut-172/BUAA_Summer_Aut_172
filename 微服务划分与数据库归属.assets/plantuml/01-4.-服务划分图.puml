@@ -1,0 +1,58 @@
+@startuml
+title 生活助手后端目标微服务划分
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+actor "前端 React" as FE
+component "API Gateway\n路由 / 鉴权透传 / 限流" as GW <<基础设施>>
+queue "Message Broker\n领域事件 / Outbox 投递" as MQ <<基础设施>>
+
+package "业务微服务" {
+  component "用户服务\nuser-service\n用户资料 / 地址 / 购物车 / 收藏" as UserSvc
+  component "商家商品服务\nmerchant-service\n商家档案 / 门店 / 分类 / 商品 / 库存" as MerchantSvc
+  component "订单服务\norder-service\n下单 / 订单状态 / 订单明细 / 团购券码" as OrderSvc
+  component "结算营销服务\nsettlement-service\n优惠券 / 用户券 / 支付流水" as SettlementSvc
+  component "配送履约服务\nfulfillment-service\n骑手档案 / 接单 / 配送任务视图" as FulfillmentSvc
+  component "互动内容服务\nengagement-service\n评价 / 订单会话 / 未读消息" as EngagementSvc
+}
+
+database "user_db\nuser, admin, address, cart,\nuser_favorite_merchant" as UserDb
+database "merchant_db\nmerchant, category, product,\nspec_group, product_spec" as MerchantDb
+database "order_db\norders, order_item, group_coupon" as OrderDb
+database "settlement_db\ncoupon, user_coupon, payment" as SettlementDb
+database "fulfillment_db\nrider" as FulfillmentDb
+database "engagement_db\nreview, message" as EngagementDb
+
+FE --> GW
+GW --> UserSvc
+GW --> MerchantSvc
+GW --> OrderSvc
+GW --> SettlementSvc
+GW --> FulfillmentSvc
+GW --> EngagementSvc
+
+UserSvc --> UserDb
+MerchantSvc --> MerchantDb
+OrderSvc --> OrderDb
+SettlementSvc --> SettlementDb
+FulfillmentSvc --> FulfillmentDb
+EngagementSvc --> EngagementDb
+
+OrderSvc --> MerchantSvc : 校验商家/商品\n预占/释放库存
+OrderSvc --> SettlementSvc : 锁定/释放/确认优惠券
+SettlementSvc --> OrderSvc : 支付成功后确认订单已支付
+FulfillmentSvc --> OrderSvc : 查询可接订单\n接单/送达状态变更
+EngagementSvc --> OrderSvc : 校验订单参与人\n标记订单明细已评价
+EngagementSvc --> UserSvc : 查询用户展示信息
+EngagementSvc --> MerchantSvc : 查询商品展示信息
+UserSvc --> MerchantSvc : 购物车/收藏校验商家商品
+
+OrderSvc --> MQ : OrderCreated / OrderPaid / OrderCancelled / OrderCompleted
+SettlementSvc --> MQ : PaymentSucceeded / CouponLocked / CouponReleased
+EngagementSvc --> MQ : ReviewCreated / MessageSent
+MerchantSvc <-- MQ : 更新销量、评分、库存投影
+UserSvc <-- MQ : 清理购物车、刷新收藏投影
+
+@enduml

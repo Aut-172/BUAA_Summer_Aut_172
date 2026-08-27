@@ -21,6 +21,10 @@ tools/plantuml.jar
 *.puml
 !需求追溯表.assets/plantuml/*.png
 !需求追溯表.assets/plantuml/*.puml
+!微服务划分与数据库归属.assets/
+!微服务划分与数据库归属.assets/plantuml/
+!微服务划分与数据库归属.assets/plantuml/*.png
+!微服务划分与数据库归属.assets/plantuml/*.puml
 "gradle-9.5.1-bin.zip"
 
 # Local startup environment overrides
