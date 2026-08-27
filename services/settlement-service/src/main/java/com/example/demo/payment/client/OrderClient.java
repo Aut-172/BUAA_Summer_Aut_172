@@ -7,11 +7,15 @@ import com.example.demo.common.contract.order.OrderInternalResponse;
 import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(name = ServiceNames.ORDER_SERVICE, path = "/internal/orders")
 public interface OrderClient {
+
+    @GetMapping("/{orderId}")
+    Result<OrderInternalResponse> getOrder(@PathVariable Long orderId);
 
     @PostMapping("/{orderId}/mark-paid")
     Result<OrderInternalResponse> markPaid(@PathVariable Long orderId,

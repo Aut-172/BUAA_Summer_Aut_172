@@ -40,6 +40,12 @@ spring:
           predicates:
             - Path=/api/auth/rider/**
 
+        - id: merchant-order-service
+          uri: lb://order-service
+          order: -20
+          predicates:
+            - Path=/api/merchant/orders,/api/merchant/orders/**
+
         - id: engagement-review-public
           uri: lb://engagement-service
           predicates:
@@ -49,6 +55,18 @@ spring:
           uri: lb://merchant-service
           predicates:
             - Path=/api/merchants/**,/api/products/**,/api/categories,/api/search,/api/recommend,/api/merchant/**
+
+        - id: settlement-service
+          uri: lb://settlement-service
+          order: -20
+          predicates:
+            - Path=/api/coupons,/api/coupons/**,/api/payments/**,/api/orders/*/pay,/api/orders/*/payments
+
+        - id: admin-order-service
+          uri: lb://order-service
+          order: -20
+          predicates:
+            - Path=/api/admin/orders,/api/admin/orders/**
 
         - id: user-service
           uri: lb://user-service
@@ -68,12 +86,7 @@ spring:
         - id: order-service
           uri: lb://order-service
           predicates:
-            - Path=/api/checkout,/api/orders/**,/api/merchant/orders/**
-
-        - id: settlement-service
-          uri: lb://settlement-service
-          predicates:
-            - Path=/api/coupons/**,/api/payments/**,/api/orders/*/pay,/api/orders/*/payments
+            - Path=/api/checkout,/api/orders,/api/orders/**,/api/merchant/orders,/api/merchant/orders/**
 
 management:
   endpoints:

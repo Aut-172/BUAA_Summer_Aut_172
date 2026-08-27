@@ -9,7 +9,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = ServiceNames.MERCHANT_SERVICE, path = "/internal/products")
+@FeignClient(contextId = "orderMerchantProductClient", name = ServiceNames.MERCHANT_SERVICE, path = "/internal/products")
 public interface MerchantProductClient {
 
     @PostMapping("/quote")

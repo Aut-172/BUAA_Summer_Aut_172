@@ -1,9 +1,11 @@
 package com.example.demo.coupon.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.example.demo.common.BusinessException;
 import com.example.demo.common.contract.settlement.CouponLockRequest;
 import com.example.demo.common.contract.settlement.CouponLockResponse;
+import com.example.demo.coupon.dto.CouponVO;
 import com.example.demo.coupon.entity.Coupon;
 import com.example.demo.coupon.entity.UserCoupon;
 import com.example.demo.coupon.mapper.CouponMapper;
@@ -14,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,12 +31,90 @@ public class SettlementCouponService {
     private final CouponMapper couponMapper;
     private final UserCouponMapper userCouponMapper;
 
+    public List<CouponVO> getUserCoupons(Long userId) {
+        List<UserCoupon> userCoupons = userCouponMapper.selectList(
+                new LambdaQueryWrapper<UserCoupon>()
+                        .eq(UserCoupon::getUserId, userId)
+                        .orderByDesc(UserCoupon::getCreateTime)
+        );
+
+        return userCoupons.stream()
+                .map(userCoupon -> {
+                    Coupon coupon = couponMapper.selectById(userCoupon.getCouponId());
+                    if (coupon == null) {
+                        return null;
+                    }
+                    CouponVO vo = toCouponVO(coupon);
+                    vo.setStatus(userCoupon.getStatus());
+                    return vo;
+                })
+                .filter(vo -> vo != null)
+                .collect(Collectors.toList());
+    }
+
+    public List<CouponVO> getAvailableCoupons() {
+        LocalDateTime now = LocalDateTime.now();
+        return couponMapper.selectList(
+                        new LambdaQueryWrapper<Coupon>()
+                                .eq(Coupon::getStatus, STATUS_RELEASED)
+                                .le(Coupon::getStartTime, now)
+                                .ge(Coupon::getEndTime, now)
+                                .orderByAsc(Coupon::getThreshold)
+                ).stream()
+                .map(this::toCouponVO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public CouponVO claimCoupon(Long userId, Long couponId) {
+        Coupon coupon = couponMapper.selectById(couponId);
+        if (coupon == null) {
+            throw BusinessException.notFound("优惠券不存在");
+        }
+        validateCoupon(coupon, coupon.getThreshold() == null ? BigDecimal.ZERO : coupon.getThreshold());
+
+        int claimedCount = coupon.getClaimedCount() == null ? 0 : coupon.getClaimedCount();
+        int totalCount = coupon.getTotalCount() == null ? 0 : coupon.getTotalCount();
+        if (totalCount <= 0 || claimedCount >= totalCount) {
+            throw BusinessException.badRequest("该优惠券已被领完");
+        }
+
+        Long userClaimed = userCouponMapper.selectCount(
+                new LambdaQueryWrapper<UserCoupon>()
+                        .eq(UserCoupon::getUserId, userId)
+                        .eq(UserCoupon::getCouponId, couponId)
+        );
+        int limitPerUser = coupon.getLimitPerUser() == null ? 1 : coupon.getLimitPerUser();
+        if (limitPerUser <= 0 || userClaimed >= limitPerUser) {
+            throw BusinessException.badRequest("已达到领取上限");
+        }
+
+        UserCoupon userCoupon = new UserCoupon();
+        userCoupon.setUserId(userId);
+        userCoupon.setCouponId(couponId);
+        userCoupon.setStatus(USER_COUPON_UNUSED);
+        userCoupon.setClaimedAt(LocalDateTime.now());
+        userCouponMapper.insert(userCoupon);
+
+        couponMapper.update(null,
+                new LambdaUpdateWrapper<Coupon>()
+                        .eq(Coupon::getId, couponId)
+                        .set(Coupon::getClaimedCount, claimedCount + 1));
+
+        CouponVO vo = toCouponVO(coupon);
+        vo.setStatus(USER_COUPON_UNUSED);
+        return vo;
+    }
+
     @Transactional
     public CouponLockResponse lockCoupon(CouponLockRequest request) {
         UserCoupon userCoupon = userCouponMapper.selectOne(
                 new LambdaQueryWrapper<UserCoupon>()
                         .eq(UserCoupon::getUserId, request.getUserId())
                         .eq(UserCoupon::getCouponId, request.getCouponId())
+                        .and(w -> w.eq(UserCoupon::getStatus, USER_COUPON_UNUSED)
+                                .or(q -> q.eq(UserCoupon::getStatus, USER_COUPON_LOCKED)
+                                        .eq(UserCoupon::getOrderId, request.getOrderId())))
                         .last("limit 1")
         );
         if (userCoupon == null) {
@@ -133,5 +215,23 @@ public class SettlementCouponService {
         response.setStatus("none");
         response.setMessage(message);
         return response;
+    }
+
+    private CouponVO toCouponVO(Coupon coupon) {
+        return CouponVO.builder()
+                .id(coupon.getId())
+                .title(coupon.getName())
+                .description(buildCouponDescription(coupon))
+                .threshold(coupon.getThreshold())
+                .discount(coupon.getDiscount())
+                .expireAt(coupon.getEndTime())
+                .build();
+    }
+
+    private String buildCouponDescription(Coupon coupon) {
+        BigDecimal threshold = coupon.getThreshold() == null ? BigDecimal.ZERO : coupon.getThreshold();
+        BigDecimal discount = coupon.getDiscount() == null ? BigDecimal.ZERO : coupon.getDiscount();
+        return "满" + threshold.stripTrailingZeros().toPlainString()
+                + "减" + discount.stripTrailingZeros().toPlainString();
     }
 }

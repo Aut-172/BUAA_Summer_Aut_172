@@ -26,6 +26,7 @@ public class OrderInternalResponse {
     private Long couponId;
     private LocalDateTime paidAt;
     private LocalDateTime completedAt;
+    private LocalDateTime createTime;
     private List<Item> items = new ArrayList<>();
 
     @Data
