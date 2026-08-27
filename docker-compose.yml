@@ -25,6 +25,10 @@ services:
     build:
       context: ./backend
     image: life-assistant-backend:${APP_VERSION:-dev}
+    networks:
+      default:
+        aliases:
+          - life-assistant-backend
     environment:
       SERVER_PORT: 8081
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-life_assistant}?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true
