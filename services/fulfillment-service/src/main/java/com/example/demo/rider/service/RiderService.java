@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.time.LocalDate;
 
@@ -67,7 +68,7 @@ public class RiderService {
     }
 
     public RiderDashboardVO getDashboard(Long riderId) {
-        Rider rider = getProfile(riderId);
+        Rider rider = requireActiveRider(riderId);
         List<OrderClient.OrderTaskSnapshot> completedOrders = orderClient.getCompletedTasks(riderId);
         LocalDate today = LocalDate.now();
         List<OrderClient.OrderTaskSnapshot> todayCompletedOrders = (completedOrders == null ? List.<OrderClient.OrderTaskSnapshot>of() : completedOrders).stream()
@@ -84,9 +85,10 @@ public class RiderService {
     }
 
     public RiderTaskVO getTasks(Long riderId) {
-        List<OrderClient.OrderTaskSnapshot> availableOrders = orderClient.getAvailableTasks();
-        List<OrderClient.OrderTaskSnapshot> assignedOrders = orderClient.getAssignedTasks(riderId);
-        List<OrderClient.OrderTaskSnapshot> completedOrders = orderClient.getCompletedTasks(riderId);
+        requireActiveRider(riderId);
+        List<OrderClient.OrderTaskSnapshot> availableOrders = safeList(orderClient.getAvailableTasks());
+        List<OrderClient.OrderTaskSnapshot> assignedOrders = safeList(orderClient.getAssignedTasks(riderId));
+        List<OrderClient.OrderTaskSnapshot> completedOrders = safeList(orderClient.getCompletedTasks(riderId));
 
         RiderTaskVO.RiderStats stats = RiderTaskVO.RiderStats.builder()
                 .totalEarnings(sumDeliveryFee(completedOrders))
@@ -95,9 +97,9 @@ public class RiderService {
                 .build();
 
         return RiderTaskVO.builder()
-                .available(availableOrders.stream().map(this::toTaskItem).collect(Collectors.toList()))
-                .assigned(assignedOrders.stream().map(this::toTaskItem).collect(Collectors.toList()))
-                .completed(completedOrders.stream().map(this::toTaskItem).collect(Collectors.toList()))
+                .available(toTaskItems(availableOrders))
+                .assigned(toTaskItems(assignedOrders))
+                .completed(toTaskItems(completedOrders))
                 .stats(stats)
                 .build();
     }
@@ -116,7 +118,7 @@ public class RiderService {
         return toTaskItem(order);
     }
 
-    private void requireActiveRider(Long riderId) {
+    private Rider requireActiveRider(Long riderId) {
         Rider rider = riderMapper.selectById(riderId);
         if (rider == null) {
             throw BusinessException.notFound("骑手不存在");
@@ -124,6 +126,7 @@ public class RiderService {
         if (!"active".equals(rider.getStatus())) {
             throw BusinessException.forbidden("骑手账号审核通过后才能使用该功能");
         }
+        return rider;
     }
 
     private String normalizeTaskStatus(String status) {
@@ -148,6 +151,17 @@ public class RiderService {
                 .sum();
     }
 
+    private List<RiderTaskVO.TaskItem> toTaskItems(List<OrderClient.OrderTaskSnapshot> orders) {
+        return safeList(orders).stream()
+                .filter(Objects::nonNull)
+                .map(this::toTaskItem)
+                .collect(Collectors.toList());
+    }
+
+    private <T> List<T> safeList(List<T> items) {
+        return items == null ? List.of() : items;
+    }
+
     private RiderTaskVO.TaskItem toTaskItem(OrderClient.OrderTaskSnapshot order) {
         String merchantName = "";
         String merchantAvatar = "";
@@ -162,15 +176,12 @@ public class RiderService {
         }
 
         String itemsSummary = (order.getItems() == null ? List.<OrderClient.ItemSnapshot>of() : order.getItems()).stream()
-                .map(item -> item.getName() + "x" + item.getQuantity())
+                .filter(Objects::nonNull)
+                .map(item -> (item.getName() != null && !item.getName().isBlank() ? item.getName() : "未知商品")
+                        + "x" + (item.getQuantity() != null ? item.getQuantity() : 0))
                 .collect(Collectors.joining("、"));
 
-        String statusText = switch (order.getStatus()) {
-            case "pending_accept" -> "待取餐";
-            case "delivering" -> "配送中";
-            case "completed" -> "已完成";
-            default -> order.getStatus();
-        };
+        String statusText = formatTaskStatus(order.getStatus());
 
         return RiderTaskVO.TaskItem.builder()
                 .id(order.getId())
@@ -186,5 +197,17 @@ public class RiderService {
                 .eta("预计30分钟送达")
                 .total(order.getActualAmount() != null ? order.getActualAmount().doubleValue() : 0.0)
                 .build();
+    }
+
+    private String formatTaskStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return "未知";
+        }
+        return switch (status) {
+            case "pending_accept" -> "待取餐";
+            case "delivering" -> "配送中";
+            case "completed" -> "已完成";
+            default -> status;
+        };
     }
 }

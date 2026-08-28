@@ -156,6 +156,23 @@ class UserServiceApiTests {
     }
 
     @Test
+    void frozenConsumerTokenCannotAccessUserApis() throws Exception {
+        mockMvc.perform(delete("/api/admin/users/10001").header(HttpHeaders.AUTHORIZATION, adminToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("frozen"));
+
+        mockMvc.perform(get("/api/user/profile").header(HttpHeaders.AUTHORIZATION, consumerToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(403))
+                .andExpect(jsonPath("$.message").value("用户账号已被冻结，无法使用该功能"));
+
+        mockMvc.perform(get("/api/user/cart").header(HttpHeaders.AUTHORIZATION, consumerToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(403))
+                .andExpect(jsonPath("$.message").value("用户账号已被冻结，无法使用该功能"));
+    }
+
+    @Test
     void getProfileReturnsCurrentConsumer() throws Exception {
         mockMvc.perform(get("/api/user/profile").header(HttpHeaders.AUTHORIZATION, consumerToken()))
                 .andExpect(status().isOk())

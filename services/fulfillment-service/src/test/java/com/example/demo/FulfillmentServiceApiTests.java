@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.mockito.Mockito.verify;
@@ -147,6 +148,19 @@ class FulfillmentServiceApiTests {
     }
 
     @Test
+    void frozenRiderCannotViewDashboardOrTaskLists() throws Exception {
+        mockMvc.perform(get("/api/rider/dashboard").header(HttpHeaders.AUTHORIZATION, riderToken(40002L)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(403))
+                .andExpect(jsonPath("$.message").value("骑手账号审核通过后才能使用该功能"));
+
+        mockMvc.perform(get("/api/rider/tasks").header(HttpHeaders.AUTHORIZATION, riderToken(40002L)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(403))
+                .andExpect(jsonPath("$.message").value("骑手账号审核通过后才能使用该功能"));
+    }
+
+    @Test
     void getRiderProfileReturnsCurrentRider() throws Exception {
         mockMvc.perform(get("/api/rider/profile").header(HttpHeaders.AUTHORIZATION, riderToken(40001L)))
                 .andExpect(status().isOk())
@@ -182,6 +196,40 @@ class FulfillmentServiceApiTests {
                 .andExpect(jsonPath("$.data.completed[0].status").value("已完成"))
                 .andExpect(jsonPath("$.data.stats.completedOrders").value(1))
                 .andExpect(jsonPath("$.data.stats.totalEarnings").value(5.0));
+    }
+
+    @Test
+    void getTasksTreatsNullRemoteListsAsEmptyLists() throws Exception {
+        when(orderClient.getAvailableTasks()).thenReturn(null);
+        when(orderClient.getAssignedTasks(40001L)).thenReturn(null);
+        when(orderClient.getCompletedTasks(40001L)).thenReturn(null);
+
+        mockMvc.perform(get("/api/rider/tasks").header(HttpHeaders.AUTHORIZATION, riderToken(40001L)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.available.length()").value(0))
+                .andExpect(jsonPath("$.data.assigned.length()").value(0))
+                .andExpect(jsonPath("$.data.completed.length()").value(0))
+                .andExpect(jsonPath("$.data.stats.completedOrders").value(0))
+                .andExpect(jsonPath("$.data.stats.totalEarnings").value(0.0));
+    }
+
+    @Test
+    void getTasksRendersPartialTaskSnapshotWithoutFailing() throws Exception {
+        OrderClient.OrderTaskSnapshot partialTask = task(70005L, 40001L, null);
+        List<OrderClient.ItemSnapshot> items = new ArrayList<>();
+        items.add(new OrderClient.ItemSnapshot());
+        items.add(null);
+        partialTask.setItems(items);
+        when(orderClient.getAvailableTasks()).thenReturn(List.of(partialTask));
+        when(orderClient.getAssignedTasks(40001L)).thenReturn(List.of());
+        when(orderClient.getCompletedTasks(40001L)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/rider/tasks").header(HttpHeaders.AUTHORIZATION, riderToken(40001L)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.available[0].status").value("未知"))
+                .andExpect(jsonPath("$.data.available[0].items").value("未知商品x0"));
     }
 
     @Test

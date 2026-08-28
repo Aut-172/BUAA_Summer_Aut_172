@@ -54,6 +54,8 @@ class UserServiceUnitTests {
         user.setId(10001L);
         user.setUsername("demo");
         user.setPhone("13800138001");
+        user.setRole("consumer");
+        user.setStatus("active");
         when(userMapper.selectById(10001L)).thenReturn(user);
         when(userMapper.selectCount(any())).thenReturn(1L);
 
@@ -64,6 +66,25 @@ class UserServiceUnitTests {
                 .isInstanceOfSatisfying(BusinessException.class, exception -> {
                     assertThat(exception.getCode()).isEqualTo(400);
                     assertThat(exception.getMessage()).isEqualTo("手机号已被其他用户使用");
+                });
+    }
+
+    @Test
+    void frozenUserCannotUpdateProfileWithOldToken() {
+        User user = new User();
+        user.setId(10001L);
+        user.setUsername("demo");
+        user.setRole("consumer");
+        user.setStatus("frozen");
+        when(userMapper.selectById(10001L)).thenReturn(user);
+
+        UserProfileUpdateRequest request = new UserProfileUpdateRequest();
+        request.setNickname("New Name");
+
+        assertThatThrownBy(() -> userService.updateProfile(10001L, request))
+                .isInstanceOfSatisfying(BusinessException.class, exception -> {
+                    assertThat(exception.getCode()).isEqualTo(403);
+                    assertThat(exception.getMessage()).isEqualTo("用户账号已被冻结，无法使用该功能");
                 });
     }
 }

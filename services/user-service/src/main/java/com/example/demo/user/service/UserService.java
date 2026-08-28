@@ -40,10 +40,7 @@ public class UserService {
      * 获取用户资料
      */
     public UserProfileVO getProfile(Long userId) {
-        User user = userMapper.selectById(userId);
-        if (user == null) {
-            throw BusinessException.notFound("用户不存在");
-        }
+        User user = requireActiveConsumer(userId);
         return UserProfileVO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -67,10 +64,7 @@ public class UserService {
      * 更新用户资料
      */
     public UserProfileVO updateProfile(Long userId, UserProfileUpdateRequest request) {
-        User user = userMapper.selectById(userId);
-        if (user == null) {
-            throw BusinessException.notFound("用户不存在");
-        }
+        User user = requireActiveConsumer(userId);
 
         // 更新非空字段
         if (request.getNickname() != null) {
@@ -100,6 +94,7 @@ public class UserService {
      * 获取用户地址列表
      */
     public List<AddressDTO> getAddressList(Long userId) {
+        requireActiveConsumer(userId);
         List<Address> addresses = addressMapper.selectList(
                 new LambdaQueryWrapper<Address>()
                         .eq(Address::getUserId, userId)
@@ -113,6 +108,7 @@ public class UserService {
      * 获取单个地址
      */
     public AddressDTO getAddress(Long userId, Long addressId) {
+        requireActiveConsumer(userId);
         Address address = addressMapper.selectOne(
                 new LambdaQueryWrapper<Address>()
                         .eq(Address::getId, addressId)
@@ -129,6 +125,7 @@ public class UserService {
      */
     @Transactional
     public AddressDTO addAddress(Long userId, AddressDTO dto) {
+        requireActiveConsumer(userId);
         // 如果设置为默认地址，先取消其他默认地址
         if (Boolean.TRUE.equals(dto.getIsDefault())) {
             clearDefaultAddress(userId);
@@ -152,6 +149,7 @@ public class UserService {
      */
     @Transactional
     public AddressDTO updateAddress(Long userId, Long addressId, AddressDTO dto) {
+        requireActiveConsumer(userId);
         Address address = addressMapper.selectOne(
                 new LambdaQueryWrapper<Address>()
                         .eq(Address::getId, addressId)
@@ -181,6 +179,7 @@ public class UserService {
      * 删除地址
      */
     public void deleteAddress(Long userId, Long addressId) {
+        requireActiveConsumer(userId);
         int deleted = addressMapper.delete(
                 new LambdaQueryWrapper<Address>()
                         .eq(Address::getId, addressId)
@@ -212,6 +211,7 @@ public class UserService {
      * 获取购物车列表
      */
     public List<CartVO> getCartList(Long userId) {
+        requireActiveConsumer(userId);
         List<Cart> carts = cartMapper.selectList(
                 new LambdaQueryWrapper<Cart>()
                         .eq(Cart::getUserId, userId)
@@ -225,6 +225,7 @@ public class UserService {
      */
     @Transactional
     public CartVO addCart(Long userId, CartRequest request) {
+        requireActiveConsumer(userId);
         if (request.getQuantity() == null || request.getQuantity() <= 0) {
             request.setQuantity(1);
         }
@@ -280,6 +281,7 @@ public class UserService {
      * 更新购物车商品数量
      */
     public CartVO updateCartQuantity(Long userId, Long cartId, Integer quantity) {
+        requireActiveConsumer(userId);
         Cart cart = cartMapper.selectOne(
                 new LambdaQueryWrapper<Cart>()
                         .eq(Cart::getId, cartId)
@@ -304,6 +306,7 @@ public class UserService {
      * 删除购物车项
      */
     public void deleteCart(Long userId, Long cartId) {
+        requireActiveConsumer(userId);
         int deleted = cartMapper.delete(
                 new LambdaQueryWrapper<Cart>()
                         .eq(Cart::getId, cartId)
@@ -318,6 +321,7 @@ public class UserService {
      * 清空购物车
      */
     public void clearCart(Long userId) {
+        requireActiveConsumer(userId);
         cartMapper.delete(
                 new LambdaQueryWrapper<Cart>()
                         .eq(Cart::getUserId, userId)
@@ -335,6 +339,7 @@ public class UserService {
     // ==================== 收藏商家 ====================
 
     public List<FavoriteMerchantVO> getFavoriteMerchants(Long userId) {
+        requireActiveConsumer(userId);
         List<UserFavoriteMerchant> favorites = favoriteMerchantMapper.selectList(
                 new LambdaQueryWrapper<UserFavoriteMerchant>()
                         .eq(UserFavoriteMerchant::getUserId, userId)
@@ -348,6 +353,7 @@ public class UserService {
     }
 
     public Boolean isFavoriteMerchant(Long userId, Long merchantId) {
+        requireActiveConsumer(userId);
         return favoriteMerchantMapper.selectCount(
                 new LambdaQueryWrapper<UserFavoriteMerchant>()
                         .eq(UserFavoriteMerchant::getUserId, userId)
@@ -357,6 +363,7 @@ public class UserService {
 
     @Transactional
     public FavoriteMerchantVO addFavoriteMerchant(Long userId, Long merchantId) {
+        requireActiveConsumer(userId);
         MerchantCatalogClient.MerchantSnapshot merchant = requireActiveMerchant(merchantId);
         UserFavoriteMerchant existing = favoriteMerchantMapper.selectOne(
                 new LambdaQueryWrapper<UserFavoriteMerchant>()
@@ -377,6 +384,7 @@ public class UserService {
     }
 
     public void deleteFavoriteMerchant(Long userId, Long merchantId) {
+        requireActiveConsumer(userId);
         favoriteMerchantMapper.delete(
                 new LambdaQueryWrapper<UserFavoriteMerchant>()
                         .eq(UserFavoriteMerchant::getUserId, userId)
@@ -396,6 +404,17 @@ public class UserService {
         dto.setLatitude(address.getLatitude());
         dto.setIsDefault(address.getIsDefault());
         return dto;
+    }
+
+    private User requireActiveConsumer(Long userId) {
+        User user = userMapper.selectById(userId);
+        if (user == null || !"consumer".equals(user.getRole())) {
+            throw BusinessException.notFound("用户不存在");
+        }
+        if ("frozen".equals(user.getStatus())) {
+            throw BusinessException.forbidden("用户账号已被冻结，无法使用该功能");
+        }
+        return user;
     }
 
     private CartVO toCartVO(Cart cart) {
