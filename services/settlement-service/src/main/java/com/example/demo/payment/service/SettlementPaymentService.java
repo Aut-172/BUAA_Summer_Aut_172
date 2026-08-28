@@ -90,7 +90,11 @@ public class SettlementPaymentService {
         if (result.getCode() != 200) {
             throw new BusinessException(result.getCode(), result.getMessage());
         }
-        return result.getData();
+        OrderInternalResponse updatedOrder = result.getData();
+        if (updatedOrder == null || !"pending_accept".equals(updatedOrder.getStatus()) || updatedOrder.getPaidAt() == null) {
+            throw BusinessException.badRequest("订单支付确认未生效");
+        }
+        return updatedOrder;
     }
 
     private OrderInternalResponse requireUserOrder(Long userId, Long orderId) {

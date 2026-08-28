@@ -9,9 +9,8 @@ version = '0.1.0-SNAPSHOT'
 description = 'life-assistant-platform'
 
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 repositories {
@@ -75,4 +74,10 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.register('printTestRuntimeClasspath') {
+    doLast {
+        println sourceSets.test.runtimeClasspath.asPath
+    }
 }

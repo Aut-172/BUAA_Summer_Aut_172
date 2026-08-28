@@ -30,6 +30,10 @@ apply_manifest_with_images() {
 }
 
 kubectl apply -n "$NAMESPACE" -f k8s/configmap.yaml
+kubectl patch configmap life-assistant-config \
+  --namespace "$NAMESPACE" \
+  --type merge \
+  -p "{\"data\":{\"app-version\":\"$IMAGE_TAG\"}}"
 
 kubectl create secret generic life-assistant-secret \
   --namespace "$NAMESPACE" \

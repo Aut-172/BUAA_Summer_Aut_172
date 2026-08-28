@@ -2,6 +2,12 @@ package com.example.demo;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.demo.merchant.entity.Product;
+import com.example.demo.merchant.entity.MerchantStockChangeRecord;
+import com.example.demo.merchant.entity.ProductSpec;
+import com.example.demo.merchant.mapper.MerchantStockChangeMapper;
+import com.example.demo.merchant.mapper.ProductMapper;
+import com.example.demo.merchant.mapper.ProductSpecMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -21,13 +27,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Sql(scripts = "classpath:db/merchant-test-schema.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-class MerchantServiceApiTests {
+public class MerchantServiceApiTests {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private ProductMapper productMapper;
+
+    @Autowired
+    private ProductSpecMapper productSpecMapper;
+
+    @Autowired
+    private MerchantStockChangeMapper merchantStockChangeMapper;
 
     @Test
     void merchantRegisterThenLoginReturnsMerchantToken() throws Exception {
@@ -188,5 +203,79 @@ class MerchantServiceApiTests {
                 .andExpect(jsonPath("$.data.available").value(false))
                 .andExpect(jsonPath("$.data.items[0].stockEnough").value(false))
                 .andExpect(jsonPath("$.data.messages[0]").value("库存不足"));
+    }
+
+    @Test
+    void reserveAndReleaseRestoreStock() throws Exception {
+        String body = """
+                {
+                  "requestId": "stock-change-1",
+                  "merchantId": 20001,
+                  "items": [
+                    {"productId": 30001, "specLabel": "Large", "quantity": 2}
+                  ]
+                }
+                """;
+
+        mockMvc.perform(post("/internal/products/reserve")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("reserved"))
+                .andExpect(jsonPath("$.data.items[0].remainingStock").value(48));
+
+        ProductSpec reservedSpec = productSpecMapper.selectById(1L);
+        Product product = productMapper.selectById(30001L);
+        assertThat(reservedSpec.getStock()).isEqualTo(48);
+        assertThat(product.getStock()).isEqualTo(100);
+
+        mockMvc.perform(post("/internal/products/release")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("released"))
+                .andExpect(jsonPath("$.data.items[0].remainingStock").value(50));
+
+        ProductSpec restoredSpec = productSpecMapper.selectById(1L);
+        assertThat(restoredSpec.getStock()).isEqualTo(50);
+    }
+
+    @Test
+    void reserveRejectsInsufficientStock() throws Exception {
+        String body = """
+                {
+                  "requestId": "stock-change-2",
+                  "merchantId": 20001,
+                  "items": [
+                    {"productId": 30002, "quantity": 1}
+                  ]
+                }
+                """;
+
+        mockMvc.perform(post("/internal/products/reserve")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("库存不足"));
+
+        assertThat(productMapper.selectById(30002L).getStock()).isEqualTo(0);
+        MerchantStockChangeRecord record = merchantStockChangeMapper.selectList(null).stream()
+                .filter(item -> "stock-change-2".equals(item.getRequestId()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(record.getStatus()).isEqualTo("failed");
+        assertThat(record.getMessage()).contains("库存不足");
+
+        mockMvc.perform(get("/internal/products/changes/stock-change-2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.status").value("failed"))
+                .andExpect(jsonPath("$.data.success").value(false))
+                .andExpect(jsonPath("$.data.message").value("库存不足"));
     }
 }

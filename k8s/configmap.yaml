@@ -3,6 +3,7 @@ kind: ConfigMap
 metadata:
   name: life-assistant-config
 data:
+  app-version: dev
   nacos-server-addr: nacos:8848
   user-datasource-url: jdbc:mysql://mysql:3306/user_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true&allowPublicKeyRetrieval=true
   merchant-datasource-url: jdbc:mysql://mysql:3306/merchant_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true

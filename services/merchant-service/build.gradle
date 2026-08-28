@@ -52,3 +52,9 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+tasks.register('printTestRuntimeClasspath') {
+    doLast {
+        println sourceSets.test.runtimeClasspath.asPath
+    }
+}

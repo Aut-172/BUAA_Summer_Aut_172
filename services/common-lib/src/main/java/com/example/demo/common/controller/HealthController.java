@@ -32,6 +32,12 @@ public class HealthController {
         Map<String, Object> info = new HashMap<>();
         info.put("status", "UP");
         info.put("application", env.getProperty("spring.application.name"));
+        String version = env.getProperty("APP_VERSION");
+        if (version == null || version.isBlank()) {
+            Package pkg = HealthController.class.getPackage();
+            version = pkg == null ? null : pkg.getImplementationVersion();
+        }
+        info.put("version", version == null || version.isBlank() ? "dev" : version);
         info.put("time", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         info.put("javaVersion", Runtime.version().toString());
         boolean databaseUp = true;

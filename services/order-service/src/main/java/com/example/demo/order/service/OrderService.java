@@ -6,11 +6,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demo.common.BusinessException;
 import com.example.demo.common.contract.merchant.ProductQuoteRequest;
 import com.example.demo.common.contract.merchant.ProductQuoteResponse;
+import com.example.demo.common.contract.merchant.StockChangeRequest;
+import com.example.demo.common.contract.merchant.StockChangeResponse;
 import com.example.demo.common.contract.order.MarkPaidRequest;
 import com.example.demo.common.contract.order.OrderInternalResponse;
 import com.example.demo.common.contract.settlement.CouponLockRequest;
 import com.example.demo.common.contract.settlement.CouponLockResponse;
 import com.example.demo.order.client.MerchantCatalogClient;
+import com.example.demo.order.client.MerchantProductClient;
 import com.example.demo.order.client.SettlementCouponClient;
 import com.example.demo.order.client.UserClient;
 import com.example.demo.order.dto.CheckoutRequest;
@@ -20,6 +23,7 @@ import com.example.demo.order.entity.OrderItem;
 import com.example.demo.order.entity.Orders;
 import com.example.demo.order.mapper.OrderItemMapper;
 import com.example.demo.order.mapper.OrdersMapper;
+import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +38,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -47,7 +52,9 @@ public class OrderService {
 
     private final OrdersMapper ordersMapper;
     private final OrderItemMapper orderItemMapper;
+    private final OrderCompensationService orderCompensationService;
     private final OrderCheckoutDraftService orderCheckoutDraftService;
+    private final MerchantProductClient merchantProductClient;
     private final MerchantCatalogClient merchantCatalogClient;
     private final SettlementCouponClient settlementCouponClient;
     private final UserClient userClient;
@@ -78,62 +85,79 @@ public class OrderService {
             throw BusinessException.badRequest("收货地址不能为空");
         }
 
+        String stockRequestId = UUID.randomUUID().toString();
+        StockChangeRequest stockRequest = toStockChangeRequest(request, stockRequestId, null);
+        Orders order = null;
         MerchantCatalogClient.MerchantSnapshot merchant = merchantCatalogClient.getMerchant(request.getMerchantId());
         if (merchant == null || !"active".equals(merchant.getStatus())) {
             throw BusinessException.notFound("商家不存在或不可下单");
         }
 
-        ProductQuoteResponse quote = orderCheckoutDraftService.quoteProducts(toQuoteRequest(request));
-        BigDecimal goodsAmount = quote.getTotalAmount() == null ? BigDecimal.ZERO : quote.getTotalAmount();
-        BigDecimal minOrderAmount = merchant.getMinDeliveryFee() == null ? BigDecimal.ZERO : merchant.getMinDeliveryFee();
-        if (goodsAmount.compareTo(minOrderAmount) < 0) {
-            throw BusinessException.badRequest("未达到商家起送金额");
-        }
-
-        BigDecimal deliveryFee = merchant.getDeliveryFee() == null ? BigDecimal.ZERO : merchant.getDeliveryFee();
-        BigDecimal totalAmount = goodsAmount.add(deliveryFee);
-
-        Orders order = new Orders();
-        order.setOrderNo(generateOrderNo());
-        order.setUserId(userId);
-        order.setMerchantId(request.getMerchantId());
-        order.setType("delivery");
-        order.setTotalAmount(totalAmount);
-        order.setActualAmount(totalAmount);
-        order.setDeliveryFee(deliveryFee);
-        order.setDiscount(BigDecimal.ZERO);
-        order.setStatus(STATUS_PENDING_PAYMENT);
-        order.setAddressDetail(request.getAddress().trim());
-        ordersMapper.insert(order);
-
-        for (ProductQuoteResponse.Item item : quote.getItems()) {
-            OrderItem orderItem = new OrderItem();
-            orderItem.setOrderId(order.getId());
-            orderItem.setProductId(item.getProductId());
-            orderItem.setName(item.getName());
-            orderItem.setPrice(item.getUnitPrice());
-            orderItem.setQuantity(item.getQuantity());
-            orderItem.setImage(item.getImage());
-            orderItem.setSpecLabel(item.getSpecLabel());
-            orderItem.setSubtotal(item.getSubtotal());
-            orderItem.setReviewed(false);
-            orderItemMapper.insert(orderItem);
-        }
-
-        if (request.getCouponId() != null) {
-            CouponLockResponse coupon = settlementCouponClient.lock(toCouponLockRequest(userId, request.getCouponId(), order.getId(), totalAmount));
-            BigDecimal discount = coupon == null || coupon.getDiscount() == null ? BigDecimal.ZERO : coupon.getDiscount();
-            if (discount.compareTo(totalAmount) > 0) {
-                discount = totalAmount;
+        try {
+            ProductQuoteResponse quote = orderCheckoutDraftService.quoteProducts(toQuoteRequest(request));
+            BigDecimal goodsAmount = quote.getTotalAmount() == null ? BigDecimal.ZERO : quote.getTotalAmount();
+            BigDecimal minOrderAmount = merchant.getMinDeliveryFee() == null ? BigDecimal.ZERO : merchant.getMinDeliveryFee();
+            if (goodsAmount.compareTo(minOrderAmount) < 0) {
+                throw BusinessException.badRequest("未达到商家起送金额");
             }
-            order.setCouponId(request.getCouponId());
-            order.setDiscount(discount);
-            order.setActualAmount(totalAmount.subtract(discount));
-            ordersMapper.updateById(order);
-        }
 
-        clearCartBestEffort(userId, request.getMerchantId());
-        return toOrderVO(order);
+            BigDecimal deliveryFee = merchant.getDeliveryFee() == null ? BigDecimal.ZERO : merchant.getDeliveryFee();
+            BigDecimal totalAmount = goodsAmount.add(deliveryFee);
+
+            reserveInventoryWithConfirmation(stockRequest);
+
+            order = new Orders();
+            order.setOrderNo(generateOrderNo());
+            order.setUserId(userId);
+            order.setMerchantId(request.getMerchantId());
+            order.setType("delivery");
+            order.setTotalAmount(totalAmount);
+            order.setActualAmount(totalAmount);
+            order.setDeliveryFee(deliveryFee);
+            order.setDiscount(BigDecimal.ZERO);
+            order.setStatus(STATUS_PENDING_PAYMENT);
+            order.setStockReserved(true);
+            order.setAddressDetail(request.getAddress().trim());
+            ordersMapper.insert(order);
+            stockRequest.setOrderId(order.getId());
+
+            for (ProductQuoteResponse.Item item : quote.getItems()) {
+                OrderItem orderItem = new OrderItem();
+                orderItem.setOrderId(order.getId());
+                orderItem.setProductId(item.getProductId());
+                orderItem.setName(item.getName());
+                orderItem.setPrice(item.getUnitPrice());
+                orderItem.setQuantity(item.getQuantity());
+                orderItem.setImage(item.getImage());
+                orderItem.setSpecLabel(item.getSpecLabel());
+                orderItem.setSubtotal(item.getSubtotal());
+                orderItem.setReviewed(false);
+                orderItemMapper.insert(orderItem);
+            }
+
+            if (request.getCouponId() != null) {
+                CouponLockResponse coupon = ensureCouponOperationSucceeded(
+                        settlementCouponClient.lock(toCouponLockRequest(userId, request.getCouponId(), order.getId(), totalAmount)),
+                        "locked",
+                        true,
+                        "优惠券锁定"
+                );
+                BigDecimal discount = coupon == null || coupon.getDiscount() == null ? BigDecimal.ZERO : coupon.getDiscount();
+                if (discount.compareTo(totalAmount) > 0) {
+                    discount = totalAmount;
+                }
+                order.setCouponId(request.getCouponId());
+                order.setDiscount(discount);
+                order.setActualAmount(totalAmount.subtract(discount));
+                ordersMapper.updateById(order);
+            }
+
+            clearCartBestEffort(userId, request.getMerchantId());
+            return toOrderVO(order);
+        } catch (RuntimeException ex) {
+            releaseReservedInventoryAfterFailure(stockRequest, order == null ? null : order.getId(), ex);
+            throw ex;
+        }
     }
 
     @Transactional
@@ -144,9 +168,29 @@ public class OrderService {
         }
 
         order.setStatus(STATUS_CANCELLED);
+        if (Boolean.TRUE.equals(order.getStockReserved())) {
+            StockChangeRequest stockRequest = toStockChangeRequest(order, UUID.randomUUID().toString());
+            try {
+                releaseInventoryWithConfirmation(stockRequest);
+                order.setStockReserved(false);
+            } catch (RuntimeException ex) {
+                recordCompensation(stockRequest, order.getId(), "release_inventory", "merchant-service", "pending", "订单取消后库存释放失败: " + ex.getMessage());
+                log.warn("Failed to release stock for cancelled order {}", order.getId(), ex);
+            }
+        }
         ordersMapper.updateById(order);
         if (order.getCouponId() != null) {
-            settlementCouponClient.release(order.getId());
+            try {
+                CouponLockResponse releaseResponse = settlementCouponClient.release(order.getId());
+                if (releaseResponse == null) {
+                    recordCompensation(null, order.getId(), "release_coupon", "settlement-service", "pending", "订单取消后优惠券释放未确认: 无响应");
+                } else if (!"released".equals(releaseResponse.getStatus()) || Boolean.TRUE.equals(releaseResponse.getLocked())) {
+                    recordCompensation(null, order.getId(), "release_coupon", "settlement-service", "pending", "订单取消后优惠券释放未确认: " + releaseResponse.getMessage());
+                }
+            } catch (RuntimeException ex) {
+                recordCompensation(null, order.getId(), "release_coupon", "settlement-service", "pending", "订单取消后优惠券释放失败: " + ex.getMessage());
+                log.warn("Failed to release coupon for cancelled order {}", order.getId(), ex);
+            }
         }
         return toOrderVO(order);
     }
@@ -193,14 +237,12 @@ public class OrderService {
             throw BusinessException.badRequest("非法的订单状态变更");
         }
 
-        order.setStatus(newStatus);
         if (STATUS_COMPLETED.equals(newStatus)) {
-            order.setCompletedAt(LocalDateTime.now());
-            if (order.getCouponId() != null) {
-                settlementCouponClient.confirm(order.getId());
-            }
+            completeOrderState(order);
+        } else {
+            order.setStatus(newStatus);
+            ordersMapper.updateById(order);
         }
-        ordersMapper.updateById(order);
         return toOrderVO(order);
     }
 
@@ -374,9 +416,23 @@ public class OrderService {
     private void completeOrderState(Orders order) {
         order.setStatus(STATUS_COMPLETED);
         order.setCompletedAt(LocalDateTime.now());
+        order.setStockReserved(false);
         ordersMapper.updateById(order);
         if (order.getCouponId() != null) {
-            settlementCouponClient.confirm(order.getId());
+            try {
+                CouponLockResponse confirmResponse = ensureCouponOperationSucceeded(
+                        settlementCouponClient.confirm(order.getId()),
+                        "used",
+                        true,
+                        "优惠券核销"
+                );
+                if (confirmResponse == null) {
+                    recordCompensation(null, order.getId(), "confirm_coupon", "settlement-service", "pending", "订单完成后优惠券核销未确认: 无响应");
+                }
+            } catch (RuntimeException ex) {
+                recordCompensation(null, order.getId(), "confirm_coupon", "settlement-service", "pending", "订单完成后优惠券确认失败: " + ex.getMessage());
+                log.warn("Failed to confirm coupon for completed order {}", order.getId(), ex);
+            }
         }
     }
 
@@ -412,6 +468,154 @@ public class OrderService {
         lockRequest.setOrderId(orderId);
         lockRequest.setOrderAmount(orderAmount);
         return lockRequest;
+    }
+
+    private StockChangeRequest toStockChangeRequest(CheckoutRequest request, String requestId, Long orderId) {
+        StockChangeRequest stockRequest = new StockChangeRequest();
+        stockRequest.setRequestId(requestId);
+        stockRequest.setOrderId(orderId);
+        stockRequest.setMerchantId(request.getMerchantId());
+        stockRequest.setItems(request.getItems().stream().map(item -> {
+            StockChangeRequest.Item stockItem = new StockChangeRequest.Item();
+            stockItem.setProductId(item.getProductId());
+            stockItem.setSpecLabel(normalizeSpecLabel(item.getSpecLabel()));
+            stockItem.setQuantity(item.getQuantity());
+            return stockItem;
+        }).collect(Collectors.toList()));
+        return stockRequest;
+    }
+
+    private StockChangeRequest toStockChangeRequest(Orders order, String requestId) {
+        StockChangeRequest stockRequest = new StockChangeRequest();
+        stockRequest.setRequestId(requestId);
+        stockRequest.setOrderId(order.getId());
+        stockRequest.setMerchantId(order.getMerchantId());
+        List<OrderItem> items = orderItemMapper.selectList(
+                new LambdaQueryWrapper<OrderItem>()
+                        .eq(OrderItem::getOrderId, order.getId())
+        );
+        stockRequest.setItems(items.stream().map(item -> {
+            StockChangeRequest.Item stockItem = new StockChangeRequest.Item();
+            stockItem.setProductId(item.getProductId());
+            stockItem.setSpecLabel(item.getSpecLabel());
+            stockItem.setQuantity(item.getQuantity());
+            return stockItem;
+        }).collect(Collectors.toList()));
+        return stockRequest;
+    }
+
+    private void releaseReservedInventoryAfterFailure(StockChangeRequest request, Long orderId, RuntimeException cause) {
+        try {
+            StockChangeResponse stockStatus = merchantProductClient.getChangeStatus(request.getRequestId());
+            if (stockStatus != null && "reserved".equals(stockStatus.getStatus())) {
+                StockChangeRequest releaseRequest = copyStockChangeRequest(request, UUID.randomUUID().toString(), orderId);
+                releaseInventoryWithConfirmation(releaseRequest);
+                recordCompensation(releaseRequest, orderId, "release_inventory", "merchant-service", "resolved", "订单创建失败后库存已回滚: " + cause.getMessage());
+            } else if (stockStatus != null && "released".equals(stockStatus.getStatus())) {
+                recordCompensation(request, orderId, "release_inventory", "merchant-service", "resolved", "订单创建失败后库存已处于释放状态: " + cause.getMessage());
+            } else if (stockStatus != null && "failed".equals(stockStatus.getStatus())) {
+                recordCompensation(request, orderId, "release_inventory", "merchant-service", "resolved", "订单创建失败后库存预留已失败，无需回滚: " + cause.getMessage());
+            } else {
+                recordCompensation(request, orderId, "release_inventory", "merchant-service", "pending", "订单创建失败后未确认到已预留库存: " + cause.getMessage());
+            }
+        } catch (RuntimeException releaseEx) {
+            recordCompensation(request, orderId, "release_inventory", "merchant-service", "pending", "订单创建失败后库存回滚失败: " + releaseEx.getMessage());
+            log.warn("Failed to release inventory for checkout request {}", request.getRequestId(), releaseEx);
+        }
+    }
+
+    private StockChangeRequest copyStockChangeRequest(StockChangeRequest source, String requestId, Long orderId) {
+        StockChangeRequest copy = new StockChangeRequest();
+        copy.setRequestId(requestId);
+        copy.setOrderId(orderId);
+        copy.setMerchantId(source.getMerchantId());
+        copy.setItems(source.getItems().stream().map(item -> {
+            StockChangeRequest.Item copyItem = new StockChangeRequest.Item();
+            copyItem.setProductId(item.getProductId());
+            copyItem.setSpecLabel(item.getSpecLabel());
+            copyItem.setQuantity(item.getQuantity());
+            return copyItem;
+        }).collect(Collectors.toList()));
+        return copy;
+    }
+
+    private StockChangeResponse reserveInventoryWithConfirmation(StockChangeRequest request) {
+        try {
+            StockChangeResponse response = merchantProductClient.reserve(request);
+            return ensureStockChangeSucceeded(response, "reserved", "库存预留");
+        } catch (RuntimeException ex) {
+            try {
+                StockChangeResponse stockStatus = merchantProductClient.getChangeStatus(request.getRequestId());
+                if (stockStatus != null && "reserved".equals(stockStatus.getStatus())) {
+                    return ensureStockChangeSucceeded(stockStatus, "reserved", "库存预留");
+                }
+            } catch (RuntimeException ignored) {
+                // 继续走外层失败补偿。
+            }
+            throw ex;
+        }
+    }
+
+    private StockChangeResponse releaseInventoryWithConfirmation(StockChangeRequest request) {
+        try {
+            StockChangeResponse response = merchantProductClient.release(request);
+            return ensureStockChangeSucceeded(response, "released", "库存释放");
+        } catch (RuntimeException ex) {
+            try {
+                StockChangeResponse stockStatus = merchantProductClient.getChangeStatus(request.getRequestId());
+                if (stockStatus != null && "released".equals(stockStatus.getStatus())) {
+                    return ensureStockChangeSucceeded(stockStatus, "released", "库存释放");
+                }
+            } catch (RuntimeException ignored) {
+                // 继续走外层失败补偿。
+            }
+            throw ex;
+        }
+    }
+
+    private StockChangeResponse ensureStockChangeSucceeded(StockChangeResponse response, String expectedStatus, String actionName) {
+        if (response == null) {
+            throw BusinessException.badRequest(actionName + "失败");
+        }
+        if (!Boolean.TRUE.equals(response.getSuccess()) || !expectedStatus.equals(response.getStatus())) {
+            String message = response.getMessage();
+            if (message == null || message.isBlank()) {
+                message = actionName + "失败";
+            }
+            throw BusinessException.badRequest(message);
+        }
+        return response;
+    }
+
+    private CouponLockResponse ensureCouponOperationSucceeded(CouponLockResponse response, String expectedStatus, boolean expectedLocked, String actionName) {
+        if (response == null) {
+            throw BusinessException.badRequest(actionName + "失败");
+        }
+        if (!expectedStatus.equals(response.getStatus()) || !Boolean.valueOf(expectedLocked).equals(response.getLocked())) {
+            String message = response.getMessage();
+            if (message == null || message.isBlank()) {
+                message = actionName + "失败";
+            }
+            throw BusinessException.badRequest(message);
+        }
+        return response;
+    }
+
+    private void recordCompensation(StockChangeRequest request, Long orderId, String action, String targetService, String status, String message) {
+        String requestId = request == null ? UUID.randomUUID().toString() : request.getRequestId();
+        String payload = request == null ? "" : describeStockRequest(request);
+        try {
+            orderCompensationService.record(requestId, orderId, action, targetService, payload, status, message);
+        } catch (RuntimeException recordEx) {
+            log.warn("Failed to persist compensation record for order {}", orderId, recordEx);
+        }
+    }
+
+    private String describeStockRequest(StockChangeRequest request) {
+        String items = request.getItems().stream()
+                .map(item -> item.getProductId() + "x" + item.getQuantity() + (item.getSpecLabel() == null ? "" : "(" + item.getSpecLabel() + ")"))
+                .collect(Collectors.joining(","));
+        return "merchantId=" + request.getMerchantId() + ", items=[" + items + "]";
     }
 
     private void clearCartBestEffort(Long userId, Long merchantId) {

@@ -23,6 +23,11 @@ spec:
           env:
             - name: SERVER_PORT
               value: "8080"
+            - name: APP_VERSION
+              valueFrom:
+                configMapKeyRef:
+                  name: life-assistant-config
+                  key: app-version
             - name: NACOS_SERVER_ADDR
               valueFrom:
                 configMapKeyRef:

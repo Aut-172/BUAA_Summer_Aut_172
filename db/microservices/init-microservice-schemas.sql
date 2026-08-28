@@ -98,6 +98,7 @@ INSERT INTO `user_favorite_merchant` (`id`, `user_id`, `merchant_id`) VALUES
 
 USE `merchant_db`;
 
+DROP TABLE IF EXISTS `merchant_stock_change`;
 DROP TABLE IF EXISTS `product_spec`;
 DROP TABLE IF EXISTS `spec_group`;
 DROP TABLE IF EXISTS `product`;
@@ -187,6 +188,23 @@ CREATE TABLE `product_spec` (
     KEY `idx_product_spec_product` (`product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE `merchant_stock_change` (
+    `id` BIGINT NOT NULL,
+    `request_id` VARCHAR(100) NOT NULL,
+    `merchant_id` BIGINT NOT NULL,
+    `order_id` BIGINT DEFAULT NULL,
+    `action` VARCHAR(20) NOT NULL,
+    `payload` TEXT DEFAULT NULL,
+    `status` VARCHAR(20) NOT NULL,
+    `message` VARCHAR(500) DEFAULT NULL,
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_merchant_stock_change_request` (`request_id`),
+    KEY `idx_merchant_stock_change_merchant` (`merchant_id`),
+    KEY `idx_merchant_stock_change_order` (`order_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 INSERT INTO `category` (`id`, `name`, `parent_id`, `sort_order`) VALUES
 (1, 'Food', NULL, 1),
 (2, 'Cafe', NULL, 2),
@@ -221,6 +239,7 @@ INSERT INTO `product_spec` (`id`, `product_id`, `label`, `price`, `stock`) VALUE
 USE `order_db`;
 
 DROP TABLE IF EXISTS `group_coupon`;
+DROP TABLE IF EXISTS `order_compensation`;
 DROP TABLE IF EXISTS `order_item`;
 DROP TABLE IF EXISTS `orders`;
 
@@ -242,6 +261,7 @@ CREATE TABLE `orders` (
     `coupon_id` BIGINT DEFAULT NULL,
     `paid_at` DATETIME DEFAULT NULL,
     `completed_at` DATETIME DEFAULT NULL,
+    `stock_reserved` TINYINT(1) NOT NULL DEFAULT 0,
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
@@ -249,6 +269,22 @@ CREATE TABLE `orders` (
     KEY `idx_orders_user` (`user_id`),
     KEY `idx_orders_merchant` (`merchant_id`),
     KEY `idx_orders_rider` (`rider_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `order_compensation` (
+    `id` BIGINT NOT NULL,
+    `request_id` VARCHAR(100) DEFAULT NULL,
+    `order_id` BIGINT DEFAULT NULL,
+    `action` VARCHAR(50) NOT NULL,
+    `target_service` VARCHAR(50) NOT NULL,
+    `payload` TEXT DEFAULT NULL,
+    `status` VARCHAR(20) NOT NULL,
+    `message` VARCHAR(500) DEFAULT NULL,
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_order_compensation_request` (`request_id`),
+    KEY `idx_order_compensation_order` (`order_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `order_item` (

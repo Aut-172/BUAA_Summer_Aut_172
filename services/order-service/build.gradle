@@ -47,6 +47,13 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-tasks.named('test') {
+tasks.withType(Test).configureEach {
     useJUnitPlatform()
+    maxParallelForks = 1
+}
+
+tasks.register('printTestRuntimeClasspath') {
+    doLast {
+        println sourceSets.test.runtimeClasspath.asPath
+    }
 }

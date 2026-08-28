@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS spec_group;
 DROP TABLE IF EXISTS product_spec;
+DROP TABLE IF EXISTS merchant_stock_change;
 DROP TABLE IF EXISTS product;
 DROP TABLE IF EXISTS category;
 DROP TABLE IF EXISTS merchant;
@@ -62,6 +63,20 @@ CREATE TABLE product_spec (
     stock INT,
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE merchant_stock_change (
+    id BIGINT PRIMARY KEY,
+    request_id VARCHAR(100) NOT NULL,
+    merchant_id BIGINT NOT NULL,
+    order_id BIGINT,
+    action VARCHAR(20) NOT NULL,
+    payload CLOB,
+    status VARCHAR(20) NOT NULL,
+    message VARCHAR(500),
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (request_id)
 );
 
 CREATE TABLE spec_group (

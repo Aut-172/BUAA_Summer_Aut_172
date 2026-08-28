@@ -47,7 +47,7 @@ microservices/order-settlement
 | `order-service` | 下单，订单状态机，订单明细快照，团购券码，商家订单视图 | `order` | 订单是交易聚合根，负责状态推进和订单快照，不直接拥有商品、优惠券、支付、骑手资料 |
 | `settlement-service` | 优惠券模板，用户券，锁券/释放/核销，支付流水 | `coupon`、`payment` | 支付和优惠券需要独立幂等、一致性和补偿逻辑 |
 | `fulfillment-service` | 骑手账号，骑手资料，接单，配送任务视图，送达 | `auth` 的骑手部分、`rider`、`delivery` | 骑手和履约状态独立于订单存储，但通过订单服务推进订单状态 |
-| `engagement-service` | 评价，评价图片，订单会话，消息线程，未读数 | `review`、`message` | 互动内容不应阻塞交易主链路，评分和已评价状态通过事件/补偿同步 |
+| `engagement-service` | 评价，评价图片，订单会话，消息线程，未读数 | `review`、`message` | 互动内容不应阻塞交易主链路，评分和已评价状态通过同步接口与本地补偿记录处理 |
 
 ## 4. 服务划分图
 
@@ -87,8 +87,8 @@ flowchart LR
 | `admin` | `user-service` | `user_db` | 其他服务不直接访问；Gateway 校验 token 后透传身份 |
 | `user` | `user-service` | `user_db` | 内部用户快照接口 |
 | `address` | `user-service` | `user_db` | 订单服务调用地址快照接口，下单后保存地址快照 |
-| `cart` | `user-service` | `user_db` | 下单成功后通过事件或内部接口清理购物车 |
-| `user_favorite_merchant` | `user-service` | `user_db` | 商家状态变化通过事件刷新收藏展示 |
+| `cart` | `user-service` | `user_db` | 下单成功后通过内部接口清理购物车 |
+| `user_favorite_merchant` | `user-service` | `user_db` | 收藏列表展示时依赖商家状态查询，不做跨服务状态同步 |
 | `merchant` | `merchant-service` | `merchant_db` | 内部商家快照接口 |
 | `category` | `merchant-service` | `merchant_db` | 公开分类接口 |
 | `product` | `merchant-service` | `merchant_db` | 商品报价、详情、库存接口 |
@@ -99,9 +99,9 @@ flowchart LR
 | `group_coupon` | `order-service` | `order_db` | 订单详情接口 |
 | `coupon` | `settlement-service` | `settlement_db` | 优惠券公开接口和内部锁券接口 |
 | `user_coupon` | `settlement-service` | `settlement_db` | 锁券、释放、核销接口 |
-| `payment` | `settlement-service` | `settlement_db` | 支付查询接口和支付成功事件 |
+| `payment` | `settlement-service` | `settlement_db` | 支付查询接口和支付确认回调 |
 | `rider` | `fulfillment-service` | `fulfillment_db` | 骑手快照和状态校验接口 |
-| `review` | `engagement-service` | `engagement_db` | 评价公开查询接口；评分投影通过事件更新 |
+| `review` | `engagement-service` | `engagement_db` | 评价公开查询接口；评分投影通过同步接口更新 |
 | `message` | `engagement-service` | `engagement_db` | 消息公开接口；发送前调各 Owner 校验参与人 |
 
 ## 6. 负责人 A 主链路内部接口草案
@@ -144,7 +144,7 @@ DTO 草案：
 
 ### 6.3 settlement-service
 
-| 接口/事件 | 类型 | 调用方/订阅方 | 用途 | 失败处理 |
+| 接口 | 类型 | 调用方/订阅方 | 用途 | 失败处理 |
 | --- | --- | --- | --- | --- |
 | `/internal/coupon-locks` | `POST` | `order-service` | 下单时锁定用户券并返回优惠金额 | 锁券失败则订单服务释放库存并终止下单 |
 | `/internal/coupon-locks/{orderId}/release` | `POST` | `order-service` | 取消订单或下单失败时释放用户券 | 幂等；失败进入补偿重试 |
@@ -202,7 +202,7 @@ DTO 草案：
 1. `fulfillment-service` 或用户确认送达。
 2. `order-service` 推进订单为 `completed`。
 3. 调 `settlement-service` 确认优惠券核销。
-4. 调 `merchant-service` 更新销量投影。
+4. 如需要销量投影，再由同步接口更新商家侧统计。
 5. 调用失败时订单服务记录补偿任务并重试。
 
 ## 8. 数据库拆分落地

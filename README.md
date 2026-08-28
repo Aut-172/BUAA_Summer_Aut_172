@@ -67,6 +67,8 @@ docker compose up --build
 
 `db-init` 会把完整初始化脚本转换为非破坏性执行：补齐缺失的 database/table/初始化数据，但不会 drop 已有表。已有旧 MySQL 卷缺少 `engagement_db` 时，单独执行 `docker compose run --rm db-init` 即可修复。
 
+运行时变量见 `.env.example`，至少要关注 `DB_HOST`、`DB_PORT`、`NACOS_SERVER_ADDR`、`REDIS_HOST` 和 `REDIS_PORT`。本地直连默认是 `localhost`，容器里要改成对应服务名或宿主机地址。
+
 启动后访问：
 
 ```text
@@ -74,6 +76,8 @@ docker compose up --build
 Gateway 健康检查：http://localhost:8080/actuator/health
 Nacos 控制台：http://localhost:8848/nacos
 ```
+
+各服务的 `/api/health` 还会返回 `application`、`version` 和数据库状态，便于现场核对当前部署版本。
 
 停止服务：
 
@@ -157,6 +161,14 @@ npm install
 npm.cmd run build
 npm.cmd run test:ci
 ```
+
+## CI/CD
+
+GitHub Actions 定义在 [.github/workflows/ci.yml](.github/workflows/ci.yml)：
+
+- `push` / `pull_request` 到 `main` 时，按服务分别跑后端测试，前端再跑单测和 E2E。
+- `push` 到 `main` 时，额外构建各业务服务和前端镜像，并通过 `scripts/deploy-kind.sh` 推送到 kind 集群。
+- 部署阶段会收集 Kubernetes 资源、Pod 和各服务日志，便于现场说明一次部署失败是怎么定位出来的。
 
 ## Kubernetes
 

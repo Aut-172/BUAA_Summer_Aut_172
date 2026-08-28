@@ -1,4 +1,5 @@
 DROP TABLE IF EXISTS group_coupon;
+DROP TABLE IF EXISTS order_compensation;
 DROP TABLE IF EXISTS order_item;
 DROP TABLE IF EXISTS orders;
 
@@ -20,6 +21,20 @@ CREATE TABLE orders (
     coupon_id BIGINT,
     paid_at TIMESTAMP,
     completed_at TIMESTAMP,
+    stock_reserved BOOLEAN DEFAULT FALSE,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE order_compensation (
+    id BIGINT PRIMARY KEY,
+    request_id VARCHAR(100),
+    order_id BIGINT,
+    action VARCHAR(50) NOT NULL,
+    target_service VARCHAR(50) NOT NULL,
+    payload CLOB,
+    status VARCHAR(20) NOT NULL,
+    message VARCHAR(500),
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

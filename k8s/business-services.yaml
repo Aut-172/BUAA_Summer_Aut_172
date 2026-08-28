@@ -22,6 +22,8 @@ spec:
             - containerPort: 8081
           env:
             - { name: SERVER_PORT, value: "8081" }
+            - name: APP_VERSION
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-version } }
             - name: NACOS_SERVER_ADDR
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-server-addr } }
             - name: SPRING_DATASOURCE_URL
@@ -75,6 +77,8 @@ spec:
             - containerPort: 8082
           env:
             - { name: SERVER_PORT, value: "8082" }
+            - name: APP_VERSION
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-version } }
             - name: NACOS_SERVER_ADDR
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-server-addr } }
             - name: SPRING_DATASOURCE_URL
@@ -134,6 +138,8 @@ spec:
             - containerPort: 8083
           env:
             - { name: SERVER_PORT, value: "8083" }
+            - name: APP_VERSION
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-version } }
             - name: NACOS_SERVER_ADDR
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-server-addr } }
             - name: SPRING_DATASOURCE_URL
@@ -183,6 +189,8 @@ spec:
             - containerPort: 8084
           env:
             - { name: SERVER_PORT, value: "8084" }
+            - name: APP_VERSION
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-version } }
             - name: NACOS_SERVER_ADDR
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-server-addr } }
             - name: SPRING_DATASOURCE_URL
@@ -232,6 +240,8 @@ spec:
             - containerPort: 8085
           env:
             - { name: SERVER_PORT, value: "8085" }
+            - name: APP_VERSION
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-version } }
             - name: NACOS_SERVER_ADDR
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-server-addr } }
             - name: SPRING_DATASOURCE_URL
@@ -291,6 +301,8 @@ spec:
             - containerPort: 8086
           env:
             - { name: SERVER_PORT, value: "8086" }
+            - name: APP_VERSION
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-version } }
             - name: NACOS_SERVER_ADDR
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-server-addr } }
             - name: SPRING_DATASOURCE_URL

@@ -15,6 +15,10 @@ $serviceDirs = @(
     "services/engagement-service"
 )
 
+$runnerDir = Join-Path $repoRoot ".manual-junit-runner"
+$runnerSource = Join-Path $runnerDir "ManualJUnitRunner.java"
+$runnerClasspath = Join-Path $runnerDir "classes"
+
 function Resolve-GradlePath {
     param([string]$ExplicitGradlePath)
 
@@ -41,17 +45,116 @@ function Resolve-GradlePath {
     return $gradleBat
 }
 
-$gradlePath = Resolve-GradlePath $GradlePath
-foreach ($serviceDir in $serviceDirs) {
-    Write-Host "Running Gradle test for $serviceDir..."
-    Push-Location (Join-Path $repoRoot $serviceDir)
-    try {
-        & $gradlePath test
-        if ($LASTEXITCODE -ne 0) {
-            throw "Gradle test failed for $serviceDir"
+function Get-ManualRunnerSource {
+    @'
+import java.io.PrintWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Set;
+import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.listeners.TestExecutionSummary;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
+
+public class ManualJUnitRunner {
+    public static void main(String[] args) throws Exception {
+        if (args.length != 1) {
+            throw new IllegalArgumentException("Usage: ManualJUnitRunner <test-classes-dir>");
         }
-    } finally {
+
+        Path testClassesDir = Paths.get(args[0]);
+        LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                .selectors(DiscoverySelectors.selectClasspathRoots(Set.of(testClassesDir)))
+                .build();
+
+        Launcher launcher = LauncherFactory.create();
+        SummaryGeneratingListener listener = new SummaryGeneratingListener();
+        launcher.registerTestExecutionListeners(listener);
+        launcher.execute(request);
+
+        TestExecutionSummary summary = listener.getSummary();
+        for (TestExecutionSummary.Failure failure : summary.getFailures()) {
+            System.out.println("FAILED TEST: " + failure.getTestIdentifier().getDisplayName());
+            System.out.println("CAUSE: " + failure.getException().getClass().getName() + ": " + failure.getException().getMessage());
+        }
+        summary.printTo(new PrintWriter(System.out, true));
+        if (summary.getTotalFailureCount() > 0) {
+            System.exit(1);
+        }
+    }
+}
+'@
+}
+
+function Invoke-Gradle {
+    param(
+        [string]$GradleExecutable,
+        [string[]]$Arguments,
+        [string]$WorkingDirectory
+    )
+
+    Push-Location $WorkingDirectory
+    try {
+        & $GradleExecutable @Arguments
+        if ($LASTEXITCODE -ne 0) {
+            throw "Gradle command failed in $WorkingDirectory"
+        }
+    }
+    finally {
         Pop-Location
+    }
+}
+
+$gradlePath = Resolve-GradlePath $GradlePath
+
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-21.0.12.1"
+$env:GRADLE_USER_HOME = Join-Path $repoRoot ".gradle-home-d"
+$env:TEMP = Join-Path $repoRoot ".tmp-d"
+$env:TMP = $env:TEMP
+
+New-Item -ItemType Directory -Force -Path $runnerDir, $runnerClasspath, $env:GRADLE_USER_HOME, $env:TEMP | Out-Null
+[System.IO.File]::WriteAllText($runnerSource, (Get-ManualRunnerSource), (New-Object System.Text.UTF8Encoding($false)))
+
+foreach ($serviceDir in $serviceDirs) {
+    $serviceRoot = Join-Path $repoRoot $serviceDir
+    Write-Host "Compiling and running tests for $serviceDir..."
+
+    Invoke-Gradle $gradlePath @("--no-daemon", "classes", "testClasses") $serviceRoot
+
+    $classpathLines = @()
+    Push-Location $serviceRoot
+    try {
+        $classpathLines = & $gradlePath --no-daemon -q printTestRuntimeClasspath
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to read test runtime classpath for $serviceDir"
+        }
+    }
+    finally {
+        Pop-Location
+    }
+
+    $runtimeClasspath = ($classpathLines | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Last 1).Trim()
+    if ([string]::IsNullOrWhiteSpace($runtimeClasspath)) {
+        throw "Empty test runtime classpath for $serviceDir"
+    }
+
+    & "$env:JAVA_HOME\bin\javac.exe" -encoding UTF8 -cp $runtimeClasspath -d $runnerClasspath $runnerSource
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to compile the manual JUnit runner"
+    }
+
+    $testClassesDir = Join-Path $serviceRoot "build\classes\java\test"
+    if (-not (Test-Path -LiteralPath $testClassesDir)) {
+        Write-Host "No compiled test classes found for $serviceDir, skipping execution."
+        continue
+    }
+
+    & "$env:JAVA_HOME\bin\java.exe" -cp "$runtimeClasspath;$runnerClasspath" ManualJUnitRunner $testClassesDir
+    if ($LASTEXITCODE -ne 0) {
+        throw "Manual JUnit run failed for $serviceDir"
     }
 }
 

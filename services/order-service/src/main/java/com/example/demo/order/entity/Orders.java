@@ -33,4 +33,5 @@ public class Orders extends BaseEntity {
     private Long couponId;
     private LocalDateTime paidAt;
     private LocalDateTime completedAt;
+    private Boolean stockReserved;
 }
