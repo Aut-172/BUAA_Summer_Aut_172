@@ -78,12 +78,15 @@ INSERT INTO merchant (
     category, description, avatar, tags, status, rating, monthly_sales,
     min_delivery_fee, delivery_fee, delivery_radius
 ) VALUES
-(20001, 'merchant1', 'secret', 'Campus Kitchen', '13800138002', 'No. 18 College Road', 116.3100000, 39.9800000,
+(20001, 'merchant1', '$2a$10$Eec47nxK3dPutEqDpCyCqOj3mJcOn31z3fCve3xGKSeI1rb4Je.dm', 'Campus Kitchen', '13800138002', 'No. 18 College Road', 116.3100000, 39.9800000,
  '09:00-22:00', 'Food', 'Classic lunch meals.', 'https://picsum.photos/seed/m1/400/300',
  'rice,lunch,hot', 'active', 4.5, 1280, 20.00, 5.00, 5),
-(20002, 'merchant2', 'secret', 'Frozen Shop', '13800138003', 'No. 19 College Road', 116.3200000, 39.9900000,
+(20002, 'merchant2', '$2a$10$Eec47nxK3dPutEqDpCyCqOj3mJcOn31z3fCve3xGKSeI1rb4Je.dm', 'Frozen Shop', '13800138003', 'No. 19 College Road', 116.3200000, 39.9900000,
  '09:00-18:00', 'Food', 'Inactive merchant.', 'https://picsum.photos/seed/m2/400/300',
- 'noodle', 'inactive', 4.9, 3000, 20.00, 5.00, 5);
+ 'noodle', 'inactive', 4.9, 3000, 20.00, 5.00, 5),
+(20003, 'frozen-merchant', '$2a$10$Eec47nxK3dPutEqDpCyCqOj3mJcOn31z3fCve3xGKSeI1rb4Je.dm', 'Frozen Merchant', '13800138009', 'No. 20 College Road', 116.3300000, 39.9700000,
+ '09:00-18:00', 'Food', 'Frozen merchant.', 'https://picsum.photos/seed/m3/400/300',
+ 'frozen', 'frozen', 4.0, 10, 20.00, 5.00, 5);
 
 INSERT INTO category (id, name, parent_id, sort_order) VALUES
 (1, 'Food', NULL, 1),

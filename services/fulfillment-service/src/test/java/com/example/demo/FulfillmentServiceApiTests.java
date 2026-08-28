@@ -50,6 +50,103 @@ class FulfillmentServiceApiTests {
     }
 
     @Test
+    void riderRegisterThenLoginReturnsRiderToken() throws Exception {
+        String registerBody = """
+                {
+                  "username": "newrider",
+                  "phone": "13900000002",
+                  "password": "123456",
+                  "nickname": "New Rider"
+                }
+                """;
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/auth/rider/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registerBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+
+        String loginBody = """
+                {
+                  "username": "13900000002",
+                  "password": "123456"
+                }
+                """;
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/auth/rider/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.user.role").value("rider"))
+                .andExpect(jsonPath("$.data.user.status").value("pending"));
+    }
+
+    @Test
+    void riderRegisterRejectsDuplicatePhone() throws Exception {
+        String body = """
+                {
+                  "username": "duperider",
+                  "phone": "13800138004",
+                  "password": "123456"
+                }
+                """;
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/auth/rider/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("手机号已注册"));
+    }
+
+    @Test
+    void adminCanListAuditFreezeAndUnfreezeRiders() throws Exception {
+        mockMvc.perform(get("/api/admin/riders")
+                        .header(HttpHeaders.AUTHORIZATION, adminToken())
+                        .param("page", "1")
+                        .param("pageSize", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.total").value(2))
+                .andExpect(jsonPath("$.data[0].password").doesNotExist());
+
+        mockMvc.perform(put("/api/admin/riders/40002/audit")
+                        .header(HttpHeaders.AUTHORIZATION, adminToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"active\",\"opinion\":\"通过\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.status").value("active"))
+                .andExpect(jsonPath("$.data.auditOpinion").value("通过"));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/admin/riders/40001")
+                        .header(HttpHeaders.AUTHORIZATION, adminToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("frozen"));
+
+        mockMvc.perform(put("/api/admin/riders/40001/unfreeze").header(HttpHeaders.AUTHORIZATION, adminToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("active"));
+    }
+
+    @Test
+    void riderDashboardSummarizesTodayCompletedTasks() throws Exception {
+        when(orderClient.getCompletedTasks(40001L)).thenReturn(List.of(
+                task(70003L, 40001L, "completed"),
+                task(70004L, 40001L, "completed")
+        ));
+
+        mockMvc.perform(get("/api/rider/dashboard").header(HttpHeaders.AUTHORIZATION, riderToken(40001L)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.rider.todayDeliveries").value(2))
+                .andExpect(jsonPath("$.data.rider.todayEarnings").value(10.0))
+                .andExpect(jsonPath("$.data.rider.status").value("active"));
+    }
+
+    @Test
     void getRiderProfileReturnsCurrentRider() throws Exception {
         mockMvc.perform(get("/api/rider/profile").header(HttpHeaders.AUTHORIZATION, riderToken(40001L)))
                 .andExpect(status().isOk())
@@ -148,6 +245,10 @@ class FulfillmentServiceApiTests {
         return "Bearer " + jwtUtil.generateToken(userId, "consumer", "user" + userId);
     }
 
+    private String adminToken() {
+        return "Bearer " + jwtUtil.generateToken(1L, "admin", "admin");
+    }
+
     private MerchantCatalogClient.MerchantSnapshot merchant() {
         MerchantCatalogClient.MerchantSnapshot merchant = new MerchantCatalogClient.MerchantSnapshot();
         merchant.setId(20001L);
@@ -170,7 +271,7 @@ class FulfillmentServiceApiTests {
         task.setDeliveryFee(new BigDecimal("5.00"));
         task.setCreateTime(LocalDateTime.of(2026, 8, 27, 12, 0));
         task.setPaidAt(LocalDateTime.of(2026, 8, 27, 12, 1));
-        task.setCompletedAt("completed".equals(status) ? LocalDateTime.of(2026, 8, 27, 12, 30) : null);
+        task.setCompletedAt("completed".equals(status) ? LocalDateTime.now() : null);
         OrderClient.ItemSnapshot item = new OrderClient.ItemSnapshot();
         item.setName("Braised Pork Rice");
         item.setQuantity(2);

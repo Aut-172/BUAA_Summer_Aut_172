@@ -7,8 +7,8 @@ import RiderConsole from './RiderConsole'
 
 const mockSession = {
     api: {
-        dashboard: { getMine: vi.fn() },
         rider: {
+            getDashboard: vi.fn(),
             getTasks: vi.fn(),
             getProfile: vi.fn(),
             updateTask: vi.fn(),
@@ -42,7 +42,7 @@ const assignedTask = { ...availableTask, id: 901, orderNo: 'NO20260826002', stat
 describe('RiderConsole page', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        mockSession.api.dashboard.getMine.mockResolvedValue({ rider: { todayDeliveries: 2, todayEarnings: 12, status: 'active' } })
+        mockSession.api.rider.getDashboard.mockResolvedValue({ rider: { todayDeliveries: 2, todayEarnings: 12, status: 'active' } })
         mockSession.api.rider.getTasks.mockResolvedValue({ available: [availableTask], assigned: [assignedTask], completed: [] })
         mockSession.api.rider.getProfile.mockResolvedValue({ name: '一号骑手', phone: '13800000021', serviceArea: '校园东区', status: 'active' })
         mockSession.api.rider.updateTask.mockResolvedValue({})

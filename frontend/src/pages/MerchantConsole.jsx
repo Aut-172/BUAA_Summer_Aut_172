@@ -69,7 +69,7 @@ export default function MerchantConsole() {
         setLoading(true)
         try {
             const [dashboardData, profileData, categoryData, productData, orderData] = await Promise.all([
-                api.dashboard.getMine(),
+                api.merchant.getDashboard(),
                 api.merchant.getProfile(),
                 api.public.getCategories(),
                 api.merchant.getProducts(),

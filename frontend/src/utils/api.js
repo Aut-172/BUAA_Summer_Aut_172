@@ -179,12 +179,6 @@ const api = {
         }
     },
 
-    dashboard: {
-        getMine() {
-            return request({ url: '/dashboard' })
-        }
-    },
-
     user: {
         getProfile() {
             return request({ url: '/user/profile' })
@@ -427,6 +421,10 @@ const api = {
     },
 
     merchant: {
+        getDashboard() {
+            return request({ url: '/merchant/dashboard' })
+        },
+
         getProfile() {
             return request({ url: '/merchant/profile' })
         },
@@ -480,6 +478,10 @@ const api = {
     },
 
     rider: {
+        getDashboard() {
+            return request({ url: '/rider/dashboard' })
+        },
+
         getProfile() {
             return request({ url: '/rider/profile' })
         },

@@ -7,6 +7,7 @@ import com.example.demo.common.BusinessException;
 import com.example.demo.fulfillment.client.MerchantCatalogClient;
 import com.example.demo.fulfillment.client.OrderClient;
 import com.example.demo.rider.dto.RiderProfileUpdateRequest;
+import com.example.demo.rider.dto.RiderDashboardVO;
 import com.example.demo.rider.dto.RiderTaskUpdateRequest;
 import com.example.demo.rider.dto.RiderTaskVO;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.time.LocalDate;
 
 /**
  * Rider service.
@@ -62,6 +64,23 @@ public class RiderService {
 
         riderMapper.updateById(rider);
         return riderMapper.selectById(riderId);
+    }
+
+    public RiderDashboardVO getDashboard(Long riderId) {
+        Rider rider = getProfile(riderId);
+        List<OrderClient.OrderTaskSnapshot> completedOrders = orderClient.getCompletedTasks(riderId);
+        LocalDate today = LocalDate.now();
+        List<OrderClient.OrderTaskSnapshot> todayCompletedOrders = (completedOrders == null ? List.<OrderClient.OrderTaskSnapshot>of() : completedOrders).stream()
+                .filter(order -> order.getCompletedAt() == null || today.equals(order.getCompletedAt().toLocalDate()))
+                .toList();
+
+        return RiderDashboardVO.builder()
+                .rider(RiderDashboardVO.RiderMetrics.builder()
+                        .todayDeliveries(todayCompletedOrders.size())
+                        .todayEarnings(sumDeliveryFee(todayCompletedOrders))
+                        .status(rider.getStatus())
+                        .build())
+                .build();
     }
 
     public RiderTaskVO getTasks(Long riderId) {

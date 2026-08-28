@@ -65,7 +65,7 @@ INSERT INTO user (id, username, password, phone, nickname, avatar, role, status)
 (10002, 'other', '$2a$10$Eec47nxK3dPutEqDpCyCqOj3mJcOn31z3fCve3xGKSeI1rb4Je.dm', '13800138099', 'Other User', NULL, 'consumer', 'active');
 
 INSERT INTO admin (id, username, password) VALUES
-(1, 'admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy');
+(1, 'admin', '$2a$10$HvAnImnOgs9dErjESgWLwuccdHPAWMxqhYxKxfSG1KNyuL6y9.jhe');
 
 INSERT INTO address (id, user_id, name, phone, detail, is_default) VALUES
 (50001, 10001, 'Demo User', '13800138001', 'Old default address', TRUE),

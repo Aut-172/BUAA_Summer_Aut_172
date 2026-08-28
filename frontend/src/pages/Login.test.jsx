@@ -55,6 +55,20 @@ describe('Login page', () => {
         expect(screen.getByLabelText('角色')).toHaveValue('merchant')
     })
 
+    it('keeps admin available for login but hides it on the register form', async () => {
+        const user = userEvent.setup()
+        renderLogin()
+
+        expect(screen.getByRole('option', { name: '管理员' })).toBeInTheDocument()
+        await user.selectOptions(screen.getByLabelText('角色'), 'admin')
+
+        await user.click(screen.getByRole('button', { name: '注册' }))
+
+        expect(screen.getByRole('heading', { name: '创建新账号' })).toBeInTheDocument()
+        expect(screen.getByLabelText('角色')).toHaveValue('consumer')
+        expect(screen.queryByRole('option', { name: '管理员' })).not.toBeInTheDocument()
+    })
+
     it('submits login credentials with captcha data', async () => {
         const user = userEvent.setup()
         mockSession.login.mockResolvedValue({ role: 'consumer' })

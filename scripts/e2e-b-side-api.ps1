@@ -2,6 +2,7 @@ param(
     [string]$GatewayUrl = "http://localhost:8080",
     [string]$ConsumerToken,
     [string]$RiderToken,
+    [string]$AdminToken,
     [long]$MerchantId = 20001,
     [long]$ProductId = 30001,
     [long]$OrderId = 0,
@@ -185,10 +186,20 @@ if ([string]::IsNullOrWhiteSpace($ConsumerToken)) {
 
 if ([string]::IsNullOrWhiteSpace($RiderToken)) {
     Add-Result "rider profile" "SKIPPED" "RiderToken is empty"
+    Add-Result "rider dashboard" "SKIPPED" "RiderToken is empty"
     Add-Result "rider tasks" "SKIPPED" "RiderToken is empty"
 } else {
     Invoke-Scenario "rider profile" { Invoke-BSideApi GET "$GatewayUrl/api/rider/profile" $RiderToken $null } | Out-Host
+    Invoke-Scenario "rider dashboard" { Invoke-BSideApi GET "$GatewayUrl/api/rider/dashboard" $RiderToken $null } | Out-Host
     Invoke-Scenario "rider tasks" { Invoke-BSideApi GET "$GatewayUrl/api/rider/tasks" $RiderToken $null } | Out-Host
+}
+
+if ([string]::IsNullOrWhiteSpace($AdminToken)) {
+    Add-Result "admin users" "SKIPPED" "AdminToken is empty"
+    Add-Result "admin riders" "SKIPPED" "AdminToken is empty"
+} else {
+    Invoke-Scenario "admin users" { Invoke-BSideApi GET "$GatewayUrl/api/admin/users?page=1&pageSize=20" $AdminToken $null } | Out-Host
+    Invoke-Scenario "admin riders" { Invoke-BSideApi GET "$GatewayUrl/api/admin/riders?page=1&pageSize=20" $AdminToken $null } | Out-Host
 }
 
 Write-E2EReport "COMPLETED"

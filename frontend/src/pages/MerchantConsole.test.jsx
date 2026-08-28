@@ -7,8 +7,8 @@ import MerchantConsole from './MerchantConsole'
 
 const mockSession = {
     api: {
-        dashboard: { getMine: vi.fn() },
         merchant: {
+            getDashboard: vi.fn(),
             getProfile: vi.fn(),
             updateProfile: vi.fn(),
             getProducts: vi.fn(),
@@ -52,7 +52,7 @@ const orders = [{ id: 900, orderNo: 'NO20260826001', status: 'delivering', total
 describe('MerchantConsole page', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        mockSession.api.dashboard.getMine.mockResolvedValue({ merchant: { todayOrders: 3, todayRevenue: 120, pendingOrders: 1 } })
+        mockSession.api.merchant.getDashboard.mockResolvedValue({ merchant: { todayOrders: 3, todayRevenue: 120, pendingOrders: 1 } })
         mockSession.api.merchant.getProfile.mockResolvedValue(profile)
         mockSession.api.public.getCategories.mockResolvedValue(categories)
         mockSession.api.merchant.getProducts.mockResolvedValue(products)

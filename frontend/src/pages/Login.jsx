@@ -42,6 +42,17 @@ export default function Login() {
         () => ROLE_OPTIONS.find((item) => item.value === role) || ROLE_OPTIONS[0],
         [role]
     )
+    const visibleRoleOptions = useMemo(
+        () => (mode === 'register' ? ROLE_OPTIONS.filter((item) => item.canRegister) : ROLE_OPTIONS),
+        [mode]
+    )
+
+    function switchToRegister() {
+        if (!currentRole.canRegister) {
+            setRole('consumer')
+        }
+        setMode('register')
+    }
 
     async function refreshCaptcha() {
         setCaptcha((current) => ({ ...current, loading: true }))
@@ -169,8 +180,7 @@ export default function Login() {
                         <button
                             className={`tab ${mode === 'register' ? 'active' : ''}`}
                             type="button"
-                            onClick={() => currentRole.canRegister && setMode('register')}
-                            disabled={!currentRole.canRegister}
+                            onClick={switchToRegister}
                         >
                             注册
                         </button>
@@ -189,7 +199,7 @@ export default function Login() {
                                 value={role}
                                 onChange={(event) => handleRoleChange(event.target.value)}
                             >
-                                {ROLE_OPTIONS.map((item) => (
+                                {visibleRoleOptions.map((item) => (
                                     <option key={item.value} value={item.value}>{item.label}</option>
                                 ))}
                             </select>

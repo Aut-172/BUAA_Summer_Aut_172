@@ -8,6 +8,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,6 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Sql(scripts = "classpath:db/merchant-test-schema.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 class MerchantServiceApiTests {
 
     @Autowired
@@ -26,6 +28,95 @@ class MerchantServiceApiTests {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Test
+    void merchantRegisterThenLoginReturnsMerchantToken() throws Exception {
+        String registerBody = """
+                {
+                  "username": "newmerchant",
+                  "phone": "13900000011",
+                  "password": "123456",
+                  "nickname": "New Merchant"
+                }
+                """;
+
+        mockMvc.perform(post("/api/auth/merchant/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registerBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+
+        String loginBody = """
+                {
+                  "username": "newmerchant",
+                  "password": "123456"
+                }
+                """;
+
+        mockMvc.perform(post("/api/auth/merchant/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.user.role").value("merchant"))
+                .andExpect(jsonPath("$.data.user.nickname").value("New Merchant"))
+                .andExpect(jsonPath("$.data.user.status").value("pending"));
+    }
+
+    @Test
+    void merchantLoginAcceptsSeedAccountAndReturnsMerchantId() throws Exception {
+        String body = """
+                {
+                  "username": "merchant1",
+                  "password": "123456"
+                }
+                """;
+
+        mockMvc.perform(post("/api/auth/merchant/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.user.id").value(20001))
+                .andExpect(jsonPath("$.data.user.merchantId").value(20001))
+                .andExpect(jsonPath("$.data.user.role").value("merchant"));
+    }
+
+    @Test
+    void merchantLoginRejectsBadPasswordAndFrozenMerchant() throws Exception {
+        mockMvc.perform(post("/api/auth/merchant/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"merchant1\",\"password\":\"wrong\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("用户名或密码错误"));
+
+        mockMvc.perform(post("/api/auth/merchant/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"frozen-merchant\",\"password\":\"123456\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("商家账号已被冻结，无法登录"));
+    }
+
+    @Test
+    void merchantRegisterRejectsDuplicatePhone() throws Exception {
+        String body = """
+                {
+                  "username": "merchant-dupe",
+                  "phone": "13800138002",
+                  "password": "123456"
+                }
+                """;
+
+        mockMvc.perform(post("/api/auth/merchant/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("手机号已注册"));
+    }
 
     @Test
     void merchantListOnlyReturnsActiveMerchants() throws Exception {

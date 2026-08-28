@@ -37,7 +37,7 @@ export default function RiderConsole() {
         setLoading(true)
         try {
             const [dashboardData, taskData, profileData] = await Promise.all([
-                api.dashboard.getMine(),
+                api.rider.getDashboard(),
                 api.rider.getTasks(),
                 api.rider.getProfile()
             ])

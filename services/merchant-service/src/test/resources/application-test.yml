@@ -21,6 +21,8 @@ jwt:
   expiration: 86400000
 
 app:
+  auth:
+    captcha-enabled: false
   upload:
     root-dir: uploads
 

@@ -56,6 +56,106 @@ class UserServiceApiTests {
     }
 
     @Test
+    void consumerRegisterThenLoginReturnsConsumerToken() throws Exception {
+        String registerBody = """
+                {
+                  "username": "newuser",
+                  "phone": "13900000001",
+                  "password": "123456",
+                  "nickname": "New User"
+                }
+                """;
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registerBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+
+        String loginBody = """
+                {
+                  "username": "newuser",
+                  "password": "123456"
+                }
+                """;
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.user.role").value("consumer"))
+                .andExpect(jsonPath("$.data.user.nickname").value("New User"));
+    }
+
+    @Test
+    void consumerRegisterRejectsDuplicatePhone() throws Exception {
+        String body = """
+                {
+                  "username": "dupe",
+                  "phone": "13800138001",
+                  "password": "123456"
+                }
+                """;
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("手机号已注册"));
+    }
+
+    @Test
+    void adminLoginReturnsAdminToken() throws Exception {
+        String body = """
+                {
+                  "username": "admin",
+                  "password": "admin123"
+                }
+                """;
+
+        mockMvc.perform(post("/api/auth/admin/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.user.role").value("admin"));
+    }
+
+    @Test
+    void adminCanListFreezeAndUnfreezeConsumers() throws Exception {
+        mockMvc.perform(get("/api/admin/users")
+                        .header(HttpHeaders.AUTHORIZATION, adminToken())
+                        .param("page", "1")
+                        .param("pageSize", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.total").value(2))
+                .andExpect(jsonPath("$.data[0].role").value("consumer"));
+
+        mockMvc.perform(delete("/api/admin/users/10001").header(HttpHeaders.AUTHORIZATION, adminToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.status").value("frozen"));
+
+        mockMvc.perform(put("/api/admin/users/10001/unfreeze").header(HttpHeaders.AUTHORIZATION, adminToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.status").value("active"));
+    }
+
+    @Test
+    void consumerCannotUseAdminUserApi() throws Exception {
+        mockMvc.perform(get("/api/admin/users").header(HttpHeaders.AUTHORIZATION, consumerToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(403))
+                .andExpect(jsonPath("$.message").value("无权访问管理员接口"));
+    }
+
+    @Test
     void getProfileReturnsCurrentConsumer() throws Exception {
         mockMvc.perform(get("/api/user/profile").header(HttpHeaders.AUTHORIZATION, consumerToken()))
                 .andExpect(status().isOk())
@@ -207,6 +307,10 @@ class UserServiceApiTests {
 
     private String consumerToken() {
         return "Bearer " + jwtUtil.generateToken(10001L, "consumer", "demo");
+    }
+
+    private String adminToken() {
+        return "Bearer " + jwtUtil.generateToken(1L, "admin", "admin");
     }
 
     private JsonNode findById(JsonNode array, long id) {

@@ -69,6 +69,8 @@ class EngagementServiceApiTests {
         when(fulfillmentClient.getRider(40001L)).thenReturn(rider());
         when(orderClient.getOrder(70001L)).thenReturn(order(70001L, "completed", List.of(30001L)));
         when(orderClient.getParticipantOrder(70001L, 10001L, "user")).thenReturn(order(70001L, "completed", List.of(30001L)));
+        when(orderClient.getParticipantOrder(70001L, 20001L, "merchant")).thenReturn(order(70001L, "completed", List.of(30001L)));
+        when(orderClient.getParticipantOrder(70001L, 40001L, "rider")).thenReturn(order(70001L, "completed", List.of(30001L)));
         when(orderClient.getParticipantOrder(70002L, 10001L, "user")).thenReturn(order(70002L, "completed", List.of(30001L)));
     }
 
@@ -165,6 +167,26 @@ class EngagementServiceApiTests {
     }
 
     @Test
+    void getMerchantReviewsRatingAndCurrentUserReviews() throws Exception {
+        mockMvc.perform(get("/api/merchants/20001/reviews"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data[0].merchantId").value(20001))
+                .andExpect(jsonPath("$.data[0].content").value("Already reviewed"));
+
+        mockMvc.perform(get("/api/merchants/20001/rating"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data").value(4.0));
+
+        mockMvc.perform(get("/api/user/reviews").header(HttpHeaders.AUTHORIZATION, consumerToken(10001L)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data[0].userId").value(10001))
+                .andExpect(jsonPath("$.data[0].productName").value("Braised Pork Rice"));
+    }
+
+    @Test
     void uploadImagesAcceptsImagesAndRejectsNonImagesAndOversizedFiles() throws Exception {
         MockMultipartFile image = new MockMultipartFile("files", "meal.png", "image/png", "image".getBytes());
 
@@ -215,6 +237,75 @@ class EngagementServiceApiTests {
                 .andExpect(jsonPath("$.data.content").value("Please add napkins"));
 
         verify(eventPublisher).publishMessageSent(any(), eq(70001L), eq(20001L), eq("merchant"));
+    }
+
+    @Test
+    void merchantCanReplyToUserInOrderConversation() throws Exception {
+        String body = """
+                {
+                  "receiverId": 10001,
+                  "receiverType": "user",
+                  "orderId": 70001,
+                  "content": "We are preparing your meal"
+                }
+                """;
+
+        mockMvc.perform(post("/api/messages")
+                        .header(HttpHeaders.AUTHORIZATION, merchantToken(20001L))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.senderType").value("merchant"))
+                .andExpect(jsonPath("$.data.receiverType").value("user"))
+                .andExpect(jsonPath("$.data.content").value("We are preparing your meal"));
+    }
+
+    @Test
+    void riderCanMessageOrderUserWhenRiderIsParticipant() throws Exception {
+        String body = """
+                {
+                  "receiverId": 10001,
+                  "receiverType": "user",
+                  "orderId": 70001,
+                  "content": "I am on the way"
+                }
+                """;
+
+        mockMvc.perform(post("/api/messages")
+                        .header(HttpHeaders.AUTHORIZATION, riderToken(40001L))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.senderType").value("rider"))
+                .andExpect(jsonPath("$.data.receiverType").value("user"))
+                .andExpect(jsonPath("$.data.content").value("I am on the way"));
+    }
+
+    @Test
+    void sendMessageRejectsReceiverOutsideOrderParticipants() throws Exception {
+        MerchantCatalogClient.MerchantSnapshot unrelated = merchant();
+        unrelated.setId(29999L);
+        unrelated.setName("Other Merchant");
+        when(merchantCatalogClient.getMerchant(29999L)).thenReturn(unrelated);
+
+        String body = """
+                {
+                  "receiverId": 29999,
+                  "receiverType": "merchant",
+                  "orderId": 70001,
+                  "content": "hello"
+                }
+                """;
+
+        mockMvc.perform(post("/api/messages")
+                        .header(HttpHeaders.AUTHORIZATION, consumerToken(10001L))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("接收方与订单无关"));
     }
 
     @Test
@@ -288,6 +379,14 @@ class EngagementServiceApiTests {
 
     private String consumerToken(Long userId) {
         return "Bearer " + jwtUtil.generateToken(userId, "consumer", "user" + userId);
+    }
+
+    private String merchantToken(Long merchantId) {
+        return "Bearer " + jwtUtil.generateToken(merchantId, "merchant", "merchant" + merchantId);
+    }
+
+    private String riderToken(Long riderId) {
+        return "Bearer " + jwtUtil.generateToken(riderId, "rider", "rider" + riderId);
     }
 
     private UserClient.UserSnapshot user(Long id) {

@@ -81,7 +81,7 @@ CREATE TABLE `user_favorite_merchant` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO `admin` (`id`, `username`, `password`) VALUES
-(1, 'admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy'),
+(1, 'admin', '$2a$10$HvAnImnOgs9dErjESgWLwuccdHPAWMxqhYxKxfSG1KNyuL6y9.jhe'),
 (2, 'gl1', '$2a$10$8gvXzERfkOBMLd8FPqynkOuuWO234A3CsRT19wTmc9DbXjzvdijue');
 
 INSERT INTO `user` (`id`, `username`, `password`, `phone`, `nickname`, `role`, `status`) VALUES

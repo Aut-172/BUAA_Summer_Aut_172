@@ -33,6 +33,7 @@ dependencies {
     implementation 'com.example:microservice-common:0.1.0-SNAPSHOT'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.security:spring-security-crypto'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
     implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery'

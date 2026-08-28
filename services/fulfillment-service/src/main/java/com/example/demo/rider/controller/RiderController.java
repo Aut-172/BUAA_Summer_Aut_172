@@ -2,6 +2,7 @@ package com.example.demo.rider.controller;
 
 import com.example.demo.auth.entity.Rider;
 import com.example.demo.common.Result;
+import com.example.demo.rider.dto.RiderDashboardVO;
 import com.example.demo.rider.dto.RiderProfileUpdateRequest;
 import com.example.demo.rider.dto.RiderTaskUpdateRequest;
 import com.example.demo.rider.dto.RiderTaskVO;
@@ -36,6 +37,11 @@ public class RiderController {
     @GetMapping("/profile")
     public Result<Rider> getProfile(HttpServletRequest request) {
         return Result.success(riderService.getProfile(getRiderId(request)));
+    }
+
+    @GetMapping("/dashboard")
+    public Result<RiderDashboardVO> getDashboard(HttpServletRequest request) {
+        return Result.success(riderService.getDashboard(getRiderId(request)));
     }
 
     @PutMapping("/profile")
