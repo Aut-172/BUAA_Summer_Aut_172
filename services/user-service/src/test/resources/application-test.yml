@@ -1,0 +1,39 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:user_service;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;NON_KEYWORDS=USER
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/user-test-schema.sql
+  cloud:
+    discovery:
+      enabled: false
+    nacos:
+      discovery:
+        enabled: false
+    service-registry:
+      auto-registration:
+        enabled: false
+
+jwt:
+  secret: LifeAssistant2025SecretKeyForJWTTokenGenerationMustBe256BitsLong
+  expiration: 86400000
+
+app:
+  auth:
+    captcha-enabled: false
+  upload:
+    root-dir: uploads
+
+mybatis-plus:
+  type-aliases-package: com.example.demo.**.entity
+  global-config:
+    db-config:
+      id-type: ASSIGN_ID
+    banner: false
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false

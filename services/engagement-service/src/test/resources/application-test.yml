@@ -1,0 +1,43 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:engagement_service;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/engagement-test-schema.sql
+  cloud:
+    discovery:
+      enabled: false
+    nacos:
+      discovery:
+        enabled: false
+    service-registry:
+      auto-registration:
+        enabled: false
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 120MB
+
+jwt:
+  secret: LifeAssistant2025SecretKeyForJWTTokenGenerationMustBe256BitsLong
+  expiration: 86400000
+
+app:
+  upload:
+    root-dir: ${java.io.tmpdir}/engagement-test-uploads
+    review-dir: ${java.io.tmpdir}/engagement-test-uploads/reviews
+    max-image-size-bytes: 1048576
+
+mybatis-plus:
+  type-aliases-package: com.example.demo.**.entity
+  global-config:
+    db-config:
+      id-type: ASSIGN_ID
+    banner: false
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
