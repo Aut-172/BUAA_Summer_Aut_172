@@ -1,6 +1,5 @@
 rootProject.name = 'life-assistant'
 
-include 'common-lib'
 include 'api-gateway'
 include 'merchant-service'
 include 'user-service'
@@ -9,7 +8,6 @@ include 'settlement-service'
 include 'fulfillment-service'
 include 'engagement-service'
 
-project(':common-lib').projectDir = file('services/common-lib')
 project(':api-gateway').projectDir = file('services/api-gateway')
 project(':merchant-service').projectDir = file('services/merchant-service')
 project(':user-service').projectDir = file('services/user-service')
@@ -17,3 +15,9 @@ project(':order-service').projectDir = file('services/order-service')
 project(':settlement-service').projectDir = file('services/settlement-service')
 project(':fulfillment-service').projectDir = file('services/fulfillment-service')
 project(':engagement-service').projectDir = file('services/engagement-service')
+
+includeBuild('services/common-lib') {
+    dependencySubstitution {
+        substitute(module('com.example:microservice-common')).using(project(':'))
+    }
+}
