@@ -2,10 +2,12 @@ FROM eclipse-temurin:21-jdk AS build
 WORKDIR /workspace
 COPY . .
 WORKDIR /workspace/services/user-service
+ENV GRADLE_USER_HOME=/workspace/.gradle-home-d
 RUN GRADLE_ZIP="$(tr -d '\r' < gradle/wrapper/gradle-wrapper.properties | sed -n 's#^distributionUrl=.*/\([^/]*\.zip\)$#\1#p')" \
     && if [ -n "$GRADLE_ZIP" ] && [ -f "/workspace/$GRADLE_ZIP" ]; then \
         sed -i "s#^distributionUrl=.*#distributionUrl=file:/workspace/$GRADLE_ZIP#" gradle/wrapper/gradle-wrapper.properties; \
     fi \
+    && sed -i 's/\r$//' ./gradlew \
     && chmod +x ./gradlew \
     && ./gradlew clean bootJar --no-daemon
 
