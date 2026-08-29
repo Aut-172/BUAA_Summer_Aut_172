@@ -69,7 +69,7 @@ class FulfillmentServiceApiTests {
 
         String loginBody = """
                 {
-                  "username": "13900000002",
+                  "username": "newrider",
                   "password": "123456"
                 }
                 """;
@@ -81,7 +81,26 @@ class FulfillmentServiceApiTests {
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
                 .andExpect(jsonPath("$.data.user.role").value("rider"))
+                .andExpect(jsonPath("$.data.user.username").value("newrider"))
                 .andExpect(jsonPath("$.data.user.status").value("pending"));
+    }
+
+    @Test
+    void riderRegisterRejectsDuplicateUsername() throws Exception {
+        String body = """
+                {
+                  "username": "rider01",
+                  "phone": "13900000002",
+                  "password": "123456"
+                }
+                """;
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/auth/rider/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("用户名已存在"));
     }
 
     @Test

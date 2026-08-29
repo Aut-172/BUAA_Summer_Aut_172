@@ -32,11 +32,16 @@ public class AuthService {
         verifyCaptcha(request.getCaptchaKey(), request.getCaptchaCode());
 
         if (riderMapper.selectCount(new LambdaQueryWrapper<Rider>()
+                .eq(Rider::getUsername, request.getUsername())) > 0) {
+            throw BusinessException.badRequest("用户名已存在");
+        }
+        if (riderMapper.selectCount(new LambdaQueryWrapper<Rider>()
                 .eq(Rider::getPhone, request.getPhone())) > 0) {
             throw BusinessException.badRequest("手机号已注册");
         }
 
         Rider rider = new Rider();
+        rider.setUsername(request.getUsername());
         rider.setName(StrUtil.isNotBlank(request.getNickname()) ? request.getNickname() : request.getUsername());
         rider.setPassword(passwordEncoder.encode(request.getPassword()));
         rider.setPhone(request.getPhone());
@@ -48,20 +53,23 @@ public class AuthService {
         verifyCaptcha(request.getCaptchaKey(), request.getCaptchaCode());
 
         Rider rider = riderMapper.selectOne(new LambdaQueryWrapper<Rider>()
+                .eq(Rider::getUsername, request.getUsername())
+                .or()
                 .eq(Rider::getPhone, request.getUsername())
                 .or()
                 .eq(Rider::getName, request.getUsername()));
         if (rider == null || !passwordEncoder.matches(request.getPassword(), rider.getPassword())) {
-            throw BusinessException.badRequest("手机号或密码错误");
+            throw BusinessException.badRequest("用户名或密码错误");
         }
         if ("frozen".equals(rider.getStatus())) {
             throw BusinessException.badRequest("账号已被冻结，无法登录");
         }
 
-        String token = jwtUtil.generateToken(rider.getId(), "rider", rider.getName());
+        String loginName = StrUtil.isNotBlank(rider.getUsername()) ? rider.getUsername() : rider.getName();
+        String token = jwtUtil.generateToken(rider.getId(), "rider", loginName);
         LoginResponse.UserInfo userInfo = LoginResponse.UserInfo.builder()
                 .id(rider.getId())
-                .username(rider.getName())
+                .username(loginName)
                 .role("rider")
                 .riderId(rider.getId())
                 .nickname(rider.getName())

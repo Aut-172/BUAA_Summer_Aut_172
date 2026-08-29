@@ -381,6 +381,7 @@ DROP TABLE IF EXISTS `rider`;
 
 CREATE TABLE `rider` (
     `id` BIGINT NOT NULL,
+    `username` VARCHAR(50) NOT NULL,
     `name` VARCHAR(50) NOT NULL,
     `password` VARCHAR(255) NOT NULL,
     `phone` VARCHAR(20) NOT NULL,
@@ -391,11 +392,65 @@ CREATE TABLE `rider` (
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_rider_username` (`username`),
     UNIQUE KEY `uk_rider_phone` (`phone`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO `rider` (`id`, `name`, `password`, `phone`, `status`, `service_area`) VALUES
-(40001, 'rider01', '$2a$10$Eec47nxK3dPutEqDpCyCqOj3mJcOn31z3fCve3xGKSeI1rb4Je.dm', '13800138004', 'active', 'Campus and Science Park');
+SET @rider_username_exists := (
+    SELECT COUNT(*)
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'rider'
+      AND COLUMN_NAME = 'username'
+);
+SET @sql := IF(
+    @rider_username_exists = 0,
+    'ALTER TABLE `rider` ADD COLUMN `username` VARCHAR(50) NULL AFTER `id`',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+UPDATE `rider`
+SET `username` = `name`
+WHERE `username` = '' OR `username` IS NULL;
+
+SET @rider_username_not_null := (
+    SELECT COUNT(*)
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'rider'
+      AND COLUMN_NAME = 'username'
+      AND IS_NULLABLE = 'YES'
+);
+SET @sql := IF(
+    @rider_username_not_null = 1,
+    'ALTER TABLE `rider` MODIFY COLUMN `username` VARCHAR(50) NOT NULL',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @rider_username_key_exists := (
+    SELECT COUNT(*)
+    FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'rider'
+      AND INDEX_NAME = 'uk_rider_username'
+);
+SET @sql := IF(
+    @rider_username_key_exists = 0,
+    'ALTER TABLE `rider` ADD UNIQUE KEY `uk_rider_username` (`username`)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+INSERT INTO `rider` (`id`, `username`, `name`, `password`, `phone`, `status`, `service_area`) VALUES
+(40001, 'rider01', 'rider01', '$2a$10$Eec47nxK3dPutEqDpCyCqOj3mJcOn31z3fCve3xGKSeI1rb4Je.dm', '13800138004', 'active', 'Campus and Science Park');
 
 USE `engagement_db`;
 

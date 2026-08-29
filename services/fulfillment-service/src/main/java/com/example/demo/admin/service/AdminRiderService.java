@@ -27,7 +27,9 @@ public class AdminRiderService {
         }
         if (StrUtil.isNotBlank(keyword)) {
             String value = keyword.trim();
-            wrapper.and(w -> w.like(Rider::getName, value)
+            wrapper.and(w -> w.like(Rider::getUsername, value)
+                    .or()
+                    .like(Rider::getName, value)
                     .or()
                     .like(Rider::getPhone, value)
                     .or()

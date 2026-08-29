@@ -65,6 +65,7 @@ class RiderServiceUnitTests {
     private Rider rider(Long id, String status) {
         Rider rider = new Rider();
         rider.setId(id);
+        rider.setUsername("rider" + id);
         rider.setName("rider" + id);
         rider.setPhone("13800138004");
         rider.setStatus(status);

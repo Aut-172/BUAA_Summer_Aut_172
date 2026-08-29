@@ -14,6 +14,7 @@ import lombok.EqualsAndHashCode;
 @TableName("rider")
 public class Rider extends BaseEntity {
 
+    private String username;
     private String name;
     @JsonIgnore
     private String password;
