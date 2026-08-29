@@ -14,6 +14,7 @@ data:
   spring-sql-init-mode: "never"
   redis-host: redis
   redis-port: "6379"
+  redis-database: "0"
   app-upload-root-dir: /app/uploads
   app-upload-review-dir: /app/uploads/reviews
   app-upload-max-image-size-bytes: "20971520"
