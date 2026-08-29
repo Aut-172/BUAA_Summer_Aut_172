@@ -55,7 +55,9 @@ test.describe('UC01-UC21 业务场景覆盖', () => {
         await expectToast(page, '注册成功')
 
         await page.getByRole('combobox').selectOption('admin')
-        await expect(page.getByRole('button', { name: '注册', exact: true })).toBeDisabled()
+        await page.getByRole('button', { name: '注册', exact: true }).click()
+        await expect(page.getByRole('heading', { name: '创建新账号' })).toBeVisible()
+        await expect(page.getByLabel('角色')).toHaveValue('consumer')
 
         for (const [role, username, password, path, heading] of [
             ['consumer', 'student01', '123456', '/', '附近热门商家'],

@@ -363,10 +363,15 @@ export async function installBusinessScenarioMock(page) {
             return fulfillJson(route, ok(state.reviews.filter((review) => review.productId === 101)))
         }
 
-        if (path === '/dashboard') {
+        if (path === '/dashboard' || path === '/merchant/dashboard') {
             return fulfillJson(route, ok({
                 consumer: { orders: state.orders.length, coupons: state.mineCoupons.length },
                 merchant: { todayOrders: state.orders.length, todayRevenue: 120, pendingOrders: 2 },
+                rider: { todayDeliveries: 2, todayEarnings: 8, status: state.riderProfile.status }
+            }))
+        }
+        if (path === '/rider/dashboard') {
+            return fulfillJson(route, ok({
                 rider: { todayDeliveries: 2, todayEarnings: 8, status: state.riderProfile.status }
             }))
         }
