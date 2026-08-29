@@ -53,11 +53,7 @@ public class AuthService {
         verifyCaptcha(request.getCaptchaKey(), request.getCaptchaCode());
 
         Rider rider = riderMapper.selectOne(new LambdaQueryWrapper<Rider>()
-                .eq(Rider::getUsername, request.getUsername())
-                .or()
-                .eq(Rider::getPhone, request.getUsername())
-                .or()
-                .eq(Rider::getName, request.getUsername()));
+            .eq(Rider::getUsername, request.getUsername()));
         if (rider == null || !passwordEncoder.matches(request.getPassword(), rider.getPassword())) {
             throw BusinessException.badRequest("用户名或密码错误");
         }
