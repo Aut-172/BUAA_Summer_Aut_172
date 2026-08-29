@@ -1,4 +1,6 @@
-# B 侧服务拆分联调验收计划
+# B 侧服务拆分联调验收与收尾记录
+
+本文按当前仓库状态整理 B 侧服务验收范围。B 侧服务指 `user-service`、`fulfillment-service`、`engagement-service`；它们已经接入 `common-lib`、Nacos 服务发现、OpenFeign 和独立 schema。A 侧主链路服务 `merchant-service`、`order-service`、`settlement-service` 已作为联调依赖存在。
 
 ## 1. 本轮 B 侧代码范围
 
@@ -57,7 +59,7 @@
 | 骑手登录 | 经 Gateway 调用 `/api/auth/rider/login`。 | Gateway 路由到履约服务，返回 rider token，履约服务只读 `fulfillment_db.rider`。 |
 | 骑手接单 | 骑手 token 调用 `/api/rider/tasks/{orderId}`，状态传 `待接单`。 | 履约服务先校验骑手 active，再调用订单服务接单接口；并发冲突时返回订单服务错误。 |
 | 配送追踪 | 用户 token 调用 `/api/delivery/{orderId}`。 | 履约服务从订单服务取订单状态，从本地骑手表取骑手信息，从商家服务取商家信息。 |
-| 提交评价 | 用户 token 调用互动服务 `/api/reviews`。 | 互动服务调用订单服务校验订单已完成且商品属于订单，只写 `engagement_db.review`，再请求订单服务标记明细已评价并发布 `ReviewCreated`。 |
+| 提交评价 | 用户 token 调用互动服务 `/api/reviews`。 | 互动服务调用订单服务校验订单已完成且商品属于订单，只写 `engagement_db.review`，再请求订单服务标记明细已评价；`ReviewCreated` 当前为日志型扩展点。 |
 | 重复评价 | 对同一订单再次调用 `/api/reviews`。 | 返回“该订单已评价，不可重复评价”，不新增评价。 |
 | 发送消息 | 任一订单参与方调用 `/api/messages`。 | 互动服务调用各 Owner 服务校验接收方和订单参与关系，只写 `engagement_db.message`。 |
 | 未读消息 | 接收方调用 `/api/messages/unread-count` 后进入会话。 | 未读数正确，拉取会话后本地消息被标记已读。 |
@@ -72,4 +74,21 @@
 | 两个骑手同时抢单 | 订单服务只允许一个成功，失败方刷新任务列表。 |
 | 订单未完成就评价 | 互动服务拒绝写入评价。 |
 | 消息接收方不是订单参与人 | 互动服务拒绝写入消息。 |
-| 评价写入成功但订单标记失败 | 后续通过本地补偿记录和重试修复；本轮不接消息中间件，仅保留日志型占位，待后续需要时再扩展。 |
+| 评价写入成功但订单标记失败 | 当前保留日志型事件发布器作为扩展点；若要完全生产化，需要补本地补偿记录和重试调度。 |
+
+## 6. 当前测试报告和 CI/CD 接入
+
+| 项目 | 当前状态 |
+| --- | --- |
+| B 侧专项脚本 | `scripts/test-b-side-services.ps1` 会先做边界扫描，再运行 `merchant-service`、`user-service`、`fulfillment-service`、`engagement-service` 测试，并生成 `reports/testing/b-side-test-report.md`。 |
+| 最近报告 | `reports/testing/b-side-test-report.md` 显示 61/61 通过；`reports/testing/b-side-test-report-smoke.md` 是早期 37/37 冒烟报告。 |
+| Gateway 直连接口冒烟 | `reports/testing/b-side-e2e-report.md` 的失败原因是本机 `localhost:8080` Gateway 未启动；`reports/testing/b-side-e2e-script-smoke.md` 因未传 token 跳过 10 个场景，不能作为真实联调通过依据。 |
+| CI/CD 接入 | `.github/workflows/ci.yml` 已存在：PR/push 到 `main` 时执行微服务矩阵测试、前端单测、前端 E2E 和前端构建；push 到 `main` 时进一步构建/推送镜像、部署 kind/K8s、做 Gateway 与前端健康检查并上传 `k8s-diagnostics`。B 侧专项脚本仍作为本地收尾验证和报告生成入口。 |
+
+## 7. 收尾风险项
+
+| 风险 | 说明 | 建议 |
+| --- | --- | --- |
+| `/api/user/reviews` Gateway 路由 | `engagement-service` 已实现该接口，但 Gateway 中 `/api/user/**` 会路由到 `user-service`。 | 给 `/api/user/reviews` 增加更高优先级的 engagement 路由，或统一改成 `/api/reviews/mine`。 |
+| 商家后台真实接口 | 前端和 Gateway 记录了 `/api/merchant/dashboard`、`/api/merchant/profile`、`/api/merchant/products/**`，但当前后端 Controller 未落地。 | 若演示依赖前端 mock，需要在交付说明中明示；若要真实联调，需要由 `merchant-service` 补齐。 |
+| 管理员商家管理 | `/api/admin/merchants/**` 当前只有前端/Gateway 记录，缺后端 Controller。 | 真实验收前补 `AdminMerchantController` 或从真实接口清单中移除。 |

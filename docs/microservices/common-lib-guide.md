@@ -8,7 +8,7 @@
 services/common-lib
 ```
 
-该包作为每个业务微服务的共同依赖使用。当前 `merchant-service` 已通过 Gradle composite build 引入：
+该包作为每个业务微服务的共同依赖使用。当前六个业务服务均通过 Gradle composite build 引入，例如：
 
 ```gradle
 // services/merchant-service/settings.gradle
@@ -18,7 +18,7 @@ includeBuild '../common-lib'
 implementation 'com.example:microservice-common:0.1.0-SNAPSHOT'
 ```
 
-后续 `user-service`、`order-service`、`settlement-service`、`fulfillment-service`、`engagement-service` 可以沿用同样方式。
+`api-gateway` 不直接使用业务公共 Web MVC 拦截器，但同样按独立 Gradle 工程构建和部署。
 
 ## 2. 当前公共内容
 
@@ -44,6 +44,8 @@ implementation 'com.example:microservice-common:0.1.0-SNAPSHOT'
 | `com.example.demo.common.contract.InternalHeaders` | 内部调用请求头常量 |
 | `com.example.demo.common.contract.merchant.ProductQuoteRequest` | 商家商品报价内部接口请求契约 |
 | `com.example.demo.common.contract.merchant.ProductQuoteResponse` | 商家商品报价内部接口响应契约 |
+| `com.example.demo.common.contract.merchant.StockChangeRequest` | 商家商品库存预占/释放请求契约 |
+| `com.example.demo.common.contract.merchant.StockChangeResponse` | 商家商品库存变更状态响应契约 |
 | `com.example.demo.common.contract.order.MarkPaidRequest` | 订单支付成功推进内部接口请求契约 |
 | `com.example.demo.common.contract.order.OrderInternalResponse` | 订单内部查询响应契约 |
 | `com.example.demo.common.contract.settlement.CouponLockRequest` | 优惠券锁定内部接口请求契约 |
@@ -93,14 +95,26 @@ LoadBalancer
 4. 前端请求统一进入 Gateway，再由 Gateway 按服务名路由到业务服务。
 5. 不再使用固定 `localhost:端口` 做服务间调用。
 
-当前 `order-service` 和 `settlement-service` 已加入 OpenFeign 和 LoadBalancer 依赖。`order-service` 通过 `MerchantProductClient` 定义了调用 `merchant-service` 商品报价接口的模板；`settlement-service` 通过 `OrderClient` 定义了支付成功后推进订单状态的模板。由于本地还没有 Gateway/Nacos 运行环境，服务注册发现仍留到后续部署阶段接入。
+当前业务服务已按上述方式接入 OpenFeign 和 LoadBalancer：
+
+| 调用方 | Feign Client | 目标服务/接口 |
+| --- | --- | --- |
+| `user-service` | `MerchantCatalogClient` | `merchant-service /internal/merchants/{merchantId}`、`/internal/products/quote`、`/internal/products/{productId}` |
+| `order-service` | `UserClient` | `user-service /internal/users/{userId}/cart?merchantId=` |
+| `order-service` | `MerchantCatalogClient`、`MerchantProductClient` | `merchant-service /internal/merchants/{merchantId}`、`/internal/products/quote`、`/internal/products/reserve`、`/internal/products/release`、`/internal/products/changes/{requestId}` |
+| `order-service` | `SettlementCouponClient` | `settlement-service /internal/coupon-locks/**` |
+| `settlement-service` | `OrderClient` | `order-service /internal/orders/{orderId}`、`/internal/orders/{orderId}/mark-paid` |
+| `fulfillment-service` | `OrderClient`、`MerchantCatalogClient` | `order-service /internal/fulfillment/**`、`order-service /internal/orders/{orderId}`、`merchant-service /internal/merchants/{merchantId}` |
+| `engagement-service` | `OrderClient`、`UserClient`、`MerchantCatalogClient`、`FulfillmentClient` | 订单参与人校验、已评价标记、用户/商家/商品/骑手快照 |
+
+本地容器环境通过 `docker-compose.yml` 启动 Nacos；Kubernetes 环境通过 `k8s/nacos.yaml` 和 `scripts/deploy-kind.sh` 接入服务发现。
 
 ## 5. 跨服务调用约定
 
 1. 服务间通过 OpenFeign 调 Owner 服务的 `/internal/**` 接口。
 2. Feign `name` 使用 `ServiceNames` 中的常量。
 3. 每次写链路调用携带 `X-Request-Id`；幂等写操作携带 `X-Idempotency-Key`。
-4. 调用失败时，调用方返回可重试错误，或写入本服务补偿记录后重试。
+4. 调用失败时，调用方返回可重试错误，或写入本服务补偿记录后重试；当前订单服务已有补偿记录落点，互动服务的事件发布器仍是日志型扩展点。
 5. 不使用跨服务直接读库、跨 schema 联表或共享 Mapper。
 
 ## 6. Docker 构建约定

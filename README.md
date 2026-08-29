@@ -134,17 +134,19 @@ powershell -ExecutionPolicy Bypass -File scripts\init-db.ps1
 
 ## 构建与测试
 
-验证全部微服务：
+验证全部微服务（编译 `classes/testClasses`，再用仓库内临时 JUnit Runner 执行各服务测试）：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\test-microservices.ps1
 ```
 
-验证 B 侧边界与服务构建：
+验证 B 侧边界与服务构建（同时检查 B 侧服务没有复制公共包、没有直接引用外部服务 Mapper/Service、没有固定 `localhost:808x` 的跨服务调用）：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\test-b-side-services.ps1
 ```
+
+该脚本默认生成 `reports/testing/b-side-test-report.md`。最近一次仓库内报告显示 `merchant-service`、`user-service`、`fulfillment-service`、`engagement-service` 合计 61 个服务级用例通过。若需要重新生成报告，可传入 `-ReportPath` 指定输出位置。
 
 单个服务也可以独立测试：
 
@@ -160,15 +162,23 @@ cd frontend
 npm install
 npm.cmd run build
 npm.cmd run test:ci
+npm.cmd run e2e
 ```
+
+前端单测覆盖 `Home`、`Search`、`Login`、`MerchantDetail`、`Cart`、`Checkout`、`Orders`、`Profile`、`Messages`、`MerchantConsole`、`RiderConsole`、`AdminConsole` 等页面；Playwright E2E 覆盖 UC01-UC21 的多角色注册登录、消费者下单闭环、商家经营入口、骑手履约入口和管理员主体管理场景。`reports/testing/b-side-e2e-report.md` 是直连 Gateway 的接口冒烟报告，历史失败原因为本机 `localhost:8080` Gateway 未启动；`reports/testing/b-side-e2e-script-smoke.md` 是无 token 参数时的脚本跳过报告，不代表真实链路通过。
 
 ## CI/CD
 
-GitHub Actions 定义在 [.github/workflows/ci.yml](.github/workflows/ci.yml)：
+GitHub Actions 定义在 [.github/workflows/ci.yml](.github/workflows/ci.yml)，触发条件为 `pull_request` 到 `main` 和 `push` 到 `main`。
 
-- `push` / `pull_request` 到 `main` 时，按服务分别跑后端测试，前端再跑单测和 E2E。
-- `push` 到 `main` 时，额外构建各业务服务和前端镜像，并通过 `scripts/deploy-kind.sh` 推送到 kind 集群。
-- 部署阶段会收集 Kubernetes 资源、Pod 和各服务日志，便于现场说明一次部署失败是怎么定位出来的。
+- `microservice-test`：使用 Ubuntu runner、Temurin JDK 21 和 Gradle cache，按矩阵分别进入 `api-gateway`、六个业务服务目录执行 `./gradlew --no-daemon test`，并上传各服务 `build/reports/tests/test/` 和 `build/test-results/test/`。
+- `frontend-test`：使用 Node 22 和 npm cache，在 `frontend/` 执行 `npm ci`、`npm run test:ci`，上传 `frontend/test-results/`。
+- `frontend-e2e`：依赖前端单测，通过 `npx playwright install --with-deps chromium` 安装浏览器后执行 `npm run e2e:direct`，上传 Playwright report 和 test-results。
+- `frontend-build`：依赖后端矩阵测试、前端单测和 E2E，执行 `npm run build`。
+- `container-build-and-k8s-deploy`：仅在 `push` 到 `main` 时运行，构建并推送 Gateway、六个业务服务和前端镜像到 Docker Hub，加载镜像到 kind 集群，执行 `bash scripts/deploy-kind.sh`，随后通过 Gateway `/actuator/health` 和前端首页做健康检查。
+- 诊断归档：部署 job 无论成功失败都会收集 `kubectl get all -o wide`、`kubectl describe pods`、各 Deployment 最近 200 行日志，以及端口转发日志并上传为 `k8s-diagnostics`。
+
+本地脚本 `scripts/test-microservices.ps1`、`scripts/test-b-side-services.ps1` 和 `scripts/deploy-kind.sh` 与 CI 流程互为补充：前者便于 Windows 本地收尾验证，后者是 GitHub Actions 在 Linux runner 上的正式门禁和发布路径。
 
 ## Kubernetes
 
