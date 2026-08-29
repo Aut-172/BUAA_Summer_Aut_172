@@ -56,6 +56,12 @@ spring:
           predicates:
             - Path=/api/products/*/reviews,/api/merchants/*/reviews,/api/merchants/*/rating
 
+        - id: engagement-user-reviews
+          uri: lb://engagement-service
+          order: -30
+          predicates:
+            - Path=/api/user/reviews
+
         - id: merchant-catalog
           uri: lb://merchant-service
           predicates:
