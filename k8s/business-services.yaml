@@ -31,6 +31,14 @@ spec:
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: mysql-root-password } }
+            - name: REDIS_HOST
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-host } }
+            - name: REDIS_PORT
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-port } }
+            - name: REDIS_DATABASE
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-database } }
+            - name: APP_AUTH_CAPTCHA_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-auth-captcha-enabled } }
             - name: JWT_SECRET
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: jwt-secret } }
             - name: APP_UPLOAD_ROOT_DIR
