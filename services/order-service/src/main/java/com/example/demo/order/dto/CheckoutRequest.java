@@ -13,6 +13,7 @@ public class CheckoutRequest {
     private BigDecimal total;
     private BigDecimal deliveryFee;
     private BigDecimal discount;
+    private Long addressId;
     private String address;
     private Long couponId;
 

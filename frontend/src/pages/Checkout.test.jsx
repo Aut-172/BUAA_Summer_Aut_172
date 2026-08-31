@@ -96,6 +96,7 @@ describe('Checkout page', () => {
         await waitFor(() => {
             expect(mockSession.api.orders.checkout).toHaveBeenCalledWith({
                 merchantId: 10,
+                addressId: 100,
                 address: '宿舍 3 号楼 302 室',
                 couponId: 500,
                 items: [
