@@ -22,7 +22,7 @@ data:
 #  oss-endpoint: oss-cn-heyuan.aliyuncs.com
   oss-endpoint: oss-cn-heyuan-internal.aliyuncs.com
   oss-bucket: buaa-summer-life-assistant
-  oss-public-base-url: https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn
+  oss-public-base-url: /oss
   oss-upload-prefix: life-assistant
   oss-cname-enabled: "false"
   spring-servlet-multipart-max-file-size: 20MB

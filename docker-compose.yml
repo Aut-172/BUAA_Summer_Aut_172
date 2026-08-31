@@ -17,7 +17,7 @@ x-business-service-env: &business-service-env
   OSS_BUCKET: ${OSS_BUCKET:-buaa-summer-life-assistant}
   OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID:-}
   OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET:-}
-  OSS_PUBLIC_BASE_URL: ${OSS_PUBLIC_BASE_URL:-https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn}
+  OSS_PUBLIC_BASE_URL: ${OSS_PUBLIC_BASE_URL:-/oss}
   OSS_UPLOAD_PREFIX: ${OSS_UPLOAD_PREFIX:-life-assistant}
   OSS_CNAME_ENABLED: ${OSS_CNAME_ENABLED:-false}
   TZ: Asia/Shanghai

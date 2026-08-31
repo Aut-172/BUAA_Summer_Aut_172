@@ -108,7 +108,7 @@ class OrderServiceApiTests {
         quoteItem.setProductId(30001L);
         quoteItem.setMerchantId(20001L);
         quoteItem.setName("Braised Pork Rice");
-        quoteItem.setImage("https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/products/braised-pork-rice.png");
+        quoteItem.setImage("/oss/life-assistant/demo/products/braised-pork-rice.png");
         quoteItem.setUnitPrice(new BigDecimal("22.00"));
         quoteItem.setQuantity(1);
         quoteItem.setStock(100);
@@ -217,7 +217,7 @@ class OrderServiceApiTests {
         MerchantCatalogClient.MerchantSnapshot merchant = new MerchantCatalogClient.MerchantSnapshot();
         merchant.setId(20001L);
         merchant.setName("Campus Kitchen");
-        merchant.setAvatar("https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/merchants/campus-kitchen.png");
+        merchant.setAvatar("/oss/life-assistant/demo/merchants/campus-kitchen.png");
         merchant.setStatus("active");
         merchant.setMinDeliveryFee(new BigDecimal("20.00"));
         merchant.setDeliveryFee(new BigDecimal("5.00"));

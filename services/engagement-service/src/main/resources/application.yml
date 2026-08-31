@@ -56,6 +56,6 @@ app:
     bucket: ${OSS_BUCKET:buaa-summer-life-assistant}
     access-key-id: ${OSS_ACCESS_KEY_ID:}
     access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
-    public-base-url: ${OSS_PUBLIC_BASE_URL:https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn}
+    public-base-url: ${OSS_PUBLIC_BASE_URL:/oss}
     upload-prefix: ${OSS_UPLOAD_PREFIX:life-assistant}
     cname-enabled: ${OSS_CNAME_ENABLED:false}

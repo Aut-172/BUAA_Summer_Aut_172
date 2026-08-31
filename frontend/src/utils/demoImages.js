@@ -18,7 +18,7 @@ export const FALLBACK_PROFILE_IMAGE = svgImage('User', '#536d8e', '#f2b84b')
 
 const OSS_PUBLIC_BASE_URL = (
     import.meta.env.VITE_OSS_PUBLIC_BASE_URL ||
-    'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn'
+    '/oss'
 ).replace(/\/+$/, '')
 
 export function normalizeImageSrc(value, fallback = FALLBACK_PRODUCT_IMAGE) {

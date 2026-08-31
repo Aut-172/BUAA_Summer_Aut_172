@@ -12,17 +12,19 @@ Use these values for the Heyuan bucket:
 OSS_ENABLED=true
 OSS_ENDPOINT=oss-cn-heyuan.aliyuncs.com
 OSS_BUCKET=buaa-summer-life-assistant
-OSS_PUBLIC_BASE_URL=https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn
+OSS_PUBLIC_BASE_URL=/oss
 OSS_UPLOAD_PREFIX=life-assistant
 OSS_CNAME_ENABLED=false
 ```
 
-If the backend runs on Alibaba Cloud ECS in the same region/VPC, you can use the internal endpoint for upload traffic while keeping the public URL for browser display:
+If the backend runs on Alibaba Cloud ECS in the same region/VPC, use the internal endpoint for upload traffic. Browser display still uses same-origin `/oss/...` URLs, and the frontend Nginx proxies those requests to OSS:
 
 ```env
 OSS_ENDPOINT=oss-cn-heyuan-internal.aliyuncs.com
-OSS_PUBLIC_BASE_URL=https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn
+OSS_PUBLIC_BASE_URL=/oss
 ```
+
+With this setup, records stored in MySQL look like `/oss/life-assistant/demo/products/braised-pork-rice.png`; browsers request the deployed frontend domain, not the OSS custom domain directly.
 
 ## Upload Demo Assets
 
@@ -60,4 +62,4 @@ Use a least-privilege RAM policy that allows only object upload/read management 
 
 ## CORS
 
-If browsers load images directly from OSS/CDN, allow your frontend domain to `GET` objects from the bucket. If uploads always go through `/api/uploads/images`, the frontend does not need direct OSS write permissions.
+The default deployment avoids browser-to-OSS cross-origin requests by proxying `/oss/` through the frontend Nginx container. If you later switch back to direct OSS/CDN URLs, allow your frontend domain to `GET` objects from the bucket. If uploads always go through `/api/uploads/images`, the frontend does not need direct OSS write permissions.
