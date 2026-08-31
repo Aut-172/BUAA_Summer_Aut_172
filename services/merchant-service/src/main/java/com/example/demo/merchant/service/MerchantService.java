@@ -437,6 +437,22 @@ public class MerchantService {
     }
 
     /**
+     * 获取商家自己的商品详情
+     */
+    public Product getMerchantProduct(Long merchantId, Long productId) {
+        requireActiveMerchant(merchantId);
+
+        Product product = productMapper.selectById(productId);
+        if (product == null) {
+            throw new BusinessException(404, "商品不存在");
+        }
+        if (!merchantId.equals(product.getMerchantId())) {
+            throw new BusinessException(403, "无权查看该商品");
+        }
+        return product;
+    }
+
+    /**
      * 添加规格分组
      */
     public void addSpecGroup(Long merchantId, SpecGroup specGroup) {

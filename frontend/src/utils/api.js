@@ -441,6 +441,12 @@ const api = {
             return request({ url: '/merchant/products' })
         },
 
+        getProduct(productId) {
+            return request({
+                url: `/merchant/products/${productId}`
+            })
+        },
+
         createProduct(payload) {
             return request({
                 url: '/merchant/products',

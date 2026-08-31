@@ -6,10 +6,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demo.common.BusinessException;
 import com.example.demo.common.contract.merchant.ProductQuoteRequest;
 import com.example.demo.common.contract.merchant.ProductQuoteResponse;
+import com.example.demo.common.contract.merchant.MerchantDashboardStats;
 import com.example.demo.common.contract.merchant.StockChangeRequest;
 import com.example.demo.common.contract.merchant.StockChangeResponse;
 import com.example.demo.common.contract.order.MarkPaidRequest;
 import com.example.demo.common.contract.order.OrderInternalResponse;
+import com.example.demo.common.contract.user.AddressSnapshot;
 import com.example.demo.common.contract.settlement.CouponLockRequest;
 import com.example.demo.common.contract.settlement.CouponLockResponse;
 import com.example.demo.order.client.MerchantCatalogClient;
@@ -30,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -73,6 +76,38 @@ public class OrderService {
         return toOrderVO(order);
     }
 
+    public MerchantDashboardStats getMerchantDashboard(Long merchantId) {
+        merchantCatalogClient.getMerchant(merchantId);
+
+        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+        long todayOrders = ordersMapper.selectCount(
+                new LambdaQueryWrapper<Orders>()
+                        .eq(Orders::getMerchantId, merchantId)
+                        .ge(Orders::getCreateTime, startOfToday)
+        );
+
+        BigDecimal todayRevenue = ordersMapper.selectList(
+                        new LambdaQueryWrapper<Orders>()
+                                .eq(Orders::getMerchantId, merchantId)
+                                .ge(Orders::getPaidAt, startOfToday)
+                ).stream()
+                .map(Orders::getActualAmount)
+                .filter(amount -> amount != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        long pendingOrders = ordersMapper.selectCount(
+                new LambdaQueryWrapper<Orders>()
+                        .eq(Orders::getMerchantId, merchantId)
+                        .in(Orders::getStatus, List.of(STATUS_PENDING_PAYMENT, STATUS_PENDING_ACCEPT))
+        );
+
+        MerchantDashboardStats stats = new MerchantDashboardStats();
+        stats.setTodayOrders(Math.toIntExact(todayOrders));
+        stats.setTodayRevenue(todayRevenue);
+        stats.setPendingOrders(Math.toIntExact(pendingOrders));
+        return stats;
+    }
+
     @Transactional
     public OrderVO checkout(Long userId, CheckoutRequest request) {
         if (request == null || request.getMerchantId() == null) {
@@ -81,7 +116,7 @@ public class OrderService {
         if (request.getItems() == null || request.getItems().isEmpty()) {
             throw BusinessException.badRequest("订单商品不能为空");
         }
-        if (request.getAddress() == null || request.getAddress().isBlank()) {
+        if (request.getAddressId() == null && (request.getAddress() == null || request.getAddress().isBlank())) {
             throw BusinessException.badRequest("收货地址不能为空");
         }
 
@@ -92,6 +127,7 @@ public class OrderService {
         if (merchant == null || !"active".equals(merchant.getStatus())) {
             throw BusinessException.notFound("商家不存在或不可下单");
         }
+        ResolvedCheckoutAddress resolvedAddress = resolveCheckoutAddress(userId, request);
 
         try {
             ProductQuoteResponse quote = orderCheckoutDraftService.quoteProducts(toQuoteRequest(request));
@@ -117,7 +153,8 @@ public class OrderService {
             order.setDiscount(BigDecimal.ZERO);
             order.setStatus(STATUS_PENDING_PAYMENT);
             order.setStockReserved(true);
-            order.setAddressDetail(request.getAddress().trim());
+            order.setAddressId(resolvedAddress.addressId());
+            order.setAddressDetail(resolvedAddress.addressDetail());
             ordersMapper.insert(order);
             stockRequest.setOrderId(order.getId());
 
@@ -770,6 +807,39 @@ public class OrderService {
             response.getItems().add(responseItem);
         }
         return response;
+    }
+
+    private ResolvedCheckoutAddress resolveCheckoutAddress(Long userId, CheckoutRequest request) {
+        if (request.getAddressId() != null) {
+            AddressSnapshot address = userClient.getAddress(userId, request.getAddressId());
+            if (address == null) {
+                throw BusinessException.notFound("地址不存在");
+            }
+            return new ResolvedCheckoutAddress(address.getId(), formatAddress(address));
+        }
+
+        String address = request.getAddress() == null ? "" : request.getAddress().trim();
+        if (address.isBlank()) {
+            throw BusinessException.badRequest("收货地址不能为空");
+        }
+        return new ResolvedCheckoutAddress(null, address);
+    }
+
+    private String formatAddress(AddressSnapshot address) {
+        List<String> parts = new ArrayList<>();
+        if (address.getName() != null && !address.getName().isBlank()) {
+            parts.add(address.getName().trim());
+        }
+        if (address.getPhone() != null && !address.getPhone().isBlank()) {
+            parts.add(address.getPhone().trim());
+        }
+        if (address.getDetail() != null && !address.getDetail().isBlank()) {
+            parts.add(address.getDetail().trim());
+        }
+        return String.join(" ", parts).trim();
+    }
+
+    private record ResolvedCheckoutAddress(Long addressId, String addressDetail) {
     }
 
     private String mapStatus(String status) {

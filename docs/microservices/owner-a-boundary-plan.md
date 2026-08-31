@@ -307,6 +307,6 @@ LoadBalancer
 
 | 差异 | 影响 | 建议 |
 | --- | --- | --- |
-| 前端仍调用 `/api/merchant/dashboard`、`/api/merchant/profile`、`/api/merchant/products/**`，但后端未暴露对应 Controller。 | 商家后台如果切到真实 Gateway 会出现 404 或路由到无处理器。 | 本阶段可标注为 mock 演示能力；真实联调前在 `merchant-service` 补齐接口。 |
-| 前端和 Gateway 记录 `/api/admin/merchants/**`，后端未暴露管理员商家管理接口。 | 管理员商家审核、冻结、解冻无法真实联调。 | 在 `merchant-service` 增加 `AdminMerchantController`，或从前端交付范围中移除真实后端承诺。 |
+| 前端仍调用 `/api/merchant/dashboard`、`/api/merchant/profile`、`/api/merchant/products/**`，后端已暴露对应 Controller。 | 商家后台可直接走真实 Gateway 联调。 | 已完成。 |
+| 前端和 Gateway 记录 `/api/admin/merchants/**`，后端已暴露管理员商家管理接口。 | 管理员商家审核、冻结、解冻可真实联调。 | 已完成。 |
 | `engagement-service` 暴露 `GET /api/user/reviews`，Gateway 当前也有 `/api/user/**` 到用户服务的泛路由。 | 该接口经 Gateway 访问时可能被用户服务截获。 | 增加更高优先级的 engagement 路由，或把接口改为 `/api/reviews/mine` 并同步前端。 |

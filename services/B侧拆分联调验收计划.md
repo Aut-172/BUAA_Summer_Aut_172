@@ -90,5 +90,5 @@
 | 风险 | 说明 | 建议 |
 | --- | --- | --- |
 | `/api/user/reviews` Gateway 路由 | `engagement-service` 已实现该接口，但 Gateway 中 `/api/user/**` 会路由到 `user-service`。 | 给 `/api/user/reviews` 增加更高优先级的 engagement 路由，或统一改成 `/api/reviews/mine`。 |
-| 商家后台真实接口 | 前端和 Gateway 记录了 `/api/merchant/dashboard`、`/api/merchant/profile`、`/api/merchant/products/**`，但当前后端 Controller 未落地。 | 若演示依赖前端 mock，需要在交付说明中明示；若要真实联调，需要由 `merchant-service` 补齐。 |
-| 管理员商家管理 | `/api/admin/merchants/**` 当前只有前端/Gateway 记录，缺后端 Controller。 | 真实验收前补 `AdminMerchantController` 或从真实接口清单中移除。 |
+| 商家后台真实接口 | 前端和 Gateway 记录了 `/api/merchant/dashboard`、`/api/merchant/profile`、`/api/merchant/products/**`，现已由 `merchant-service` 落地。 | 可直接进入真实联调与验收。 |
+| 管理员商家管理 | `/api/admin/merchants/**` 已落地后端 Controller，可直接联调。 | 已完成。 |

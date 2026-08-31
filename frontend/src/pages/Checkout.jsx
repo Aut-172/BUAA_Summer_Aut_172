@@ -94,10 +94,13 @@ export default function Checkout() {
             return
         }
 
+        const selectedSavedAddress = !manualAddress.trim() ? selectedAddress : null
+
         setSubmitting(true)
         try {
             const order = await api.orders.checkout({
                 merchantId: currentGroup.merchantId,
+                addressId: selectedSavedAddress ? Number(selectedSavedAddress.id) : null,
                 address: finalAddress,
                 couponId: selectedCoupon ? selectedCoupon.id : null,
                 items: currentGroup.items.map((item) => ({

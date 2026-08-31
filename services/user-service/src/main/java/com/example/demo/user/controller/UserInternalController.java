@@ -2,6 +2,7 @@ package com.example.demo.user.controller;
 
 import com.example.demo.auth.entity.User;
 import com.example.demo.common.Result;
+import com.example.demo.common.contract.user.AddressSnapshot;
 import com.example.demo.user.dto.AddressDTO;
 import com.example.demo.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +26,17 @@ public class UserInternalController {
     }
 
     @GetMapping("/{userId}/addresses/{addressId}")
-    public Result<AddressDTO> getAddress(@PathVariable Long userId, @PathVariable Long addressId) {
-        return Result.success(userService.getAddress(userId, addressId));
+    public Result<AddressSnapshot> getAddress(@PathVariable Long userId, @PathVariable Long addressId) {
+        AddressDTO dto = userService.getAddress(userId, addressId);
+        AddressSnapshot snapshot = new AddressSnapshot();
+        snapshot.setId(dto.getId());
+        snapshot.setName(dto.getName());
+        snapshot.setPhone(dto.getPhone());
+        snapshot.setDetail(dto.getDetail());
+        snapshot.setLongitude(dto.getLongitude());
+        snapshot.setLatitude(dto.getLatitude());
+        snapshot.setIsDefault(dto.getIsDefault());
+        return Result.success(snapshot);
     }
 
     @DeleteMapping("/{userId}/cart")

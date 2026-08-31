@@ -1,6 +1,7 @@
 package com.example.demo.order.controller;
 
 import com.example.demo.common.Result;
+import com.example.demo.common.contract.merchant.MerchantDashboardStats;
 import com.example.demo.common.contract.order.MarkPaidRequest;
 import com.example.demo.common.contract.order.OrderInternalResponse;
 import com.example.demo.order.service.OrderService;
@@ -26,6 +27,11 @@ public class InternalOrderController {
     @GetMapping("/{orderId}")
     public Result<OrderInternalResponse> getOrder(@PathVariable Long orderId) {
         return Result.success(orderService.getOrder(orderId));
+    }
+
+    @GetMapping("/merchant-dashboard")
+    public Result<MerchantDashboardStats> getMerchantDashboard(@RequestParam Long merchantId) {
+        return Result.success(orderService.getMerchantDashboard(merchantId));
     }
 
     @PostMapping("/{orderId}/mark-paid")
