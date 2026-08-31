@@ -49,6 +49,12 @@ dependencies {
     // MyBatis-Plus
     implementation 'com.baomidou:mybatis-plus-spring-boot3-starter:3.5.7'
 
+    // Aliyun OSS
+    implementation 'com.aliyun.oss:aliyun-sdk-oss:3.17.4'
+    implementation 'javax.xml.bind:jaxb-api:2.3.1'
+    implementation 'javax.activation:activation:1.1.1'
+    implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.3'
+
     // MySQL
     runtimeOnly 'com.mysql:mysql-connector-j'
 

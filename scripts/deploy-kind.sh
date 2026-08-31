@@ -5,6 +5,8 @@ IMAGE_TAG="${IMAGE_TAG:-$(git rev-parse --short HEAD 2>/dev/null || echo dev)}"
 NAMESPACE="${K8S_NAMESPACE:-default}"
 MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-123456}"
 JWT_SECRET="${JWT_SECRET:-LifeAssistant2025SecretKeyForJWTTokenGenerationMustBe256BitsLong}"
+OSS_ACCESS_KEY_ID="${OSS_ACCESS_KEY_ID:-}"
+OSS_ACCESS_KEY_SECRET="${OSS_ACCESS_KEY_SECRET:-}"
 ACR_REGISTRY="${ACR_REGISTRY:-}"
 ACR_USERNAME="${ACR_USERNAME:-}"
 ACR_PASSWORD="${ACR_PASSWORD:-}"
@@ -42,6 +44,8 @@ kubectl create secret generic life-assistant-secret \
   --namespace "$NAMESPACE" \
   --from-literal=mysql-root-password="$MYSQL_ROOT_PASSWORD" \
   --from-literal=jwt-secret="$JWT_SECRET" \
+  --from-literal=oss-access-key-id="$OSS_ACCESS_KEY_ID" \
+  --from-literal=oss-access-key-secret="$OSS_ACCESS_KEY_SECRET" \
   --dry-run=client \
   -o yaml | kubectl apply -f -
 

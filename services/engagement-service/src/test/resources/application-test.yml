@@ -31,6 +31,8 @@ app:
     root-dir: ${java.io.tmpdir}/engagement-test-uploads
     review-dir: ${java.io.tmpdir}/engagement-test-uploads/reviews
     max-image-size-bytes: 1048576
+  oss:
+    enabled: false
 
 mybatis-plus:
   type-aliases-package: com.example.demo.**.entity

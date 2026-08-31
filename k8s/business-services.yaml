@@ -326,6 +326,22 @@ spec:
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-upload-review-dir } }
             - name: APP_UPLOAD_MAX_IMAGE_SIZE_BYTES
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-upload-max-image-size-bytes } }
+            - name: OSS_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: oss-enabled } }
+            - name: OSS_ENDPOINT
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: oss-endpoint } }
+            - name: OSS_BUCKET
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: oss-bucket } }
+            - name: OSS_PUBLIC_BASE_URL
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: oss-public-base-url } }
+            - name: OSS_UPLOAD_PREFIX
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: oss-upload-prefix } }
+            - name: OSS_CNAME_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: oss-cname-enabled } }
+            - name: OSS_ACCESS_KEY_ID
+              valueFrom: { secretKeyRef: { name: life-assistant-secret, key: oss-access-key-id } }
+            - name: OSS_ACCESS_KEY_SECRET
+              valueFrom: { secretKeyRef: { name: life-assistant-secret, key: oss-access-key-secret } }
             - name: SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: spring-servlet-multipart-max-file-size } }
             - name: SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE

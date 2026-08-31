@@ -77,7 +77,7 @@ public class OrderServiceInternalApiTests {
         MerchantCatalogClient.MerchantSnapshot merchant = new MerchantCatalogClient.MerchantSnapshot();
         merchant.setId(20001L);
         merchant.setName("Campus Kitchen");
-        merchant.setAvatar("https://picsum.photos/seed/m1/400/300");
+        merchant.setAvatar("https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/merchants/campus-kitchen.svg");
         merchant.setStatus("active");
         merchant.setMinDeliveryFee(new BigDecimal("20.00"));
         merchant.setDeliveryFee(new BigDecimal("5.00"));
@@ -140,7 +140,7 @@ public class OrderServiceInternalApiTests {
         quoteItem.setProductId(30001L);
         quoteItem.setMerchantId(20001L);
         quoteItem.setName("Braised Pork Rice");
-        quoteItem.setImage("https://picsum.photos/seed/p1/400/300");
+        quoteItem.setImage("https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/products/braised-pork-rice.svg");
         quoteItem.setUnitPrice(new BigDecimal("22.00"));
         quoteItem.setQuantity(1);
         quoteItem.setStock(100);
@@ -201,7 +201,7 @@ public class OrderServiceInternalApiTests {
         quoteItem.setProductId(30001L);
         quoteItem.setMerchantId(20001L);
         quoteItem.setName("Braised Pork Rice");
-        quoteItem.setImage("https://picsum.photos/seed/p1/400/300");
+        quoteItem.setImage("https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/products/braised-pork-rice.svg");
         quoteItem.setUnitPrice(new BigDecimal("22.00"));
         quoteItem.setQuantity(1);
         quoteItem.setStock(100);
@@ -262,7 +262,7 @@ public class OrderServiceInternalApiTests {
         quoteItem.setProductId(30001L);
         quoteItem.setMerchantId(20001L);
         quoteItem.setName("Braised Pork Rice");
-        quoteItem.setImage("https://picsum.photos/seed/p1/400/300");
+        quoteItem.setImage("https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/products/braised-pork-rice.svg");
         quoteItem.setUnitPrice(new BigDecimal("22.00"));
         quoteItem.setQuantity(1);
         quoteItem.setStock(100);
@@ -325,7 +325,7 @@ public class OrderServiceInternalApiTests {
         orderItem.setName("Braised Pork Rice");
         orderItem.setPrice(new BigDecimal("22.00"));
         orderItem.setQuantity(1);
-        orderItem.setImage("https://picsum.photos/seed/p1/400/300");
+        orderItem.setImage("https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/products/braised-pork-rice.svg");
         orderItem.setSubtotal(new BigDecimal("22.00"));
         orderItem.setReviewed(false);
         orderItemMapper.insert(orderItem);

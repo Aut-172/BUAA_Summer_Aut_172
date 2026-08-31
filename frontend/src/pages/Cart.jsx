@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useSession } from '../utils/ApiProvider'
+import { FALLBACK_PRODUCT_IMAGE } from '../utils/demoImages'
 import { formatMoney, groupCartItems } from '../utils/format'
 
 export default function Cart() {
@@ -98,7 +99,7 @@ export default function Cart() {
                                         <article className="cart-item-card" key={item.id}>
                                             <img
                                                 className="cart-thumb"
-                                                src={item.image || 'https://picsum.photos/seed/cart-thumb/120/120'}
+                                                src={item.image || FALLBACK_PRODUCT_IMAGE}
                                                 alt={item.name}
                                             />
                                             <div className="stack tight grow">

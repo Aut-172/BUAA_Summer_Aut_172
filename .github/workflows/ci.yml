@@ -181,6 +181,8 @@ jobs:
       FRONTEND_IMAGE: ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/life-service-assistant:frontend-${{ github.sha }}
       MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      OSS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
+      OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
       ACR_REGISTRY: ${{ secrets.ACR_REGISTRY }}
       ACR_PULL_REGISTRY: ${{ secrets.ACR_PULL_REGISTRY }}
       ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
@@ -235,6 +237,8 @@ jobs:
         run: |
           MYSQL_ROOT_PASSWORD_B64="$(printf '%s' "${MYSQL_ROOT_PASSWORD}" | base64 -w0)"
           JWT_SECRET_B64="$(printf '%s' "${JWT_SECRET}" | base64 -w0)"
+          OSS_ACCESS_KEY_ID_B64="$(printf '%s' "${OSS_ACCESS_KEY_ID}" | base64 -w0)"
+          OSS_ACCESS_KEY_SECRET_B64="$(printf '%s' "${OSS_ACCESS_KEY_SECRET}" | base64 -w0)"
           ACR_PASSWORD_B64="$(printf '%s' "${ACR_PASSWORD}" | base64 -w0)"
           PULL_REGISTRY="${ACR_PULL_REGISTRY:-${ACR_REGISTRY}}"
           PULL_REGISTRY="${PULL_REGISTRY#https://}"
@@ -263,12 +267,16 @@ jobs:
             FRONTEND_IMAGE='${FRONTEND_PULL_IMAGE}' \
             MYSQL_ROOT_PASSWORD_B64='${MYSQL_ROOT_PASSWORD_B64}' \
             JWT_SECRET_B64='${JWT_SECRET_B64}' \
+            OSS_ACCESS_KEY_ID_B64='${OSS_ACCESS_KEY_ID_B64}' \
+            OSS_ACCESS_KEY_SECRET_B64='${OSS_ACCESS_KEY_SECRET_B64}' \
             bash -s" <<'REMOTE_DEPLOY'
           set -euo pipefail
           cd ~/life-service
           tar -xzf life-service-deploy.tgz
           export MYSQL_ROOT_PASSWORD="$(printf '%s' "${MYSQL_ROOT_PASSWORD_B64}" | base64 -d)"
           export JWT_SECRET="$(printf '%s' "${JWT_SECRET_B64}" | base64 -d)"
+          export OSS_ACCESS_KEY_ID="$(printf '%s' "${OSS_ACCESS_KEY_ID_B64}" | base64 -d)"
+          export OSS_ACCESS_KEY_SECRET="$(printf '%s' "${OSS_ACCESS_KEY_SECRET_B64}" | base64 -d)"
           export ACR_PASSWORD="$(printf '%s' "${ACR_PASSWORD_B64}" | base64 -d)"
           bash scripts/deploy-kind.sh
           REMOTE_DEPLOY

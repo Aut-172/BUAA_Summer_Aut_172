@@ -50,3 +50,12 @@ app:
     root-dir: ${APP_UPLOAD_ROOT_DIR:uploads}
     review-dir: ${APP_UPLOAD_REVIEW_DIR:${APP_UPLOAD_ROOT_DIR:uploads}/reviews}
     max-image-size-bytes: ${APP_UPLOAD_MAX_IMAGE_SIZE_BYTES:20971520}
+  oss:
+    enabled: ${OSS_ENABLED:false}
+    endpoint: ${OSS_ENDPOINT:oss-cn-heyuan.aliyuncs.com}
+    bucket: ${OSS_BUCKET:buaa-summer-life-assistant}
+    access-key-id: ${OSS_ACCESS_KEY_ID:}
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
+    public-base-url: ${OSS_PUBLIC_BASE_URL:https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn}
+    upload-prefix: ${OSS_UPLOAD_PREFIX:life-assistant}
+    cname-enabled: ${OSS_CNAME_ENABLED:false}

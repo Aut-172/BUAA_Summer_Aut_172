@@ -10,6 +10,7 @@ import com.example.demo.review.dto.ReviewRequest;
 import com.example.demo.review.dto.ReviewVO;
 import com.example.demo.review.entity.Review;
 import com.example.demo.review.mapper.ReviewMapper;
+import com.example.demo.review.storage.ImageStorageService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,9 +23,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,12 +45,7 @@ public class ReviewService {
     private final MerchantCatalogClient merchantCatalogClient;
     private final EngagementEventPublisher eventPublisher;
     private final ObjectMapper objectMapper;
-
-    @Value("${app.upload.review-dir:uploads/reviews}")
-    private String reviewUploadDir;
-
-    @Value("${app.upload.root-dir:uploads}")
-    private String uploadRootDir;
+    private final ImageStorageService imageStorageService;
 
     @Value("${app.upload.max-image-size-bytes:20971520}")
     private long maxImageSizeBytes;
@@ -176,13 +169,6 @@ public class ReviewService {
         }
 
         String safeScene = normalizeUploadScene(scene);
-        Path uploadDir = resolveUploadDir(safeScene);
-        try {
-            Files.createDirectories(uploadDir);
-        } catch (IOException e) {
-            throw BusinessException.badRequest("图片目录创建失败");
-        }
-
         List<String> urls = new ArrayList<>();
         for (MultipartFile file : files) {
             if (file == null || file.isEmpty()) {
@@ -198,16 +184,11 @@ public class ReviewService {
             }
 
             String fileName = UUID.randomUUID() + resolveImageExtension(file.getOriginalFilename(), contentType);
-            Path target = uploadDir.resolve(fileName).normalize();
-            if (!target.startsWith(uploadDir)) {
-                throw BusinessException.badRequest("图片文件名不合法");
-            }
             try {
-                Files.copy(file.getInputStream(), target);
+                urls.add(imageStorageService.store(file, safeScene, fileName, contentType));
             } catch (IOException e) {
                 throw BusinessException.badRequest("图片上传失败");
             }
-            urls.add("/uploads/" + safeScene + "/" + fileName);
         }
 
         if (urls.isEmpty()) {
@@ -222,18 +203,6 @@ public class ReviewService {
             throw BusinessException.badRequest("图片场景不合法");
         }
         return value;
-    }
-
-    private Path resolveUploadDir(String scene) {
-        if ("reviews".equals(scene)) {
-            return Paths.get(reviewUploadDir).toAbsolutePath().normalize();
-        }
-        Path root = Paths.get(uploadRootDir).toAbsolutePath().normalize();
-        Path uploadDir = root.resolve(scene).normalize();
-        if (!uploadDir.startsWith(root)) {
-            throw BusinessException.badRequest("图片目录不合法");
-        }
-        return uploadDir;
     }
 
     private List<ReviewVO> buildReviewVOs(List<Review> reviews) {
