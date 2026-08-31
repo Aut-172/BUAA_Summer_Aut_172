@@ -211,14 +211,14 @@ INSERT INTO `category` (`id`, `name`, `parent_id`, `sort_order`) VALUES
 (3, 'Service', NULL, 3);
 
 INSERT INTO `merchant` (`id`, `username`, `password`, `name`, `phone`, `address`, `longitude`, `latitude`, `business_hours`, `category`, `description`, `avatar`, `tags`, `status`, `rating`, `monthly_sales`, `min_delivery_fee`, `delivery_fee`, `delivery_radius`) VALUES
-(20001, 'merchant1', '$2a$10$Eec47nxK3dPutEqDpCyCqOj3mJcOn31z3fCve3xGKSeI1rb4Je.dm', 'Campus Kitchen', '13800138002', 'No. 18 College Road', 116.4600000, 39.9100000, '09:00-22:00', 'Food', 'Fast meals and rice bowls for campus delivery.', 'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/merchants/campus-kitchen.svg', 'fast,hot', 'active', 4.5, 1280, 20.00, 5.00, 5),
-(20002, 'merchant2', '$2a$10$Eec47nxK3dPutEqDpCyCqOj3mJcOn31z3fCve3xGKSeI1rb4Je.dm', 'Tea Corner', '13800138003', 'No. 1 Science Park', 116.3100000, 39.9800000, '10:00-22:00', 'Cafe', 'Fresh tea, coffee and desserts.', 'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/merchants/tea-corner.svg', 'tea,dessert', 'active', 4.8, 2560, 15.00, 3.00, 3);
+(20001, 'merchant1', '$2a$10$Eec47nxK3dPutEqDpCyCqOj3mJcOn31z3fCve3xGKSeI1rb4Je.dm', 'Campus Kitchen', '13800138002', 'No. 18 College Road', 116.4600000, 39.9100000, '09:00-22:00', 'Food', 'Fast meals and rice bowls for campus delivery.', 'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/merchants/campus-kitchen.png', 'fast,hot', 'active', 4.5, 1280, 20.00, 5.00, 5),
+(20002, 'merchant2', '$2a$10$Eec47nxK3dPutEqDpCyCqOj3mJcOn31z3fCve3xGKSeI1rb4Je.dm', 'Tea Corner', '13800138003', 'No. 1 Science Park', 116.3100000, 39.9800000, '10:00-22:00', 'Cafe', 'Fresh tea, coffee and desserts.', 'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/merchants/tea-corner.png', 'tea,dessert', 'active', 4.8, 2560, 15.00, 3.00, 3);
 
 INSERT INTO `product` (`id`, `merchant_id`, `category_id`, `name`, `image`, `price`, `description`, `monthly_sales`, `stock`, `type`, `status`, `gallery`) VALUES
-(30001, 20001, 1, 'Braised Pork Rice', 'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/products/braised-pork-rice.svg', 22.00, 'Classic lunch rice bowl.', 320, 100, 'delivery', 'active', '[]'),
-(30002, 20001, 1, 'Kung Pao Chicken Rice', 'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/products/kung-pao-chicken-rice.svg', 24.00, 'Spicy chicken with peanuts and rice.', 280, 100, 'delivery', 'active', '[]'),
-(30003, 20002, 2, 'Bubble Milk Tea', 'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/products/bubble-milk-tea.svg', 12.00, 'Signature bubble milk tea.', 800, 200, 'delivery', 'active', '[]'),
-(30004, 20002, 2, 'Tiramisu', 'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/products/tiramisu.svg', 28.00, 'Fresh tiramisu dessert cup.', 120, 30, 'delivery', 'active', '[]');
+(30001, 20001, 1, 'Braised Pork Rice', 'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/products/braised-pork-rice.png', 22.00, 'Classic lunch rice bowl.', 320, 100, 'delivery', 'active', '[]'),
+(30002, 20001, 1, 'Kung Pao Chicken Rice', 'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/products/kung-pao-chicken-rice.png', 24.00, 'Spicy chicken with peanuts and rice.', 280, 100, 'delivery', 'active', '[]'),
+(30003, 20002, 2, 'Bubble Milk Tea', 'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/products/bubble-milk-tea.png', 12.00, 'Signature bubble milk tea.', 800, 200, 'delivery', 'active', '[]'),
+(30004, 20002, 2, 'Tiramisu', 'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/products/tiramisu.png', 28.00, 'Fresh tiramisu dessert cup.', 120, 30, 'delivery', 'active', '[]');
 
 INSERT INTO `spec_group` (`id`, `product_id`, `name`, `values`) VALUES
 (1, 30001, 'Size', '["Large(+3)","Standard"]'),

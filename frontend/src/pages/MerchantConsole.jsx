@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ReviewImageGallery, { LightboxImage } from '../components/ReviewImageGallery'
 import { useSession } from '../utils/ApiProvider'
+import { FALLBACK_PRODUCT_IMAGE, FALLBACK_STORE_IMAGE, normalizeImageSrc } from '../utils/demoImages'
 import { formatDateTime, formatMoney, formatStatusText, getStatusTone } from '../utils/format'
 
 const EMPTY_PRODUCT = {
@@ -376,7 +377,7 @@ export default function MerchantConsole() {
                                     <label className="form-row">
                                         <span>头像</span>
                                         {profileForm.avatar ? (
-                                            <img className="profile-avatar" src={profileForm.avatar} alt="商家头像预览" />
+                                            <img className="profile-avatar" src={normalizeImageSrc(profileForm.avatar, FALLBACK_STORE_IMAGE)} alt="商家头像预览" />
                                         ) : null}
                                         <input
                                             className="input"
@@ -454,7 +455,7 @@ export default function MerchantConsole() {
                                         {productForm.image ? (
                                             <LightboxImage
                                                 className="product-image-large compact-preview"
-                                                src={productForm.image}
+                                                src={normalizeImageSrc(productForm.image, FALLBACK_PRODUCT_IMAGE)}
                                                 alt="商品图片预览"
                                                 buttonClassName="product-image-button"
                                             />

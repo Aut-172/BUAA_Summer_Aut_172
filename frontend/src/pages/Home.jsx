@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useSession } from '../utils/ApiProvider'
-import { FALLBACK_PRODUCT_IMAGE, FALLBACK_STORE_IMAGE } from '../utils/demoImages'
+import { FALLBACK_PRODUCT_IMAGE, FALLBACK_STORE_IMAGE, normalizeImageSrc } from '../utils/demoImages'
 import { formatMoney, normalizeTags } from '../utils/format'
 
 const FLOW_STEPS = [
@@ -174,7 +174,7 @@ export default function Home() {
                                     <div className="merchant-header">
                                         <img
                                             className="merchant-avatar"
-                                            src={merchant.avatar || FALLBACK_STORE_IMAGE}
+                                            src={normalizeImageSrc(merchant.avatar, FALLBACK_STORE_IMAGE)}
                                             alt={merchant.name}
                                         />
                                         <div className="merchant-meta">
@@ -197,7 +197,7 @@ export default function Home() {
                                     <div className="mini-product-grid">
                                         {(merchant.products || []).slice(0, 4).map((product) => (
                                             <div className="mini-product" key={product.id}>
-                                                <img src={product.image || FALLBACK_PRODUCT_IMAGE} alt={product.name} />
+                                                <img src={normalizeImageSrc(product.image, FALLBACK_PRODUCT_IMAGE)} alt={product.name} />
                                                 <strong>{product.name}</strong>
                                                 <span>{formatMoney(product.price)}</span>
                                             </div>

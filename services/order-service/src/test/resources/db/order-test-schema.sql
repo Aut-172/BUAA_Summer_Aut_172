@@ -76,5 +76,5 @@ INSERT INTO orders (
 INSERT INTO order_item (
     id, order_id, product_id, name, price, quantity, image, spec_label, subtotal, reviewed
 ) VALUES
-(71001, 70001, 30001, 'Braised Pork Rice', 22.00, 1, 'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/products/braised-pork-rice.svg', NULL, 22.00, FALSE),
-(71002, 70002, 30001, 'Braised Pork Rice', 22.00, 1, 'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/products/braised-pork-rice.svg', NULL, 22.00, FALSE);
+(71001, 70001, 30001, 'Braised Pork Rice', 22.00, 1, 'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/products/braised-pork-rice.png', NULL, 22.00, FALSE),
+(71002, 70002, 30001, 'Braised Pork Rice', 22.00, 1, 'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn/life-assistant/demo/products/braised-pork-rice.png', NULL, 22.00, FALSE);

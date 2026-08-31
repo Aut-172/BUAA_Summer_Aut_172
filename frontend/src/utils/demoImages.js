@@ -15,3 +15,33 @@ function svgImage(label, background, accent) {
 export const FALLBACK_STORE_IMAGE = svgImage('Store', '#2f6f73', '#f2b84b')
 export const FALLBACK_PRODUCT_IMAGE = svgImage('Product', '#795548', '#55b9a8')
 export const FALLBACK_PROFILE_IMAGE = svgImage('User', '#536d8e', '#f2b84b')
+
+const OSS_PUBLIC_BASE_URL = (
+    import.meta.env.VITE_OSS_PUBLIC_BASE_URL ||
+    'https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn'
+).replace(/\/+$/, '')
+
+export function normalizeImageSrc(value, fallback = FALLBACK_PRODUCT_IMAGE) {
+    const raw = typeof value === 'string' ? value.trim().replace(/^['"]|['"]$/g, '') : ''
+    if (!raw) {
+        return fallback
+    }
+
+    if (raw.startsWith('//')) {
+        return `https:${raw}`
+    }
+
+    if (/^(https?:|data:image\/|blob:|\/)/i.test(raw)) {
+        return raw
+    }
+
+    if (/^[a-z0-9.-]+\.[a-z]{2,}(\/|$)/i.test(raw)) {
+        return `https://${raw}`
+    }
+
+    if (/^(life-assistant|demo)\//i.test(raw)) {
+        return `${OSS_PUBLIC_BASE_URL}/${raw.replace(/^\/+/, '')}`
+    }
+
+    return `/${raw.replace(/^\/+/, '')}`
+}

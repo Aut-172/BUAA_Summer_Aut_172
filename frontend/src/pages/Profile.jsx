@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useSession } from '../utils/ApiProvider'
-import { FALLBACK_PROFILE_IMAGE, FALLBACK_STORE_IMAGE } from '../utils/demoImages'
+import { FALLBACK_PROFILE_IMAGE, FALLBACK_STORE_IMAGE, normalizeImageSrc } from '../utils/demoImages'
 import { buildAddressLabel, formatMoney, normalizeTags } from '../utils/format'
 
 const EMPTY_ADDRESS = {
@@ -170,7 +170,7 @@ export default function Profile() {
                             <div className="profile-banner">
                                 <img
                                     className="profile-avatar"
-                                    src={profileForm.avatar || FALLBACK_PROFILE_IMAGE}
+                                    src={normalizeImageSrc(profileForm.avatar, FALLBACK_PROFILE_IMAGE)}
                                     alt={profile?.nickname || profile?.username || '用户头像'}
                                 />
                                 <div className="stack tight">
@@ -312,7 +312,7 @@ export default function Profile() {
                                             <div className="merchant-header">
                                                 <img
                                                     className="merchant-avatar"
-                                                    src={merchant.avatar || FALLBACK_STORE_IMAGE}
+                                                    src={normalizeImageSrc(merchant.avatar, FALLBACK_STORE_IMAGE)}
                                                     alt={merchant.name}
                                                 />
                                                 <div className="merchant-meta">

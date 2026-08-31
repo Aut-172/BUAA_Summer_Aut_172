@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react'
+import { normalizeImageSrc } from '../utils/demoImages'
 
 export function LightboxImage({ src, alt, className, buttonClassName }) {
     const [activeImage, setActiveImage] = useState(null)
+    const imageSrc = normalizeImageSrc(src)
 
     useEffect(() => {
         if (!activeImage) {
@@ -24,8 +26,8 @@ export function LightboxImage({ src, alt, className, buttonClassName }) {
 
     return (
         <>
-            <button className={buttonClassName || 'lightbox-image-button'} type="button" onClick={() => setActiveImage(src)}>
-                <img className={className} src={src} alt={alt} />
+            <button className={buttonClassName || 'lightbox-image-button'} type="button" onClick={() => setActiveImage(imageSrc)}>
+                <img className={className} src={imageSrc} alt={alt} />
             </button>
 
             {activeImage ? (

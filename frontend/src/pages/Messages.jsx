@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useSession } from '../utils/ApiProvider'
+import { FALLBACK_PROFILE_IMAGE, normalizeImageSrc } from '../utils/demoImages'
 import { formatDateTime } from '../utils/format'
 
 const POLL_MESSAGES_MS = 5000
@@ -200,7 +201,7 @@ export default function Messages() {
                                     onClick={() => openThread(thread)}
                                 >
                                     <span className="thread-avatar">
-                                        {thread.targetAvatar ? <img src={thread.targetAvatar} alt="" /> : (thread.targetName || '?').slice(0, 1)}
+                                        {thread.targetAvatar ? <img src={normalizeImageSrc(thread.targetAvatar, FALLBACK_PROFILE_IMAGE)} alt="" /> : (thread.targetName || '?').slice(0, 1)}
                                     </span>
                                     <span className="thread-main">
                                         <span className="thread-title-row">

@@ -7,34 +7,64 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-function New-DemoSvg {
+Add-Type -AssemblyName System.Drawing
+
+function Convert-HexColor {
+    param([string]$Hex)
+
+    return [System.Drawing.ColorTranslator]::FromHtml($Hex)
+}
+
+function New-DemoPng {
     param(
         [string]$Label,
         [string]$Subtitle,
         [string]$Background,
-        [string]$Accent
+        [string]$Accent,
+        [string]$Path
     )
 
-    return @"
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="520" viewBox="0 0 800 520">
-  <rect width="800" height="520" rx="42" fill="$Background"/>
-  <circle cx="675" cy="95" r="92" fill="$Accent" opacity="0.26"/>
-  <circle cx="130" cy="440" r="140" fill="#ffffff" opacity="0.13"/>
-  <path d="M120 350c80-92 136-136 190-136 43 0 72 31 108 66 32 32 64 61 111 61 43 0 89-28 145-82v132H120z" fill="#ffffff" opacity="0.22"/>
-  <rect x="120" y="118" width="560" height="118" rx="26" fill="#ffffff" opacity="0.17"/>
-  <text x="400" y="170" text-anchor="middle" font-family="Arial, sans-serif" font-size="44" font-weight="700" fill="#ffffff">$Label</text>
-  <text x="400" y="215" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#ffffff" opacity="0.82">$Subtitle</text>
-</svg>
-"@
+    $bitmap = New-Object System.Drawing.Bitmap 800, 520
+    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+    $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+    $graphics.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::AntiAliasGridFit
+
+    try {
+        $backgroundBrush = New-Object System.Drawing.SolidBrush (Convert-HexColor $Background)
+        $accentColor = Convert-HexColor $Accent
+        $accentBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(66, $accentColor))
+        $softWhiteBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(36, [System.Drawing.Color]::White))
+        $panelBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(46, [System.Drawing.Color]::White))
+        $textBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::White)
+        $subtitleBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(210, [System.Drawing.Color]::White))
+        $titleFont = New-Object System.Drawing.Font "Arial", 44, ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
+        $subtitleFont = New-Object System.Drawing.Font "Arial", 24, ([System.Drawing.FontStyle]::Regular), ([System.Drawing.GraphicsUnit]::Pixel)
+        $format = New-Object System.Drawing.StringFormat
+        $format.Alignment = [System.Drawing.StringAlignment]::Center
+        $format.LineAlignment = [System.Drawing.StringAlignment]::Center
+
+        $graphics.FillRectangle($backgroundBrush, 0, 0, 800, 520)
+        $graphics.FillEllipse($accentBrush, 583, 3, 184, 184)
+        $graphics.FillEllipse($softWhiteBrush, -10, 300, 280, 280)
+        $graphics.FillRectangle($panelBrush, 120, 118, 560, 118)
+        $graphics.DrawString($Label, $titleFont, $textBrush, [System.Drawing.RectangleF]::new(120, 124, 560, 56), $format)
+        $graphics.DrawString($Subtitle, $subtitleFont, $subtitleBrush, [System.Drawing.RectangleF]::new(120, 184, 560, 40), $format)
+
+        $bitmap.Save($Path, [System.Drawing.Imaging.ImageFormat]::Png)
+    }
+    finally {
+        $graphics.Dispose()
+        $bitmap.Dispose()
+    }
 }
 
 $items = @(
-    @{ Key = "demo/merchants/campus-kitchen.svg"; Label = "Campus Kitchen"; Subtitle = "Rice Bowls"; Background = "#2f6f73"; Accent = "#f2b84b" },
-    @{ Key = "demo/merchants/tea-corner.svg"; Label = "Tea Corner"; Subtitle = "Tea And Dessert"; Background = "#536d8e"; Accent = "#f2b84b" },
-    @{ Key = "demo/products/braised-pork-rice.svg"; Label = "Braised Pork Rice"; Subtitle = "Campus Lunch"; Background = "#795548"; Accent = "#55b9a8" },
-    @{ Key = "demo/products/kung-pao-chicken-rice.svg"; Label = "Kung Pao Chicken"; Subtitle = "Hot Rice Bowl"; Background = "#8a4f3d"; Accent = "#f2b84b" },
-    @{ Key = "demo/products/bubble-milk-tea.svg"; Label = "Bubble Milk Tea"; Subtitle = "Fresh Tea"; Background = "#526c49"; Accent = "#d7c56d" },
-    @{ Key = "demo/products/tiramisu.svg"; Label = "Tiramisu"; Subtitle = "Dessert Cup"; Background = "#6f5a7e"; Accent = "#f1c88b" }
+    @{ Key = "demo/merchants/campus-kitchen.png"; Label = "Campus Kitchen"; Subtitle = "Rice Bowls"; Background = "#2f6f73"; Accent = "#f2b84b" },
+    @{ Key = "demo/merchants/tea-corner.png"; Label = "Tea Corner"; Subtitle = "Tea And Dessert"; Background = "#536d8e"; Accent = "#f2b84b" },
+    @{ Key = "demo/products/braised-pork-rice.png"; Label = "Braised Pork Rice"; Subtitle = "Campus Lunch"; Background = "#795548"; Accent = "#55b9a8" },
+    @{ Key = "demo/products/kung-pao-chicken-rice.png"; Label = "Kung Pao Chicken"; Subtitle = "Hot Rice Bowl"; Background = "#8a4f3d"; Accent = "#f2b84b" },
+    @{ Key = "demo/products/bubble-milk-tea.png"; Label = "Bubble Milk Tea"; Subtitle = "Fresh Tea"; Background = "#526c49"; Accent = "#d7c56d" },
+    @{ Key = "demo/products/tiramisu.png"; Label = "Tiramisu"; Subtitle = "Dessert Cup"; Background = "#6f5a7e"; Accent = "#f1c88b" }
 )
 
 $normalizedPrefix = $Prefix.Trim("/")
@@ -46,12 +76,12 @@ foreach ($item in $items) {
     $localPath = Join-Path $outputDir $relativePath
     New-Item -ItemType Directory -Force -Path (Split-Path $localPath -Parent) | Out-Null
 
-    $svg = New-DemoSvg `
+    New-DemoPng `
         -Label $item.Label `
         -Subtitle $item.Subtitle `
         -Background $item.Background `
-        -Accent $item.Accent
-    [IO.File]::WriteAllText($localPath, $svg, [Text.UTF8Encoding]::new($false))
+        -Accent $item.Accent `
+        -Path $localPath
 
     $objectKey = if ($normalizedPrefix) { "$normalizedPrefix/$($item.Key)" } else { $item.Key }
     Write-Host "Generated $localPath -> oss://$Bucket/$objectKey"

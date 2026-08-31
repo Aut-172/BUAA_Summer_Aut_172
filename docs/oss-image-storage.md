@@ -32,7 +32,7 @@ Configure `ossutil` with a RAM AccessKey that can write to this bucket, then run
 powershell -ExecutionPolicy Bypass -File scripts/upload-demo-oss-images.ps1
 ```
 
-The script generates SVG demo images and uploads them under:
+The script generates PNG demo images and uploads them under:
 
 ```text
 life-assistant/demo/merchants/

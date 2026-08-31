@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import ReviewImageGallery from '../components/ReviewImageGallery'
 import { useSession } from '../utils/ApiProvider'
-import { FALLBACK_PRODUCT_IMAGE } from '../utils/demoImages'
+import { FALLBACK_PRODUCT_IMAGE, normalizeImageSrc } from '../utils/demoImages'
 import { formatMoney, formatStatusText } from '../utils/format'
 
 const RATING_OPTIONS = [5, 4, 3, 2, 1]
@@ -182,7 +182,7 @@ export default function Review() {
                                     <div className="merchant-header">
                                         <img
                                             className="review-thumb"
-                                            src={item.image || FALLBACK_PRODUCT_IMAGE}
+                                            src={normalizeImageSrc(item.image, FALLBACK_PRODUCT_IMAGE)}
                                             alt={item.name}
                                         />
                                         <div className="merchant-meta grow">
