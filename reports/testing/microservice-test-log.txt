@@ -1,0 +1,126 @@
+﻿[STDERR] api-gateway Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build what is described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+[STDERR] api-gateway WARNING: A Java agent has been loaded dynamically (D:\±±??????\?ó????\С???\monolith-start\new\.gradle-home-d\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.15.11\a38b16385e867f59a641330f0362ebe742788ed8\byte-buddy-agent-1.15.1)
+[STDERR] api-gateway WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+[STDERR] api-gateway WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+[STDERR] api-gateway WARNING: Dynamic loading of agents will be disallowed by default in a future release
+[STDERR] api-gateway Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[PASSED] api-gateway.GatewayRouteDefinitionTests.roleAndDomainRoutesTargetExpectedServices 1497.13 ms
+[PASSED] api-gateway.GatewayRouteDefinitionTests.authRoutesAreSplitByOwnedService 3.76 ms
+[PASSED] api-gateway.GatewayRouteDefinitionTests.userReviewRouteHasPriorityOverUserServiceFallback 5.93 ms
+[STDERR] merchant-service Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build what is described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+[STDERR] merchant-service WARNING: A Java agent has been loaded dynamically (D:\±±??????\?ó????\С???\monolith-start\new\.gradle-home-d\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.15.11\a38b16385e867f59a641330f0362ebe742788ed8\byte-buddy-agent-1.15.1)
+[STDERR] merchant-service WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+[STDERR] merchant-service WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+[STDERR] merchant-service WARNING: Dynamic loading of agents will be disallowed by default in a future release
+[STDERR] merchant-service Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[PASSED] merchant-service.MerchantServiceApiTests.quoteReportsInsufficientStock 454.41 ms
+[PASSED] merchant-service.MerchantServiceApiTests.reserveAndReleaseRestoreStock 238.13 ms
+[PASSED] merchant-service.MerchantServiceApiTests.merchantLoginAcceptsSeedAccountAndReturnsMerchantId 209.04 ms
+[PASSED] merchant-service.MerchantServiceApiTests.merchantLoginRejectsBadPasswordAndFrozenMerchant 140.88 ms
+[PASSED] merchant-service.MerchantServiceApiTests.quoteCalculatesSpecPriceAndStock 26.83 ms
+[PASSED] merchant-service.MerchantServiceApiTests.reserveRejectsInsufficientStock 33.85 ms
+[PASSED] merchant-service.MerchantServiceApiTests.merchantRegisterThenLoginReturnsMerchantToken 136.09 ms
+[PASSED] merchant-service.MerchantServiceApiTests.merchantListOnlyReturnsActiveMerchants 86.06 ms
+[PASSED] merchant-service.MerchantServiceApiTests.merchantRegisterRejectsDuplicatePhone 11.23 ms
+[PASSED] merchant-service.MerchantServiceApiTests.merchantSelfDashboardProfileAndProductsWorkWithMerchantToken 114.72 ms
+[PASSED] merchant-service.MerchantServiceApiTests.searchMatchesProductNameAndHidesInactiveMerchants 27.96 ms
+[STDERR] user-service Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build what is described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+[STDERR] user-service WARNING: A Java agent has been loaded dynamically (D:\±±??????\?ó????\С???\monolith-start\new\.gradle-home-d\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.15.11\a38b16385e867f59a641330f0362ebe742788ed8\byte-buddy-agent-1.15.1)
+[STDERR] user-service WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+[STDERR] user-service WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+[STDERR] user-service WARNING: Dynamic loading of agents will be disallowed by default in a future release
+[STDERR] user-service Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[PASSED] user-service.UserServiceUnitTests.updateProfileRejectsPhoneUsedByAnotherUser 3296.29 ms
+[PASSED] user-service.UserServiceUnitTests.getProfileThrowsNotFoundWhenUserMissing 4.93 ms
+[PASSED] user-service.UserServiceUnitTests.frozenUserCannotUpdateProfileWithOldToken 3.73 ms
+[PASSED] user-service.UserServiceApiTests.getProfileReturnsCurrentConsumer 464.53 ms
+[PASSED] user-service.UserServiceApiTests.addingDefaultAddressClearsPreviousDefaultAddress 176.24 ms
+[PASSED] user-service.UserServiceApiTests.favoriteRejectsInactiveMerchantFromMerchantService 19.8 ms
+[PASSED] user-service.UserServiceApiTests.cartReturnsServiceUnavailableWhenMerchantServiceFails 20.46 ms
+[PASSED] user-service.UserServiceApiTests.addExistingCartItemIncrementsQuantityWithoutNewQuote 30.54 ms
+[PASSED] user-service.UserServiceApiTests.internalClearCartByMerchantOnlyDeletesOwnedMerchantItems 35.02 ms
+[PASSED] user-service.UserServiceApiTests.consumerCannotUseAdminUserApi 12.96 ms
+[PASSED] user-service.UserServiceApiTests.consumerRegisterRejectsDuplicatePhone 93.85 ms
+[PASSED] user-service.UserServiceApiTests.adminLoginReturnsAdminToken 92.5 ms
+[PASSED] user-service.UserServiceApiTests.consumerRegisterThenLoginReturnsConsumerToken 135.14 ms
+[PASSED] user-service.UserServiceApiTests.addCartUsesMerchantServiceQuoteAndCalculatesSubtotal 14.66 ms
+[PASSED] user-service.UserServiceApiTests.frozenConsumerTokenCannotAccessUserApis 25.7 ms
+[PASSED] user-service.UserServiceApiTests.updateProfileRejectsDuplicatePhone 12.63 ms
+[PASSED] user-service.UserServiceApiTests.adminCanListFreezeAndUnfreezeConsumers 78.71 ms
+[PASSED] user-service.UserServiceApiTests.settingCartQuantityToZeroDeletesItem 17.81 ms
+[STDERR] order-service Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build what is described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+[STDERR] order-service WARNING: A Java agent has been loaded dynamically (D:\±±??????\?ó????\С???\monolith-start\new\.gradle-home-d\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.15.11\a38b16385e867f59a641330f0362ebe742788ed8\byte-buddy-agent-1.15.1)
+[STDERR] order-service WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+[STDERR] order-service WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+[STDERR] order-service WARNING: Dynamic loading of agents will be disallowed by default in a future release
+[STDERR] order-service Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[PASSED] order-service.OrderServiceInternalApiTests.cancelOrderReleasesInventoryAndKeepsCancellationWhenCouponReleaseFails 340.49 ms
+[PASSED] order-service.OrderServiceInternalApiTests.checkoutRejectsWhenCouponLockResponseIsNotConfirmed 19.77 ms
+[PASSED] order-service.OrderServiceInternalApiTests.markPaidMovesPendingPaymentOrderToPendingAccept 355.68 ms
+[PASSED] order-service.OrderServiceInternalApiTests.checkoutRejectsWhenInventoryResponseIsStillProcessing 10 ms
+[PASSED] order-service.OrderServiceInternalApiTests.markPaidRejectsAmountMismatch 14.68 ms
+[PASSED] order-service.OrderServiceInternalApiTests.getInternalOrderReturnsSnapshotAndItems 13.52 ms
+[PASSED] order-service.OrderServiceInternalApiTests.checkoutReleasesInventoryAndRecordsCompensationWhenCouponLockFails 14.37 ms
+[PASSED] order-service.OrderServiceApiTests.adminPublicApisExposeOrderListAndDetail 248.72 ms
+[PASSED] order-service.OrderServiceApiTests.merchantPublicApisExposeMerchantOrdersAndUpdates 57.1 ms
+[PASSED] order-service.OrderServiceApiTests.consumerPublicApisExposeOrdersCheckoutCancelAndComplete 57.28 ms
+[STDERR] settlement-service Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build what is described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+[STDERR] settlement-service WARNING: A Java agent has been loaded dynamically (D:\±±??????\?ó????\С???\monolith-start\new\.gradle-home-d\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.15.11\a38b16385e867f59a641330f0362ebe742788ed8\byte-buddy-agent-1.15.1)
+[STDERR] settlement-service WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+[STDERR] settlement-service WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+[STDERR] settlement-service WARNING: Dynamic loading of agents will be disallowed by default in a future release
+[STDERR] settlement-service Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[PASSED] settlement-service.SettlementCouponInternalApiTests.lockCouponMovesUnusedCouponToLocked 2152.84 ms
+[PASSED] settlement-service.SettlementCouponInternalApiTests.lockCouponRejectsThresholdMismatch 11.71 ms
+[PASSED] settlement-service.SettlementCouponInternalApiTests.releaseCouponMovesLockedCouponBackToUnused 9.77 ms
+[PASSED] settlement-service.SettlementServiceApiTests.paymentApisCreatePaymentAndExposePaymentQueries 1021.78 ms
+[PASSED] settlement-service.SettlementServiceApiTests.healthEndpointExposesVersionAndDatabaseStatus 32.53 ms
+[PASSED] settlement-service.SettlementServiceApiTests.couponApisExposeUserCouponsAvailableCouponsAndClaimFlow 144.42 ms
+[PASSED] settlement-service.SettlementPaymentServiceTests.mockPaySuccessRequiresOrderToMoveToPendingAccept 23.18 ms
+[PASSED] settlement-service.SettlementPaymentServiceTests.mockPaySuccessRecordsPaymentWhenOrderIsConfirmed 15.8 ms
+[STDERR] fulfillment-service Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build what is described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+[STDERR] fulfillment-service WARNING: A Java agent has been loaded dynamically (D:\±±??????\?ó????\С???\monolith-start\new\.gradle-home-d\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.15.11\a38b16385e867f59a641330f0362ebe742788ed8\byte-buddy-agent-1.15.1)
+[STDERR] fulfillment-service WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+[STDERR] fulfillment-service WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+[STDERR] fulfillment-service WARNING: Dynamic loading of agents will be disallowed by default in a future release
+[STDERR] fulfillment-service Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[PASSED] fulfillment-service.FulfillmentServiceApiTests.updateRiderProfileRejectsDuplicatePhone 784.98 ms
+[PASSED] fulfillment-service.FulfillmentServiceApiTests.getTasksTreatsNullRemoteListsAsEmptyLists 78.39 ms
+[PASSED] fulfillment-service.FulfillmentServiceApiTests.getTasksCombinesOrderTasksAndMerchantSnapshots 25.85 ms
+[PASSED] fulfillment-service.FulfillmentServiceApiTests.frozenRiderCannotViewDashboardOrTaskLists 21.49 ms
+[PASSED] fulfillment-service.FulfillmentServiceApiTests.riderRegisterRejectsDuplicateUsername 187.28 ms
+[PASSED] fulfillment-service.FulfillmentServiceApiTests.frozenRiderCannotUpdateTask 24.99 ms
+[PASSED] fulfillment-service.FulfillmentServiceApiTests.adminCanListAuditFreezeAndUnfreezeRiders 134.27 ms
+[PASSED] fulfillment-service.FulfillmentServiceApiTests.acceptTaskAssignsActiveRiderThroughOrderService 25.12 ms
+[PASSED] fulfillment-service.FulfillmentServiceApiTests.getTasksRendersPartialTaskSnapshotWithoutFailing 14.62 ms
+[PASSED] fulfillment-service.FulfillmentServiceApiTests.riderRegisterRejectsDuplicatePhone 11.95 ms
+[PASSED] fulfillment-service.FulfillmentServiceApiTests.riderDashboardSummarizesTodayCompletedTasks 18.53 ms
+[PASSED] fulfillment-service.FulfillmentServiceApiTests.deliveryInfoOnlyAllowsOrderOwner 21.7 ms
+[PASSED] fulfillment-service.FulfillmentServiceApiTests.internalRiderSnapshotReturnsNotFoundForMissingRider 8.16 ms
+[PASSED] fulfillment-service.FulfillmentServiceApiTests.getRiderProfileReturnsCurrentRider 9.47 ms
+[PASSED] fulfillment-service.FulfillmentServiceApiTests.riderRegisterThenLoginReturnsRiderToken 152.94 ms
+[PASSED] fulfillment-service.RiderServiceUnitTests.frozenRiderCannotAcceptTaskAndDoesNotCallOrderService 236.36 ms
+[PASSED] fulfillment-service.RiderServiceUnitTests.activeRiderRejectsUnsupportedTaskStatus 2 ms
+[STDERR] engagement-service Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build what is described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+[STDERR] engagement-service WARNING: A Java agent has been loaded dynamically (D:\±±??????\?ó????\С???\monolith-start\new\.gradle-home-d\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.15.11\a38b16385e867f59a641330f0362ebe742788ed8\byte-buddy-agent-1.15.1)
+[STDERR] engagement-service WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+[STDERR] engagement-service WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+[STDERR] engagement-service WARNING: Dynamic loading of agents will be disallowed by default in a future release
+[STDERR] engagement-service Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[PASSED] engagement-service.ReviewServiceUnitTests.uploadImagesStoresImageUnderRequestedScene 4148.09 ms
+[PASSED] engagement-service.ReviewServiceUnitTests.uploadImagesRejectsUnsafeSceneName 15.89 ms
+[PASSED] engagement-service.ReviewServiceUnitTests.uploadImagesRejectsEmptyFileList 6.58 ms
+[PASSED] engagement-service.EngagementServiceApiTests.merchantCanReplyToUserInOrderConversation 755.96 ms
+[PASSED] engagement-service.EngagementServiceApiTests.submitReviewRejectsDuplicateOrderReview 101.07 ms
+[PASSED] engagement-service.EngagementServiceApiTests.sendMessageRejectsReceiverOutsideOrderParticipants 15.62 ms
+[PASSED] engagement-service.EngagementServiceApiTests.riderCanMessageOrderUserWhenRiderIsParticipant 13.58 ms
+[PASSED] engagement-service.EngagementServiceApiTests.getMerchantReviewsRatingAndCurrentUserReviews 48.49 ms
+[PASSED] engagement-service.EngagementServiceApiTests.sendMessageRejectsMissingOrderIdAndSelfSend 17.84 ms
+[PASSED] engagement-service.EngagementServiceApiTests.submitReviewRejectsProductOutsideOrder 13.21 ms
+[PASSED] engagement-service.EngagementServiceApiTests.uploadImagesAcceptsImagesAndRejectsNonImagesAndOversizedFiles 42.12 ms
+[PASSED] engagement-service.EngagementServiceApiTests.getProductReviewsEnrichesUserAndProductSnapshots 10.89 ms
+[PASSED] engagement-service.EngagementServiceApiTests.readingMessagesMarksUnreadConversationAsRead 35.16 ms
+[PASSED] engagement-service.EngagementServiceApiTests.submitReviewRejectsUnfinishedOrder 12.75 ms
+[PASSED] engagement-service.EngagementServiceApiTests.submitReviewCreatesReviewsAndMarksOrderItemsReviewed 41.48 ms
+[PASSED] engagement-service.EngagementServiceApiTests.sendMessageRequiresValidOrderParticipantAndPublishesEvent 13.5 ms
+[PASSED] engagement-service.EngagementServiceApiTests.threadsReportUnreadMessageAndTargetSnapshot 17.74 ms

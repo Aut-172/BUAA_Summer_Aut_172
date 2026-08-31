@@ -12,7 +12,8 @@ export default defineConfig({
     reporter: [
         ['list'],
         ['html', { outputFolder: 'playwright-report', open: 'never' }],
-        ['json', { outputFile: 'test-results/e2e-results.json' }]
+        ['json', { outputFile: 'test-results/e2e-results.json' }],
+        ['./scripts/markdown-e2e-reporter.js']
     ],
     webServer: {
         command: 'npm run dev -- --host 127.0.0.1',

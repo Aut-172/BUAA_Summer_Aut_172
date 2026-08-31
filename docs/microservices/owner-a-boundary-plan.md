@@ -273,12 +273,12 @@ LoadBalancer
 
 | 服务 | 当前已落地能力 | 仍需关注 |
 | --- | --- | --- |
-| `merchant-service` | 商家注册登录、公开商家/商品/分类、搜索、推荐、内部商家/商品快照、商品报价、库存预占/释放/状态查询。 | 商家后台资料、商品 CRUD、管理员商家管理接口当前前端和 Gateway 有记录，但后端 Controller 未落地。 |
+| `merchant-service` | 商家注册登录、公开商家/商品/分类、搜索、推荐、内部商家/商品快照、商品报价、库存预占/释放/状态查询。 | 已补齐商家后台资料、商品 CRUD、管理员商家管理接口。 |
 | `user-service` | 消费者注册登录、管理员登录、用户资料、地址、购物车、收藏、用户内部快照、购物车按商家清理、管理员用户冻结/解冻。 | 购物车与收藏依赖 `merchant-service` 可用；服务不可用时按可重试错误处理。 |
 | `order-service` | 消费者订单、下单、取消、完成、商家订单、管理员订单、内部订单快照、支付推进、履约任务代理、参与人校验、评价标记、补偿记录。 | 库存/券释放补偿记录已有落点，后续可补自动重试调度。 |
 | `settlement-service` | 用户券、可领取券、领券、内部锁券/释放/确认、支付流水、模拟支付成功并调用订单 `mark-paid`。 | 当前为模拟支付链路，未接真实第三方支付回调。 |
 | `fulfillment-service` | 骑手注册登录、资料、看板、任务列表、接单、送达、配送追踪、骑手内部快照、管理员骑手审核/冻结/解冻。 | 任务事实源仍在订单服务，履约服务不直接拥有订单表。 |
-| `engagement-service` | 评价、图片上传、商品/商家/用户评价、商家评分、订单消息、线程、未读数、会话订单代理。 | `GET /api/user/reviews` 需要 Gateway 优先路由到 engagement-service；日志型事件发布器只是后续扩展点。 |
+| `engagement-service` | 评价、图片上传、商品/商家/用户评价、商家评分、订单消息、线程、未读数、会话订单代理。 | `GET /api/user/reviews` 已由 Gateway 优先路由到 engagement-service；日志型事件发布器只是后续扩展点。 |
 
 ## 10. 测试和验收入口
 
@@ -309,4 +309,4 @@ LoadBalancer
 | --- | --- | --- |
 | 前端仍调用 `/api/merchant/dashboard`、`/api/merchant/profile`、`/api/merchant/products/**`，后端已暴露对应 Controller。 | 商家后台可直接走真实 Gateway 联调。 | 已完成。 |
 | 前端和 Gateway 记录 `/api/admin/merchants/**`，后端已暴露管理员商家管理接口。 | 管理员商家审核、冻结、解冻可真实联调。 | 已完成。 |
-| `engagement-service` 暴露 `GET /api/user/reviews`，Gateway 当前也有 `/api/user/**` 到用户服务的泛路由。 | 该接口经 Gateway 访问时可能被用户服务截获。 | 增加更高优先级的 engagement 路由，或把接口改为 `/api/reviews/mine` 并同步前端。 |
+| `engagement-service` 暴露 `GET /api/user/reviews`，Gateway 已补更高优先级路由。 | 该接口经 Gateway 访问时不会再被用户服务泛路由截获。 | 如需进一步统一命名，可后续把接口改为 `/api/reviews/mine` 并同步前端。 |

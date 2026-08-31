@@ -1,0 +1,47 @@
+﻿[STDERR] merchant-service Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build what is described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+[STDERR] merchant-service WARNING: A Java agent has been loaded dynamically (D:\±±??????\?ó????\С???\monolith-start\new\.gradle-home-d\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.15.11\a38b16385e867f59a641330f0362ebe742788ed8\byte-buddy-agent-1.15.1)
+[STDERR] merchant-service WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+[STDERR] merchant-service WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+[STDERR] merchant-service WARNING: Dynamic loading of agents will be disallowed by default in a future release
+[STDERR] merchant-service Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[PASSED] merchant-service.MerchantServiceApiTests.quoteReportsInsufficientStock 503.04 ms
+[PASSED] merchant-service.MerchantServiceApiTests.reserveAndReleaseRestoreStock 223.61 ms
+[PASSED] merchant-service.MerchantServiceApiTests.merchantLoginAcceptsSeedAccountAndReturnsMerchantId 193.67 ms
+[PASSED] merchant-service.MerchantServiceApiTests.merchantLoginRejectsBadPasswordAndFrozenMerchant 134.41 ms
+[PASSED] merchant-service.MerchantServiceApiTests.quoteCalculatesSpecPriceAndStock 20.96 ms
+[PASSED] merchant-service.MerchantServiceApiTests.reserveRejectsInsufficientStock 37.81 ms
+[PASSED] merchant-service.MerchantServiceApiTests.merchantRegisterThenLoginReturnsMerchantToken 141.33 ms
+[PASSED] merchant-service.MerchantServiceApiTests.merchantListOnlyReturnsActiveMerchants 132.81 ms
+[PASSED] merchant-service.MerchantServiceApiTests.merchantRegisterRejectsDuplicatePhone 12.76 ms
+[PASSED] merchant-service.MerchantServiceApiTests.merchantSelfDashboardProfileAndProductsWorkWithMerchantToken 127.54 ms
+[PASSED] merchant-service.MerchantServiceApiTests.searchMatchesProductNameAndHidesInactiveMerchants 32.37 ms
+[STDERR] order-service Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build what is described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+[STDERR] order-service WARNING: A Java agent has been loaded dynamically (D:\±±??????\?ó????\С???\monolith-start\new\.gradle-home-d\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.15.11\a38b16385e867f59a641330f0362ebe742788ed8\byte-buddy-agent-1.15.1)
+[STDERR] order-service WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+[STDERR] order-service WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+[STDERR] order-service WARNING: Dynamic loading of agents will be disallowed by default in a future release
+[STDERR] order-service Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[PASSED] order-service.OrderServiceInternalApiTests.cancelOrderReleasesInventoryAndKeepsCancellationWhenCouponReleaseFails 323.77 ms
+[PASSED] order-service.OrderServiceInternalApiTests.checkoutRejectsWhenCouponLockResponseIsNotConfirmed 16.29 ms
+[PASSED] order-service.OrderServiceInternalApiTests.markPaidMovesPendingPaymentOrderToPendingAccept 395.29 ms
+[PASSED] order-service.OrderServiceInternalApiTests.checkoutRejectsWhenInventoryResponseIsStillProcessing 9.02 ms
+[PASSED] order-service.OrderServiceInternalApiTests.markPaidRejectsAmountMismatch 13.73 ms
+[PASSED] order-service.OrderServiceInternalApiTests.getInternalOrderReturnsSnapshotAndItems 13.7 ms
+[PASSED] order-service.OrderServiceInternalApiTests.checkoutReleasesInventoryAndRecordsCompensationWhenCouponLockFails 13.48 ms
+[PASSED] order-service.OrderServiceApiTests.adminPublicApisExposeOrderListAndDetail 250.92 ms
+[PASSED] order-service.OrderServiceApiTests.merchantPublicApisExposeMerchantOrdersAndUpdates 71.07 ms
+[PASSED] order-service.OrderServiceApiTests.consumerPublicApisExposeOrdersCheckoutCancelAndComplete 58.07 ms
+[STDERR] settlement-service Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build what is described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
+[STDERR] settlement-service WARNING: A Java agent has been loaded dynamically (D:\±±??????\?ó????\С???\monolith-start\new\.gradle-home-d\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.15.11\a38b16385e867f59a641330f0362ebe742788ed8\byte-buddy-agent-1.15.1)
+[STDERR] settlement-service WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+[STDERR] settlement-service WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+[STDERR] settlement-service WARNING: Dynamic loading of agents will be disallowed by default in a future release
+[STDERR] settlement-service Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[PASSED] settlement-service.SettlementCouponInternalApiTests.lockCouponMovesUnusedCouponToLocked 2150.46 ms
+[PASSED] settlement-service.SettlementCouponInternalApiTests.lockCouponRejectsThresholdMismatch 10.18 ms
+[PASSED] settlement-service.SettlementCouponInternalApiTests.releaseCouponMovesLockedCouponBackToUnused 8.4 ms
+[PASSED] settlement-service.SettlementServiceApiTests.paymentApisCreatePaymentAndExposePaymentQueries 967.36 ms
+[PASSED] settlement-service.SettlementServiceApiTests.healthEndpointExposesVersionAndDatabaseStatus 31.44 ms
+[PASSED] settlement-service.SettlementServiceApiTests.couponApisExposeUserCouponsAvailableCouponsAndClaimFlow 149.61 ms
+[PASSED] settlement-service.SettlementPaymentServiceTests.mockPaySuccessRequiresOrderToMoveToPendingAccept 21.17 ms
+[PASSED] settlement-service.SettlementPaymentServiceTests.mockPaySuccessRecordsPaymentWhenOrderIsConfirmed 12.92 ms

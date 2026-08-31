@@ -81,7 +81,7 @@
 | 项目 | 当前状态 |
 | --- | --- |
 | B 侧专项脚本 | `scripts/test-b-side-services.ps1` 会先做边界扫描，再运行 `merchant-service`、`user-service`、`fulfillment-service`、`engagement-service` 测试，并生成 `reports/testing/b-side-test-report.md`。 |
-| 最近报告 | `reports/testing/b-side-test-report.md` 显示 61/61 通过；`reports/testing/b-side-test-report-smoke.md` 是早期 37/37 冒烟报告。 |
+| 最近报告 | `reports/testing/b-side-test-report.md` 显示 63/63 通过；`reports/testing/b-side-test-report-smoke.md` 是早期 37/37 冒烟报告。 |
 | Gateway 直连接口冒烟 | `reports/testing/b-side-e2e-report.md` 的失败原因是本机 `localhost:8080` Gateway 未启动；`reports/testing/b-side-e2e-script-smoke.md` 因未传 token 跳过 10 个场景，不能作为真实联调通过依据。 |
 | CI/CD 接入 | `.github/workflows/ci.yml` 已存在：PR/push 到 `main` 时执行微服务矩阵测试、前端单测、前端 E2E 和前端构建；push 到 `main` 时进一步构建/推送镜像、部署 kind/K8s、做 Gateway 与前端健康检查并上传 `k8s-diagnostics`。B 侧专项脚本仍作为本地收尾验证和报告生成入口。 |
 
@@ -89,6 +89,6 @@
 
 | 风险 | 说明 | 建议 |
 | --- | --- | --- |
-| `/api/user/reviews` Gateway 路由 | `engagement-service` 已实现该接口，但 Gateway 中 `/api/user/**` 会路由到 `user-service`。 | 给 `/api/user/reviews` 增加更高优先级的 engagement 路由，或统一改成 `/api/reviews/mine`。 |
+| `/api/user/reviews` Gateway 路由 | `engagement-service` 已实现该接口，Gateway 已补高优先级路由覆盖。 | 已完成。 |
 | 商家后台真实接口 | 前端和 Gateway 记录了 `/api/merchant/dashboard`、`/api/merchant/profile`、`/api/merchant/products/**`，现已由 `merchant-service` 落地。 | 可直接进入真实联调与验收。 |
 | 管理员商家管理 | `/api/admin/merchants/**` 已落地后端 Controller，可直接联调。 | 已完成。 |
