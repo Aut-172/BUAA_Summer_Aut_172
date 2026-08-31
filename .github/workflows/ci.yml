@@ -183,14 +183,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v5
-
-      - name: Create kind cluster
-        uses: helm/kind-action@v1
-        with:
-          cluster_name: life-assistant-ci
-
       - name: Login to Docker Hub
         uses: docker/login-action@v4
         with:
@@ -219,26 +211,48 @@ jobs:
           docker push "${ENGAGEMENT_SERVICE_IMAGE}"
           docker push "${FRONTEND_IMAGE}"
 
-      - name: Load images into kind
+      - name: Configure SSH
         run: |
-          kind load docker-image "${API_GATEWAY_IMAGE}" --name life-assistant-ci
-          kind load docker-image "${MERCHANT_SERVICE_IMAGE}" --name life-assistant-ci
-          kind load docker-image "${USER_SERVICE_IMAGE}" --name life-assistant-ci
-          kind load docker-image "${ORDER_SERVICE_IMAGE}" --name life-assistant-ci
-          kind load docker-image "${SETTLEMENT_SERVICE_IMAGE}" --name life-assistant-ci
-          kind load docker-image "${FULFILLMENT_SERVICE_IMAGE}" --name life-assistant-ci
-          kind load docker-image "${ENGAGEMENT_SERVICE_IMAGE}" --name life-assistant-ci
-          kind load docker-image "${FRONTEND_IMAGE}" --name life-assistant-ci
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.ECS_SSH_KEY }}" > ~/.ssh/ecs_key
+          chmod 600 ~/.ssh/ecs_key
+          ssh-keyscan -p "${{ secrets.ECS_SSH_PORT }}" "${{ secrets.ECS_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Deploy to Kubernetes
-        run: bash scripts/deploy-kind.sh
+      - name: Upload deployment files
+        run: |
+          tar -czf life-service-deploy.tgz k8s scripts db
+          ssh -i ~/.ssh/ecs_key -p "${{ secrets.ECS_SSH_PORT }}" "${{ secrets.ECS_USER }}@${{ secrets.ECS_HOST }}" 'mkdir -p ~/life-service'
+          scp -i ~/.ssh/ecs_key -P "${{ secrets.ECS_SSH_PORT }}" life-service-deploy.tgz "${{ secrets.ECS_USER }}@${{ secrets.ECS_HOST }}:~/life-service/life-service-deploy.tgz"
+
+      - name: Deploy to ECS K3s
+        run: |
+          MYSQL_ROOT_PASSWORD_B64="$(printf '%s' "${MYSQL_ROOT_PASSWORD}" | base64 -w0)"
+          JWT_SECRET_B64="$(printf '%s' "${JWT_SECRET}" | base64 -w0)"
+          ssh -i ~/.ssh/ecs_key -p "${{ secrets.ECS_SSH_PORT }}" "${{ secrets.ECS_USER }}@${{ secrets.ECS_HOST }}" \
+            "IMAGE_TAG='${IMAGE_TAG}' \
+            API_GATEWAY_IMAGE='${API_GATEWAY_IMAGE}' \
+            MERCHANT_SERVICE_IMAGE='${MERCHANT_SERVICE_IMAGE}' \
+            USER_SERVICE_IMAGE='${USER_SERVICE_IMAGE}' \
+            ORDER_SERVICE_IMAGE='${ORDER_SERVICE_IMAGE}' \
+            SETTLEMENT_SERVICE_IMAGE='${SETTLEMENT_SERVICE_IMAGE}' \
+            FULFILLMENT_SERVICE_IMAGE='${FULFILLMENT_SERVICE_IMAGE}' \
+            ENGAGEMENT_SERVICE_IMAGE='${ENGAGEMENT_SERVICE_IMAGE}' \
+            FRONTEND_IMAGE='${FRONTEND_IMAGE}' \
+            MYSQL_ROOT_PASSWORD_B64='${MYSQL_ROOT_PASSWORD_B64}' \
+            JWT_SECRET_B64='${JWT_SECRET_B64}' \
+            bash -s" <<'REMOTE_DEPLOY'
+          set -euo pipefail
+          cd ~/life-service
+          tar -xzf life-service-deploy.tgz
+          export MYSQL_ROOT_PASSWORD="$(printf '%s' "${MYSQL_ROOT_PASSWORD_B64}" | base64 -d)"
+          export JWT_SECRET="$(printf '%s' "${JWT_SECRET_B64}" | base64 -d)"
+          bash scripts/deploy-kind.sh
+          REMOTE_DEPLOY
 
       - name: Health check
         run: |
-          kubectl port-forward service/api-gateway 18080:8080 > gateway-port-forward.log 2>&1 &
-          kubectl port-forward service/life-assistant-frontend 18081:80 > frontend-port-forward.log 2>&1 &
           for i in {1..40}; do
-            if curl -fsS http://127.0.0.1:18080/actuator/health && curl -fsS http://127.0.0.1:18081/ > /dev/null; then
+            if curl -fsS "http://${{ secrets.ECS_HOST }}:30081/actuator/health" && curl -fsS "http://${{ secrets.ECS_HOST }}:30080/" > /dev/null; then
               exit 0
             fi
             sleep 3
@@ -250,13 +264,20 @@ jobs:
         if: always()
         run: |
           mkdir -p k8s-diagnostics
-          kubectl get all -o wide > k8s-diagnostics/resources.txt || true
-          kubectl describe pods > k8s-diagnostics/pods.txt || true
+          ssh -i ~/.ssh/ecs_key -p "${{ secrets.ECS_SSH_PORT }}" "${{ secrets.ECS_USER }}@${{ secrets.ECS_HOST }}" 'bash -s' <<'REMOTE_DIAGNOSTICS'
+          set +e
+          cd ~/life-service
+          rm -rf k8s-diagnostics
+          mkdir -p k8s-diagnostics
+          kubectl get all -o wide > k8s-diagnostics/resources.txt 2>&1
+          kubectl describe pods > k8s-diagnostics/pods.txt 2>&1
           for deployment in life-assistant-api-gateway life-assistant-merchant-service life-assistant-user-service life-assistant-order-service life-assistant-settlement-service life-assistant-fulfillment-service life-assistant-engagement-service life-assistant-frontend life-assistant-mysql life-assistant-redis life-assistant-nacos; do
-            kubectl logs deployment/${deployment} --tail=200 > k8s-diagnostics/${deployment}.log 2>&1 || true
+            kubectl logs deployment/${deployment} --tail=200 > k8s-diagnostics/${deployment}.log 2>&1
           done
-          cp gateway-port-forward.log k8s-diagnostics/gateway-port-forward.log 2>/dev/null || true
-          cp frontend-port-forward.log k8s-diagnostics/frontend-port-forward.log 2>/dev/null || true
+          tar -czf k8s-diagnostics.tgz k8s-diagnostics
+          REMOTE_DIAGNOSTICS
+          scp -i ~/.ssh/ecs_key -P "${{ secrets.ECS_SSH_PORT }}" "${{ secrets.ECS_USER }}@${{ secrets.ECS_HOST }}:~/life-service/k8s-diagnostics.tgz" k8s-diagnostics.tgz || true
+          tar -xzf k8s-diagnostics.tgz || true
 
       - name: Upload Kubernetes diagnostics
         if: always()
