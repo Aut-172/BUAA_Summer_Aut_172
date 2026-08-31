@@ -66,6 +66,91 @@ function Parse-TestCases {
     return @($cases)
 }
 
+function Parse-GradleTestResults {
+    param(
+        [string]$ServiceName,
+        [string]$ServiceRoot,
+        [string]$EvidencePath
+    )
+
+    $resultsDir = Join-Path $ServiceRoot "build/test-results/test"
+    if (-not (Test-Path -LiteralPath $resultsDir)) {
+        return @()
+    }
+
+    $cases = @()
+    $xmlFiles = @(Get-ChildItem -LiteralPath $resultsDir -Filter "TEST-*.xml" -File -ErrorAction SilentlyContinue)
+    foreach ($xmlFile in $xmlFiles) {
+        try {
+            [xml]$document = Get-Content -LiteralPath $xmlFile.FullName -Raw
+        } catch {
+            continue
+        }
+
+        $suiteName = if ($document.testsuite -and $document.testsuite.name) {
+            [string]$document.testsuite.name
+        } else {
+            [System.IO.Path]::GetFileNameWithoutExtension($xmlFile.Name) -replace '^TEST-', ''
+        }
+
+        foreach ($testCase in @($document.SelectNodes("//testcase"))) {
+            $className = if (-not [string]::IsNullOrWhiteSpace($testCase.classname)) {
+                [string]$testCase.classname
+            } else {
+                $suiteName
+            }
+            $methodName = [string]$testCase.name
+            if ($methodName -match '^([A-Za-z0-9_$]+)\(.*\)$') {
+                $methodName = $Matches[1]
+            }
+            $durationMs = 0
+            if (-not [string]::IsNullOrWhiteSpace($testCase.time)) {
+                $durationMs = [double]$testCase.time * 1000
+            }
+
+            $status = "PASSED"
+            $message = ""
+            if ($testCase.failure) {
+                $status = "FAILED"
+                $message = if (-not [string]::IsNullOrWhiteSpace($testCase.failure.message)) {
+                    [string]$testCase.failure.message
+                } else {
+                    [string]$testCase.failure.InnerText
+                }
+            } elseif ($testCase.error) {
+                $status = "FAILED"
+                $message = if (-not [string]::IsNullOrWhiteSpace($testCase.error.message)) {
+                    [string]$testCase.error.message
+                } else {
+                    [string]$testCase.error.InnerText
+                }
+            } elseif ($testCase.skipped) {
+                $status = "SKIPPED"
+                $message = if (-not [string]::IsNullOrWhiteSpace($testCase.skipped.message)) {
+                    [string]$testCase.skipped.message
+                } else {
+                    [string]$testCase.skipped.InnerText
+                }
+            }
+
+            $cases += [pscustomobject]@{
+                Service = $ServiceName
+                UniqueId = "$ServiceName.$className.$methodName"
+                DisplayName = $methodName
+                ClassName = $className
+                MethodName = $methodName
+                SourceType = "GRADLE_XML"
+                Status = $status
+                DurationMs = $durationMs
+                Message = $message
+                Evidence = "$EvidencePath; $($xmlFile.FullName)"
+            }
+        }
+    }
+
+    return @($cases)
+}
+
 function Get-CaseSummary {
     param([object[]]$Cases)
 
@@ -504,7 +589,6 @@ $env:TMP = $env:TEMP
 Use-Jdk21IfAvailable
 
 New-Item -ItemType Directory -Force -Path $runnerDir, $runnerClasspath, $env:GRADLE_USER_HOME, $env:TEMP | Out-Null
-[System.IO.File]::WriteAllText($runnerSource, (Get-ManualRunnerSource), (New-Object System.Text.UTF8Encoding($false)))
 
 $serviceRuns = @()
 $logLines = New-Object System.Collections.Generic.List[string]
@@ -513,51 +597,24 @@ foreach ($serviceDir in $ServiceDirs) {
     $gradlePath = Resolve-GradlePath $GradlePath $serviceDir
     Write-Host "Compiling and running tests for $serviceDir..."
 
-    Invoke-Gradle $gradlePath @("--no-daemon", "classes", "testClasses") $serviceRoot
-
-    $classpathLines = @()
-    Push-Location $serviceRoot
-    try {
-        $classpathLines = & $gradlePath --no-daemon -q printTestRuntimeClasspath
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to read test runtime classpath for $serviceDir"
-        }
-    }
-    finally {
-        Pop-Location
-    }
-
-    $runtimeClasspath = ($classpathLines | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Last 1).Trim()
-    if ([string]::IsNullOrWhiteSpace($runtimeClasspath)) {
-        throw "Empty test runtime classpath for $serviceDir"
-    }
-
-    $javacExecutable = Resolve-JavaTool "javac"
-    $javaExecutable = Resolve-JavaTool "java"
-    & $javacExecutable -encoding UTF8 -cp $runtimeClasspath -d $runnerClasspath $runnerSource
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to compile the manual JUnit runner"
-    }
-
-    $testClassesDir = Join-Path $serviceRoot "build\classes\java\test"
-    if (-not (Test-Path -LiteralPath $testClassesDir)) {
-        Write-Host "No compiled test classes found for $serviceDir, skipping execution."
-        continue
-    }
-
     $serviceName = Split-Path -Leaf $serviceDir
+    $testResultsDir = Join-Path $serviceRoot "build/test-results/test"
+    if (Test-Path -LiteralPath $testResultsDir) {
+        Remove-Item -LiteralPath $testResultsDir -Recurse -Force
+    }
+
     $serviceKey = ($serviceDir -replace '[^A-Za-z0-9]', '-')
     $stdoutFile = Join-Path $runnerDir "stdout-$serviceKey.txt"
     $stderrFile = Join-Path $runnerDir "stderr-$serviceKey.txt"
-    $classpathSeparator = [System.IO.Path]::PathSeparator
-    $process = Start-Process -FilePath $javaExecutable `
-        -ArgumentList @("-cp", "$runtimeClasspath$classpathSeparator$runnerClasspath", "ManualJUnitRunner", $serviceName, $testClassesDir) `
+
+    $process = Start-Process -FilePath $gradlePath `
+        -ArgumentList @("--no-daemon", "test") `
         -WorkingDirectory $serviceRoot `
         -RedirectStandardOutput $stdoutFile `
         -RedirectStandardError $stderrFile `
         -Wait `
         -PassThru
-    $runnerExitCode = $process.ExitCode
+    $gradleExitCode = $process.ExitCode
 
     $runOutput = @()
     if (Test-Path -LiteralPath $stdoutFile) {
@@ -567,7 +624,7 @@ foreach ($serviceDir in $ServiceDirs) {
     if (Test-Path -LiteralPath $stderrFile) {
         $runErrors = Get-Content -LiteralPath $stderrFile
     }
-    $caseDetails = Parse-TestCases $runOutput
+    $caseDetails = Parse-GradleTestResults $serviceName $serviceRoot $LogPath
     $summary = Get-CaseSummary $caseDetails
     $serviceRuns += [pscustomobject]@{
         Name = $serviceName
@@ -579,7 +636,7 @@ foreach ($serviceDir in $ServiceDirs) {
     }
 
     foreach ($line in $runOutput) {
-        if (-not [string]::IsNullOrWhiteSpace($line) -and $line -notmatch '^TEST_CASE\s+') {
+        if (-not [string]::IsNullOrWhiteSpace($line)) {
             Write-Host $line
         }
     }
@@ -595,10 +652,10 @@ foreach ($serviceDir in $ServiceDirs) {
         Write-Host ("[{0}] {1} {2} ({3:n0} ms)" -f $case.Status, $case.ClassName, $case.MethodName, [double]$case.DurationMs)
     }
 
-    if ($runnerExitCode -ne 0) {
+    if ($gradleExitCode -ne 0) {
         Set-Content -LiteralPath $LogPath -Value $logLines -Encoding UTF8
-        Write-TestReport $serviceRuns $ReportPath "FAILED" "Manual JUnit run failed for $serviceDir" $gradlePath
-        throw "Manual JUnit run failed for $serviceDir"
+        Write-TestReport $serviceRuns $ReportPath "FAILED" "Gradle test failed for $serviceDir" $gradlePath
+        throw "Gradle test failed for $serviceDir"
     }
 }
 
