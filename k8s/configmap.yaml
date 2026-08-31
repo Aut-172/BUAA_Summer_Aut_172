@@ -18,6 +18,13 @@ data:
   app-upload-root-dir: /app/uploads
   app-upload-review-dir: /app/uploads/reviews
   app-upload-max-image-size-bytes: "20971520"
+  oss-enabled: "true"
+#  oss-endpoint: oss-cn-heyuan.aliyuncs.com
+  oss-endpoint: oss-cn-heyuan-internal.aliyuncs.com
+  oss-bucket: buaa-summer-life-assistant
+  oss-public-base-url: https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn
+  oss-upload-prefix: life-assistant
+  oss-cname-enabled: "false"
   spring-servlet-multipart-max-file-size: 20MB
   spring-servlet-multipart-max-request-size: 120MB
   app-auth-captcha-enabled: "true"

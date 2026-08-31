@@ -12,6 +12,14 @@ x-business-service-env: &business-service-env
   JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
   APP_AUTH_CAPTCHA_ENABLED: ${APP_AUTH_CAPTCHA_ENABLED:-true}
   APP_UPLOAD_ROOT_DIR: /app/uploads
+  OSS_ENABLED: ${OSS_ENABLED:-false}
+  OSS_ENDPOINT: ${OSS_ENDPOINT:-oss-cn-heyuan.aliyuncs.com}
+  OSS_BUCKET: ${OSS_BUCKET:-buaa-summer-life-assistant}
+  OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID:-}
+  OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET:-}
+  OSS_PUBLIC_BASE_URL: ${OSS_PUBLIC_BASE_URL:-https://buaa-summer-life-assistant.cn-heyuan.taihangztn.cn}
+  OSS_UPLOAD_PREFIX: ${OSS_UPLOAD_PREFIX:-life-assistant}
+  OSS_CNAME_ENABLED: ${OSS_CNAME_ENABLED:-false}
   TZ: Asia/Shanghai
 
 services:

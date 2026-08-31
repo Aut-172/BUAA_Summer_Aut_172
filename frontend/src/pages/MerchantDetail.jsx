@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import ReviewImageGallery, { LightboxImage } from '../components/ReviewImageGallery'
 import { useSession } from '../utils/ApiProvider'
+import { FALLBACK_PRODUCT_IMAGE, FALLBACK_STORE_IMAGE } from '../utils/demoImages'
 import { formatDateTime, formatMoney, normalizeTags } from '../utils/format'
 
 export default function MerchantDetail() {
@@ -162,7 +163,7 @@ export default function MerchantDetail() {
                 <div className="merchant-header">
                     <img
                         className="merchant-avatar large"
-                        src={merchant.avatar || 'https://picsum.photos/seed/default-store/160/160'}
+                        src={merchant.avatar || FALLBACK_STORE_IMAGE}
                         alt={merchant.name}
                     />
                     <div className="merchant-meta">
@@ -222,7 +223,7 @@ export default function MerchantDetail() {
                                     <article className="product-card panel" key={product.id}>
                                         <LightboxImage
                                             className="product-image-large"
-                                            src={product.image || 'https://picsum.photos/seed/default-product/360/240'}
+                                            src={product.image || FALLBACK_PRODUCT_IMAGE}
                                             alt={product.name}
                                             buttonClassName="product-image-button"
                                         />

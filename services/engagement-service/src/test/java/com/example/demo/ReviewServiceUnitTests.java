@@ -7,6 +7,7 @@ import com.example.demo.engagement.client.UserClient;
 import com.example.demo.engagement.event.EngagementEventPublisher;
 import com.example.demo.review.mapper.ReviewMapper;
 import com.example.demo.review.service.ReviewService;
+import com.example.demo.review.storage.LocalImageStorageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -81,11 +82,17 @@ class ReviewServiceUnitTests {
                 userClient,
                 merchantCatalogClient,
                 eventPublisher,
-                new ObjectMapper()
+                new ObjectMapper(),
+                localImageStorageService()
         );
-        ReflectionTestUtils.setField(reviewService, "uploadRootDir", tempDir.toString());
-        ReflectionTestUtils.setField(reviewService, "reviewUploadDir", tempDir.resolve("reviews").toString());
         ReflectionTestUtils.setField(reviewService, "maxImageSizeBytes", 1024L);
         return reviewService;
+    }
+
+    private LocalImageStorageService localImageStorageService() {
+        LocalImageStorageService storageService = new LocalImageStorageService();
+        ReflectionTestUtils.setField(storageService, "uploadRootDir", tempDir.toString());
+        ReflectionTestUtils.setField(storageService, "reviewUploadDir", tempDir.resolve("reviews").toString());
+        return storageService;
     }
 }

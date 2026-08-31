@@ -5,6 +5,11 @@ IMAGE_TAG="${IMAGE_TAG:-$(git rev-parse --short HEAD 2>/dev/null || echo dev)}"
 NAMESPACE="${K8S_NAMESPACE:-default}"
 MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-123456}"
 JWT_SECRET="${JWT_SECRET:-LifeAssistant2025SecretKeyForJWTTokenGenerationMustBe256BitsLong}"
+OSS_ACCESS_KEY_ID="${OSS_ACCESS_KEY_ID:-}"
+OSS_ACCESS_KEY_SECRET="${OSS_ACCESS_KEY_SECRET:-}"
+ACR_REGISTRY="${ACR_REGISTRY:-}"
+ACR_USERNAME="${ACR_USERNAME:-}"
+ACR_PASSWORD="${ACR_PASSWORD:-}"
 
 API_GATEWAY_IMAGE="${API_GATEWAY_IMAGE:-life-assistant-api-gateway:${IMAGE_TAG}}"
 MERCHANT_SERVICE_IMAGE="${MERCHANT_SERVICE_IMAGE:-life-assistant-merchant-service:${IMAGE_TAG}}"
@@ -39,8 +44,25 @@ kubectl create secret generic life-assistant-secret \
   --namespace "$NAMESPACE" \
   --from-literal=mysql-root-password="$MYSQL_ROOT_PASSWORD" \
   --from-literal=jwt-secret="$JWT_SECRET" \
+  --from-literal=oss-access-key-id="$OSS_ACCESS_KEY_ID" \
+  --from-literal=oss-access-key-secret="$OSS_ACCESS_KEY_SECRET" \
   --dry-run=client \
   -o yaml | kubectl apply -f -
+
+if [[ -n "$ACR_REGISTRY" && -n "$ACR_USERNAME" && -n "$ACR_PASSWORD" ]]; then
+  kubectl create secret docker-registry acr-pull-secret \
+    --namespace "$NAMESPACE" \
+    --docker-server="$ACR_REGISTRY" \
+    --docker-username="$ACR_USERNAME" \
+    --docker-password="$ACR_PASSWORD" \
+    --dry-run=client \
+    -o yaml | kubectl apply -f -
+
+  kubectl patch serviceaccount default \
+    --namespace "$NAMESPACE" \
+    --type merge \
+    -p '{"imagePullSecrets":[{"name":"acr-pull-secret"}]}'
+fi
 
 kubectl create configmap life-assistant-db-init \
   --namespace "$NAMESPACE" \

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useSession } from '../utils/ApiProvider'
+import { FALLBACK_PRODUCT_IMAGE } from '../utils/demoImages'
 import { buildAddressLabel, formatMoney, groupCartItems } from '../utils/format'
 
 export default function Checkout() {
@@ -150,7 +151,7 @@ export default function Checkout() {
                                     <div className="cart-item-card" key={item.id}>
                                         <img
                                             className="cart-thumb"
-                                            src={item.image || 'https://picsum.photos/seed/checkout-thumb/120/120'}
+                                            src={item.image || FALLBACK_PRODUCT_IMAGE}
                                             alt={item.name}
                                         />
                                         <div className="stack tight grow">

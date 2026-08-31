@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      max-parallel: 2
       matrix:
         include:
           - name: api-gateway
@@ -206,25 +207,33 @@ jobs:
       - frontend-build
     env:
       IMAGE_TAG: ${{ github.sha }}
-      API_GATEWAY_IMAGE: aquared/life-service-assistant:api-gateway-${{ github.sha }}
-      MERCHANT_SERVICE_IMAGE: aquared/life-service-assistant:merchant-service-${{ github.sha }}
-      USER_SERVICE_IMAGE: aquared/life-service-assistant:user-service-${{ github.sha }}
-      ORDER_SERVICE_IMAGE: aquared/life-service-assistant:order-service-${{ github.sha }}
-      SETTLEMENT_SERVICE_IMAGE: aquared/life-service-assistant:settlement-service-${{ github.sha }}
-      FULFILLMENT_SERVICE_IMAGE: aquared/life-service-assistant:fulfillment-service-${{ github.sha }}
-      ENGAGEMENT_SERVICE_IMAGE: aquared/life-service-assistant:engagement-service-${{ github.sha }}
-      FRONTEND_IMAGE: aquared/life-service-assistant:frontend-${{ github.sha }}
+      IMAGE_REPOSITORY: ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/life-service-assistant
+      API_GATEWAY_IMAGE: ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/life-service-assistant:api-gateway-${{ github.sha }}
+      MERCHANT_SERVICE_IMAGE: ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/life-service-assistant:merchant-service-${{ github.sha }}
+      USER_SERVICE_IMAGE: ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/life-service-assistant:user-service-${{ github.sha }}
+      ORDER_SERVICE_IMAGE: ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/life-service-assistant:order-service-${{ github.sha }}
+      SETTLEMENT_SERVICE_IMAGE: ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/life-service-assistant:settlement-service-${{ github.sha }}
+      FULFILLMENT_SERVICE_IMAGE: ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/life-service-assistant:fulfillment-service-${{ github.sha }}
+      ENGAGEMENT_SERVICE_IMAGE: ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/life-service-assistant:engagement-service-${{ github.sha }}
+      FRONTEND_IMAGE: ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/life-service-assistant:frontend-${{ github.sha }}
       MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      OSS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
+      OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+      ACR_REGISTRY: ${{ secrets.ACR_REGISTRY }}
+      ACR_PULL_REGISTRY: ${{ secrets.ACR_PULL_REGISTRY }}
+      ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
+      ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Login to Docker Hub
+      - name: Login to Alibaba Cloud ACR
         uses: docker/login-action@v4
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ${{ secrets.ACR_REGISTRY }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
 
       - name: Build images
         run: |
@@ -265,24 +274,47 @@ jobs:
         run: |
           MYSQL_ROOT_PASSWORD_B64="$(printf '%s' "${MYSQL_ROOT_PASSWORD}" | base64 -w0)"
           JWT_SECRET_B64="$(printf '%s' "${JWT_SECRET}" | base64 -w0)"
+          OSS_ACCESS_KEY_ID_B64="$(printf '%s' "${OSS_ACCESS_KEY_ID}" | base64 -w0)"
+          OSS_ACCESS_KEY_SECRET_B64="$(printf '%s' "${OSS_ACCESS_KEY_SECRET}" | base64 -w0)"
+          ACR_PASSWORD_B64="$(printf '%s' "${ACR_PASSWORD}" | base64 -w0)"
+          PULL_REGISTRY="${ACR_PULL_REGISTRY:-${ACR_REGISTRY}}"
+          PULL_REGISTRY="${PULL_REGISTRY#https://}"
+          PULL_REGISTRY="${PULL_REGISTRY#http://}"
+          PULL_REGISTRY="${PULL_REGISTRY%%/*}"
+          API_GATEWAY_PULL_IMAGE="${API_GATEWAY_IMAGE/$ACR_REGISTRY/$PULL_REGISTRY}"
+          MERCHANT_SERVICE_PULL_IMAGE="${MERCHANT_SERVICE_IMAGE/$ACR_REGISTRY/$PULL_REGISTRY}"
+          USER_SERVICE_PULL_IMAGE="${USER_SERVICE_IMAGE/$ACR_REGISTRY/$PULL_REGISTRY}"
+          ORDER_SERVICE_PULL_IMAGE="${ORDER_SERVICE_IMAGE/$ACR_REGISTRY/$PULL_REGISTRY}"
+          SETTLEMENT_SERVICE_PULL_IMAGE="${SETTLEMENT_SERVICE_IMAGE/$ACR_REGISTRY/$PULL_REGISTRY}"
+          FULFILLMENT_SERVICE_PULL_IMAGE="${FULFILLMENT_SERVICE_IMAGE/$ACR_REGISTRY/$PULL_REGISTRY}"
+          ENGAGEMENT_SERVICE_PULL_IMAGE="${ENGAGEMENT_SERVICE_IMAGE/$ACR_REGISTRY/$PULL_REGISTRY}"
+          FRONTEND_PULL_IMAGE="${FRONTEND_IMAGE/$ACR_REGISTRY/$PULL_REGISTRY}"
           ssh -i ~/.ssh/ecs_key -p "${{ secrets.ECS_SSH_PORT }}" "${{ secrets.ECS_USER }}@${{ secrets.ECS_HOST }}" \
             "IMAGE_TAG='${IMAGE_TAG}' \
-            API_GATEWAY_IMAGE='${API_GATEWAY_IMAGE}' \
-            MERCHANT_SERVICE_IMAGE='${MERCHANT_SERVICE_IMAGE}' \
-            USER_SERVICE_IMAGE='${USER_SERVICE_IMAGE}' \
-            ORDER_SERVICE_IMAGE='${ORDER_SERVICE_IMAGE}' \
-            SETTLEMENT_SERVICE_IMAGE='${SETTLEMENT_SERVICE_IMAGE}' \
-            FULFILLMENT_SERVICE_IMAGE='${FULFILLMENT_SERVICE_IMAGE}' \
-            ENGAGEMENT_SERVICE_IMAGE='${ENGAGEMENT_SERVICE_IMAGE}' \
-            FRONTEND_IMAGE='${FRONTEND_IMAGE}' \
+            ACR_REGISTRY='${PULL_REGISTRY}' \
+            ACR_USERNAME='${ACR_USERNAME}' \
+            ACR_PASSWORD_B64='${ACR_PASSWORD_B64}' \
+            API_GATEWAY_IMAGE='${API_GATEWAY_PULL_IMAGE}' \
+            MERCHANT_SERVICE_IMAGE='${MERCHANT_SERVICE_PULL_IMAGE}' \
+            USER_SERVICE_IMAGE='${USER_SERVICE_PULL_IMAGE}' \
+            ORDER_SERVICE_IMAGE='${ORDER_SERVICE_PULL_IMAGE}' \
+            SETTLEMENT_SERVICE_IMAGE='${SETTLEMENT_SERVICE_PULL_IMAGE}' \
+            FULFILLMENT_SERVICE_IMAGE='${FULFILLMENT_SERVICE_PULL_IMAGE}' \
+            ENGAGEMENT_SERVICE_IMAGE='${ENGAGEMENT_SERVICE_PULL_IMAGE}' \
+            FRONTEND_IMAGE='${FRONTEND_PULL_IMAGE}' \
             MYSQL_ROOT_PASSWORD_B64='${MYSQL_ROOT_PASSWORD_B64}' \
             JWT_SECRET_B64='${JWT_SECRET_B64}' \
+            OSS_ACCESS_KEY_ID_B64='${OSS_ACCESS_KEY_ID_B64}' \
+            OSS_ACCESS_KEY_SECRET_B64='${OSS_ACCESS_KEY_SECRET_B64}' \
             bash -s" <<'REMOTE_DEPLOY'
           set -euo pipefail
           cd ~/life-service
           tar -xzf life-service-deploy.tgz
           export MYSQL_ROOT_PASSWORD="$(printf '%s' "${MYSQL_ROOT_PASSWORD_B64}" | base64 -d)"
           export JWT_SECRET="$(printf '%s' "${JWT_SECRET_B64}" | base64 -d)"
+          export OSS_ACCESS_KEY_ID="$(printf '%s' "${OSS_ACCESS_KEY_ID_B64}" | base64 -d)"
+          export OSS_ACCESS_KEY_SECRET="$(printf '%s' "${OSS_ACCESS_KEY_SECRET_B64}" | base64 -d)"
+          export ACR_PASSWORD="$(printf '%s' "${ACR_PASSWORD_B64}" | base64 -d)"
           bash scripts/deploy-kind.sh
           REMOTE_DEPLOY
 
