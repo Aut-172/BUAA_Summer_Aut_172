@@ -216,6 +216,21 @@ function Resolve-GradlePath {
         return $gradle.Source
     }
 
+    $zipPath = Join-Path $repoRoot "gradle-9.5.1-bin.zip"
+    if (Test-Path -LiteralPath $zipPath) {
+        $runtimeDir = Join-Path $env:TEMP "codex-gradle-9.5.1"
+        $gradleExecutableName = if ($IsWindows -or $env:OS -eq "Windows_NT") { "gradle.bat" } else { "gradle" }
+        $gradleExecutable = Join-Path $runtimeDir "gradle-9.5.1/bin/$gradleExecutableName"
+        if (-not (Test-Path -LiteralPath $gradleExecutable)) {
+            New-Item -ItemType Directory -Force -Path $runtimeDir | Out-Null
+            Expand-Archive -LiteralPath $zipPath -DestinationPath $runtimeDir -Force
+        }
+        if (-not ($IsWindows -or $env:OS -eq "Windows_NT")) {
+            & chmod +x $gradleExecutable
+        }
+        return $gradleExecutable
+    }
+
     if (-not [string]::IsNullOrWhiteSpace($ServiceDir)) {
         $wrapperName = if ($IsWindows -or $env:OS -eq "Windows_NT") { "gradlew.bat" } else { "gradlew" }
         $wrapperPath = Join-Path (Join-Path $repoRoot $ServiceDir) $wrapperName
@@ -224,19 +239,7 @@ function Resolve-GradlePath {
         }
     }
 
-    $zipPath = Join-Path $repoRoot "gradle-9.5.1-bin.zip"
-    if (-not (Test-Path -LiteralPath $zipPath)) {
-        throw "Gradle is not installed, no service Gradle wrapper was found, and local gradle-9.5.1-bin.zip was not found."
-    }
-
-    $runtimeDir = Join-Path $env:TEMP "codex-gradle-9.5.1"
-    $gradleExecutableName = if ($IsWindows -or $env:OS -eq "Windows_NT") { "gradle.bat" } else { "gradle" }
-    $gradleExecutable = Join-Path $runtimeDir "gradle-9.5.1/bin/$gradleExecutableName"
-    if (-not (Test-Path -LiteralPath $gradleExecutable)) {
-        New-Item -ItemType Directory -Force -Path $runtimeDir | Out-Null
-        Expand-Archive -LiteralPath $zipPath -DestinationPath $runtimeDir -Force
-    }
-    return $gradleExecutable
+    throw "Gradle is not installed, local gradle-9.5.1-bin.zip was not found, and no service Gradle wrapper was found."
 }
 
 function Resolve-JavaTool {
@@ -256,6 +259,33 @@ function Resolve-JavaTool {
     }
 
     throw "Cannot find $ToolName. Install JDK 21 or set JAVA_HOME."
+}
+
+function Use-Jdk21IfAvailable {
+    if (-not [string]::IsNullOrWhiteSpace($env:JAVA_HOME) -and $env:JAVA_HOME -match '(^|[\\/])jdk-?21|(^|[\\/])java-?21|21\.[0-9]') {
+        return
+    }
+
+    $candidateHomes = @(
+        $env:JAVA_HOME_21_X64,
+        "C:\Program Files\Java\jdk-21.0.12.1",
+        "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.7-hotspot",
+        "C:\Program Files\Microsoft\jdk-21.0.8.9-hotspot"
+    )
+
+    foreach ($candidateHome in $candidateHomes) {
+        if ([string]::IsNullOrWhiteSpace($candidateHome)) {
+            continue
+        }
+
+        $javaExecutableName = if ($IsWindows -or $env:OS -eq "Windows_NT") { "java.exe" } else { "java" }
+        $javaPath = Join-Path $candidateHome "bin/$javaExecutableName"
+        if (Test-Path -LiteralPath $javaPath) {
+            $env:JAVA_HOME = $candidateHome
+            $env:PATH = "$(Join-Path $candidateHome 'bin')$([System.IO.Path]::PathSeparator)$env:PATH"
+            return
+        }
+    }
 }
 
 function Get-ManualRunnerSource {
@@ -436,6 +466,10 @@ public class ManualJUnitRunner {
         launcher.execute(request);
 
         TestExecutionSummary summary = listener.getSummary();
+        for (TestExecutionSummary.Failure failure : summary.getFailures()) {
+            System.out.println("FAILED TEST: " + failure.getTestIdentifier().getDisplayName());
+            System.out.println("CAUSE: " + failure.getException().getClass().getName() + ": " + failure.getException().getMessage());
+        }
         summary.printTo(new PrintWriter(System.out, true));
         if (summary.getTotalFailureCount() > 0) {
             System.exit(1);
@@ -467,6 +501,7 @@ function Invoke-Gradle {
 $env:GRADLE_USER_HOME = Join-Path $repoRoot ".gradle-home-d"
 $env:TEMP = Join-Path $repoRoot ".tmp-d"
 $env:TMP = $env:TEMP
+Use-Jdk21IfAvailable
 
 New-Item -ItemType Directory -Force -Path $runnerDir, $runnerClasspath, $env:GRADLE_USER_HOME, $env:TEMP | Out-Null
 [System.IO.File]::WriteAllText($runnerSource, (Get-ManualRunnerSource), (New-Object System.Text.UTF8Encoding($false)))
@@ -515,8 +550,14 @@ foreach ($serviceDir in $ServiceDirs) {
     $stdoutFile = Join-Path $runnerDir "stdout-$serviceKey.txt"
     $stderrFile = Join-Path $runnerDir "stderr-$serviceKey.txt"
     $classpathSeparator = [System.IO.Path]::PathSeparator
-    & $javaExecutable -cp "$runtimeClasspath$classpathSeparator$runnerClasspath" ManualJUnitRunner $serviceName $testClassesDir > $stdoutFile 2> $stderrFile
-    $runnerExitCode = $LASTEXITCODE
+    $process = Start-Process -FilePath $javaExecutable `
+        -ArgumentList @("-cp", "$runtimeClasspath$classpathSeparator$runnerClasspath", "ManualJUnitRunner", $serviceName, $testClassesDir) `
+        -WorkingDirectory $serviceRoot `
+        -RedirectStandardOutput $stdoutFile `
+        -RedirectStandardError $stderrFile `
+        -Wait `
+        -PassThru
+    $runnerExitCode = $process.ExitCode
 
     $runOutput = @()
     if (Test-Path -LiteralPath $stdoutFile) {
@@ -545,6 +586,7 @@ foreach ($serviceDir in $ServiceDirs) {
     foreach ($line in $runErrors) {
         if (-not [string]::IsNullOrWhiteSpace($line)) {
             $logLines.Add("[STDERR] $serviceName $line") | Out-Null
+            Write-Host "[STDERR] $serviceName $line"
         }
     }
 
