@@ -1,0 +1,14 @@
+NAME                                                 CPU(cores)   MEMORY(bytes)   
+life-assistant-api-gateway-74477cb8bf-bj8c6          6m           213Mi           
+life-assistant-engagement-service-7c88c4dd55-9dtrp   10m          275Mi           
+life-assistant-frontend-57c66c6878-rc6tl             1m           7Mi             
+life-assistant-fulfillment-service-c7d796f6b-nhfjw   8m           268Mi           
+life-assistant-merchant-service-7f9c8f666d-cffdm     42m          275Mi           
+life-assistant-merchant-service-7f9c8f666d-pqg2v     8m           263Mi           
+life-assistant-merchant-service-7f9c8f666d-q6zgj     7m           260Mi           
+life-assistant-mysql-596766557b-hl5pf                15m          613Mi           
+life-assistant-nacos-5995f55965-l7wq6                5m           560Mi           
+life-assistant-order-service-55cc89b84d-74hvv        10m          261Mi           
+life-assistant-redis-c4fcbf6c-r8mhj                  9m           14Mi            
+life-assistant-settlement-service-649b44d76b-hjmml   7m           264Mi           
+life-assistant-user-service-774d699455-2c5dd         12m          277Mi           

@@ -1,0 +1,3 @@
+NAME                              REFERENCE                                    TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+life-assistant-api-gateway        Deployment/life-assistant-api-gateway        cpu: 4%/60%    1         3         1          75m
+life-assistant-merchant-service   Deployment/life-assistant-merchant-service   cpu: 10%/50%   1         5         3          75m

@@ -59,13 +59,28 @@ $jmeterArgs = @(
 )
 
 if ($JMeterJar) {
-    & java -Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 -Duser.language=en -Duser.country=US -jar $JMeterJar @jmeterArgs
+    $javaArgs = @(
+        "-Dfile.encoding=UTF-8",
+        "-Dsun.stdout.encoding=UTF-8",
+        "-Dsun.stderr.encoding=UTF-8",
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-jar",
+        $JMeterJar
+    ) + $jmeterArgs
+    & java @javaArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "JMeter failed with exit code $LASTEXITCODE."
+    }
 }
 else {
     $previousJvmArgs = $env:JVM_ARGS
     $env:JVM_ARGS = "-Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 -Duser.language=en -Duser.country=US $previousJvmArgs"
     try {
         & $JMeterBin @jmeterArgs
+        if ($LASTEXITCODE -ne 0) {
+            throw "JMeter failed with exit code $LASTEXITCODE."
+        }
     }
     finally {
         $env:JVM_ARGS = $previousJvmArgs

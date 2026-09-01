@@ -1,0 +1,14 @@
+NAME                                                  READY   STATUS    RESTARTS   AGE    IP            NODE                      NOMINATED NODE   READINESS GATES
+life-assistant-api-gateway-68b5c996df-hwdds           1/1     Running   0          109s   10.42.0.140   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-api-gateway-68b5c996df-nljj5           1/1     Running   0          12m    10.42.0.137   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-engagement-service-95c6b48f5-rqzdj     1/1     Running   0          14m    10.42.0.136   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-frontend-fc48fc794-wmck7               1/1     Running   0          11m    10.42.0.138   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-fulfillment-service-7d8b56595d-z9slz   1/1     Running   0          14m    10.42.0.135   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-merchant-service-55f5f7c468-4t6l5      1/1     Running   0          14m    10.42.0.131   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-merchant-service-55f5f7c468-tmqj4      1/1     Running   0          2m4s   10.42.0.139   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-mysql-596766557b-hl5pf                 1/1     Running   0          23h    10.42.0.8     izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-nacos-5995f55965-l7wq6                 1/1     Running   0          23h    10.42.0.10    izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-order-service-5696b855c6-lq468         1/1     Running   0          14m    10.42.0.133   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-redis-c4fcbf6c-r8mhj                   1/1     Running   0          23h    10.42.0.9     izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-settlement-service-6485f7b9bb-wwdxd    1/1     Running   0          14m    10.42.0.134   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-user-service-d9d686b55-p49lg           1/1     Running   0          14m    10.42.0.132   izf8z9823mhcfvpm8llt12z   <none>           <none>

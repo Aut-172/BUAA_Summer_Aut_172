@@ -43,4 +43,17 @@ tools/plantuml.jar
 backend/src/main/resources/application-local.yml
 backend/src/main/resources/application-local.yaml
 
-reports/perf/
+# Keep generated test, performance, and experiment reports versioned.
+!reports/
+!reports/**
+!reports/**/*.log
+!reports/**/*.png
+!reports/**/*.puml
+!reports/**/*.jtl
+!reports/**/*.csv
+!reports/**/*.json
+!reports/**/*.html
+!reports/**/*.txt
+!reports/**/*.tgz
+!reports/**/*.gz
+*.jtl
