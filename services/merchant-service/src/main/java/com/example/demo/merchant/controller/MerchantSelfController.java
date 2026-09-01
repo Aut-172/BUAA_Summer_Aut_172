@@ -2,9 +2,9 @@ package com.example.demo.merchant.controller;
 
 import com.example.demo.auth.entity.Merchant;
 import com.example.demo.common.Result;
-import com.example.demo.merchant.client.OrderSummaryClient;
 import com.example.demo.merchant.dto.MerchantDashboardVO;
 import com.example.demo.merchant.entity.Product;
+import com.example.demo.merchant.service.MerchantDashboardService;
 import com.example.demo.merchant.service.MerchantService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -25,12 +25,12 @@ import java.util.List;
 public class MerchantSelfController {
 
     private final MerchantService merchantService;
-    private final OrderSummaryClient orderSummaryClient;
+    private final MerchantDashboardService merchantDashboardService;
 
     @GetMapping("/dashboard")
     public Result<MerchantDashboardVO> getDashboard(HttpServletRequest request) {
         Long merchantId = getMerchantId(request);
-        return Result.success(new MerchantDashboardVO(orderSummaryClient.getMerchantDashboard(merchantId)));
+        return Result.success(merchantDashboardService.getDashboard(merchantId));
     }
 
     @GetMapping("/profile")

@@ -12,6 +12,12 @@ spring:
     loadbalancer:
       nacos:
         enabled: true
+    openfeign:
+      client:
+        config:
+          default:
+            connect-timeout: ${FEIGN_CONNECT_TIMEOUT:1000}
+            read-timeout: ${FEIGN_READ_TIMEOUT:2000}
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/merchant_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
     username: ${SPRING_DATASOURCE_USERNAME:root}
@@ -34,6 +40,9 @@ jwt:
   expiration: ${JWT_EXPIRATION:86400000}
 
 app:
+  fault-tolerance:
+    merchant-dashboard:
+      fallback-message: ${MERCHANT_DASHBOARD_FALLBACK_MESSAGE:订单服务暂不可用，已返回临时看板数据，请稍后刷新。}
   upload:
     root-dir: ${APP_UPLOAD_ROOT_DIR:uploads}
 

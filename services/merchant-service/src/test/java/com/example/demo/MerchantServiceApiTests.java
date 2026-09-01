@@ -3,6 +3,7 @@ package com.example.demo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.demo.common.JwtUtil;
+import com.example.demo.common.Result;
 import com.example.demo.common.contract.merchant.MerchantDashboardStats;
 import com.example.demo.merchant.entity.Product;
 import com.example.demo.merchant.entity.MerchantStockChangeRecord;
@@ -22,6 +23,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -132,7 +134,7 @@ public class MerchantServiceApiTests {
         stats.setTodayOrders(3);
         stats.setTodayRevenue(new java.math.BigDecimal("120.00"));
         stats.setPendingOrders(1);
-        when(orderSummaryClient.getMerchantDashboard(20001L)).thenReturn(stats);
+        when(orderSummaryClient.getMerchantDashboardResult(20001L)).thenReturn(Result.success(stats));
 
         String token = jwtUtil.generateToken(20001L, "merchant", "merchant1");
 
@@ -142,7 +144,8 @@ public class MerchantServiceApiTests {
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.merchant.todayOrders").value(3))
                 .andExpect(jsonPath("$.data.merchant.todayRevenue").value(120.00))
-                .andExpect(jsonPath("$.data.merchant.pendingOrders").value(1));
+                .andExpect(jsonPath("$.data.merchant.pendingOrders").value(1))
+                .andExpect(jsonPath("$.data.degraded").value(false));
 
         mockMvc.perform(get("/api/merchant/profile")
                         .header("Authorization", "Bearer " + token))
@@ -164,6 +167,25 @@ public class MerchantServiceApiTests {
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.id").value(30001))
                 .andExpect(jsonPath("$.data.name").value("Braised Pork Rice"));
+    }
+
+    @Test
+    void merchantDashboardUsesFallbackWhenOrderServiceFails() throws Exception {
+        doThrow(new RuntimeException("order service unavailable"))
+                .when(orderSummaryClient).getMerchantDashboardResult(20001L);
+
+        String token = jwtUtil.generateToken(20001L, "merchant", "merchant1");
+
+        mockMvc.perform(get("/api/merchant/dashboard")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.degraded").value(true))
+                .andExpect(jsonPath("$.data.degradedDependency").value("order-service"))
+                .andExpect(jsonPath("$.data.degradationMessage").value("订单服务暂不可用，已返回临时看板数据，请稍后刷新。"))
+                .andExpect(jsonPath("$.data.merchant.todayOrders").value(0))
+                .andExpect(jsonPath("$.data.merchant.todayRevenue").value(0))
+                .andExpect(jsonPath("$.data.merchant.pendingOrders").value(0));
     }
 
     @Test
