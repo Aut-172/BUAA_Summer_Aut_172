@@ -180,6 +180,22 @@ GitHub Actions 定义在 [.github/workflows/ci.yml](.github/workflows/ci.yml)，
 
 本地脚本 `scripts/test-microservices.ps1`、`scripts/test-b-side-services.ps1` 和 `scripts/deploy-kind.sh` 与 CI 流程互为补充：前者便于 Windows 本地收尾验证，后者是 GitHub Actions 在 Linux runner 上的正式门禁和发布路径。
 
+## 性能对比
+
+性能对比脚本位于 [scripts/performance/compare-performance.mjs](scripts/performance/compare-performance.mjs)，会按同一套请求、同一并发和同一轮次分别压测单体版与微服务版，并自动生成详细报告：
+
+```powershell
+node scripts/performance/compare-performance.mjs
+```
+
+默认会输出以下文件到 `reports/performance/`：
+
+- `performance-comparison.md`
+- `performance-comparison.raw.json`
+- `performance-comparison.raw.csv`
+
+脚本默认对比的接口是 `GET /api/merchants`、`GET /api/products/30001` 和 `GET /api/orders/70001`。如果要换基址、并发数、轮次或容器名，可以通过命令行参数覆盖。
+
 ## Kubernetes
 
 K8s 示例清单位于 `k8s/`：
