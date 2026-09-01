@@ -4,8 +4,17 @@ server:
 spring:
   application:
     name: settlement-service
+  config:
+    import:
+      - optional:nacos:life-assistant-common.yml?group=${NACOS_CONFIG_GROUP:DEFAULT_GROUP}&refreshEnabled=${NACOS_CONFIG_REFRESH_ENABLED:true}
+      - optional:nacos:${spring.application.name}.yml?group=${NACOS_CONFIG_GROUP:DEFAULT_GROUP}&refreshEnabled=${NACOS_CONFIG_REFRESH_ENABLED:true}
   cloud:
     nacos:
+      config:
+        server-addr: ${NACOS_CONFIG_SERVER_ADDR:${NACOS_SERVER_ADDR:127.0.0.1:8848}}
+        namespace: ${NACOS_CONFIG_NAMESPACE:}
+        group: ${NACOS_CONFIG_GROUP:DEFAULT_GROUP}
+        file-extension: yml
       discovery:
         server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
         fail-fast: ${NACOS_DISCOVERY_FAIL_FAST:false}
@@ -16,8 +25,9 @@ spring:
       client:
         config:
           default:
-            connect-timeout: ${FEIGN_CONNECT_TIMEOUT:3000}
-            read-timeout: ${FEIGN_READ_TIMEOUT:5000}
+            connect-timeout: ${FEIGN_CONNECT_TIMEOUT:1000}
+            read-timeout: ${FEIGN_READ_TIMEOUT:3000}
+            logger-level: ${FEIGN_LOGGER_LEVEL:basic}
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/settlement_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
     username: ${SPRING_DATASOURCE_USERNAME:root}
@@ -32,6 +42,8 @@ jwt:
   expiration: ${JWT_EXPIRATION:86400000}
 
 app:
+  feign:
+    logger-level: ${FEIGN_LOGGER_LEVEL:BASIC}
   upload:
     root-dir: ${APP_UPLOAD_ROOT_DIR:uploads}
 

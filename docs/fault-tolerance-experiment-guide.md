@@ -92,6 +92,21 @@ powershell -NoProfile -Command '$errors=$null; [System.Management.Automation.Lan
 
 先不要注入故障，先确认系统正常状态下能通过探测。
 
+注意：云端默认可能开启验证码校验。当前 Kubernetes 配置中 `life-assistant-config` 的 `app-auth-captcha-enabled` 如果为 `"true"`，商家登录接口会要求 `captchaKey` 和 `captchaCode`。此时探测脚本只使用默认账号 `merchant1 / 123456` 会登录失败，常见返回是业务 `code=400`，提示“验证码错误或已过期”。
+
+推荐在实验环境中临时关闭验证码，让实验流程可重复、可自动化：
+
+```bash
+kubectl patch configmap life-assistant-config \
+  --type merge \
+  -p '{"data":{"app-auth-captcha-enabled":"false"}}'
+
+kubectl rollout restart deployment/life-assistant-merchant-service
+kubectl rollout status deployment/life-assistant-merchant-service --timeout=240s
+```
+
+如果不想关闭验证码，也可以先通过前端或接口手工登录，拿到商家 token 后传给探测脚本的 `-MerchantToken` 参数。传入 token 时不要带 `Bearer ` 前缀。
+
 在 Windows PowerShell 执行：
 
 ```powershell
@@ -100,6 +115,17 @@ cd E:\Develop\IDEA\IdeaProject\new
 powershell -ExecutionPolicy Bypass -File load-tests\run-fault-tolerance-check.ps1 `
   -GatewayUrl "http://47.120.37.61:30081" `
   -Phase baseline `
+  -Iterations 5 `
+  -IntervalSeconds 2
+```
+
+如果使用已有 token，则执行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File load-tests\run-fault-tolerance-check.ps1 `
+  -GatewayUrl "http://47.120.37.61:30081" `
+  -Phase baseline `
+  -MerchantToken "你的商家访问令牌" `
   -Iterations 5 `
   -IntervalSeconds 2
 ```
@@ -323,6 +349,17 @@ powershell -ExecutionPolicy Bypass -File scripts\write-fault-tolerance-report.ps
 kubectl scale deployment life-assistant-order-service --replicas=1
 kubectl apply -f k8s/hpa.yaml
 kubectl rollout status deployment/life-assistant-order-service --timeout=240s
+```
+
+- 如果实验前临时关闭了验证码，实验结束后建议恢复：
+
+```bash
+kubectl patch configmap life-assistant-config \
+  --type merge \
+  -p '{"data":{"app-auth-captcha-enabled":"true"}}'
+
+kubectl rollout restart deployment/life-assistant-merchant-service
+kubectl rollout status deployment/life-assistant-merchant-service --timeout=240s
 ```
 
 ## 15. 为未来中间件实验预留的扩展点

@@ -4,6 +4,9 @@ param(
     [string]$Phase = "baseline",
     [string]$MerchantUsername = "merchant1",
     [string]$MerchantPassword = "123456",
+    [string]$MerchantToken,
+    [string]$CaptchaKey,
+    [string]$CaptchaCode,
     [string]$Keyword = "Braised",
     [int]$Iterations = 10,
     [int]$IntervalSeconds = 3,
@@ -172,24 +175,55 @@ $csvPath = Join-Path $OutputDir "probe-results.csv"
 $jsonPath = Join-Path $OutputDir "probe-results.json"
 $mdPath = Join-Path $OutputDir "probe-summary.md"
 
-$loginUrl = Join-Url $GatewayUrl "/api/auth/merchant/login"
-$login = Invoke-ProbeRequest "merchant-login" "POST" $loginUrl @{} @{
-    username = $MerchantUsername
-    password = $MerchantPassword
-}
-if (-not $login.Passed) {
-    throw "Merchant login failed: HTTP $($login.HttpStatus), code=$($login.BusinessCode), error=$($login.Error), body=$($login.Body)"
-}
-
-$loginJson = $login.Body | ConvertFrom-Json
-$token = $loginJson.data.accessToken
+$token = $MerchantToken
 if ([string]::IsNullOrWhiteSpace($token)) {
-    throw "Merchant login response did not contain data.accessToken."
+    $loginUrl = Join-Url $GatewayUrl "/api/auth/merchant/login"
+    $loginBody = @{
+        username = $MerchantUsername
+        password = $MerchantPassword
+    }
+    if (-not [string]::IsNullOrWhiteSpace($CaptchaKey)) {
+        $loginBody.captchaKey = $CaptchaKey
+    }
+    if (-not [string]::IsNullOrWhiteSpace($CaptchaCode)) {
+        $loginBody.captchaCode = $CaptchaCode
+    }
+
+    $login = Invoke-ProbeRequest "merchant-login" "POST" $loginUrl @{} $loginBody
+    if (-not $login.Passed) {
+        throw "Merchant login failed: HTTP $($login.HttpStatus), code=$($login.BusinessCode), error=$($login.Error), body=$($login.Body). If captcha is enabled, pass -CaptchaKey and -CaptchaCode, or pass -MerchantToken to skip login."
+    }
+
+    $loginJson = $login.Body | ConvertFrom-Json
+    $token = $loginJson.data.accessToken
+    if ([string]::IsNullOrWhiteSpace($token)) {
+        throw "Merchant login response did not contain data.accessToken."
+    }
+    $allResults = New-Object System.Collections.Generic.List[object]
+    $allResults.Add($login) | Out-Null
+} else {
+    $allResults = New-Object System.Collections.Generic.List[object]
+    $allResults.Add([pscustomobject]@{
+        Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff zzz"
+        Phase = $Phase
+        Name = "merchant-login"
+        Method = "SKIP"
+        Url = "token-provided"
+        HttpStatus = ""
+        BusinessCode = ""
+        ElapsedMs = 0
+        Degraded = ""
+        Dependency = ""
+        Message = "MerchantToken provided; login skipped"
+        FallbackReason = ""
+        Assertion = "Token is provided by caller"
+        Passed = $true
+        Error = ""
+        Body = ""
+    }) | Out-Null
 }
 
 $headers = @{ Authorization = "Bearer $token" }
-$allResults = New-Object System.Collections.Generic.List[object]
-$allResults.Add($login) | Out-Null
 
 $dashboardUrl = Join-Url $GatewayUrl "/api/merchant/dashboard"
 $profileUrl = Join-Url $GatewayUrl "/api/merchant/profile"

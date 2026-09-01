@@ -1,0 +1,14 @@
+NAME                                                  READY   STATUS    RESTARTS   AGE     IP            NODE                      NOMINATED NODE   READINESS GATES
+life-assistant-api-gateway-776675b754-zmgz7           1/1     Running   0          25m     10.42.0.197   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-engagement-service-5957b687f6-cd7nq    1/1     Running   0          27m     10.42.0.196   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-frontend-6cb65cc47c-99gcr              1/1     Running   0          24m     10.42.0.200   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-fulfillment-service-5f98ffd56f-ktld2   1/1     Running   0          27m     10.42.0.195   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-merchant-service-b9566645f-5dxww       1/1     Running   0          8m27s   10.42.0.208   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-merchant-service-b9566645f-9b7gr       1/1     Running   0          13m     10.42.0.203   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-mysql-596766557b-hl5pf                 1/1     Running   0          28h     10.42.0.8     izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-nacos-5995f55965-l7wq6                 1/1     Running   0          28h     10.42.0.10    izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-order-service-5d8996d9c5-lfjvh         1/1     Running   0          8m6s    10.42.0.209   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-order-service-5d8996d9c5-nc9ll         1/1     Running   0          8m6s    10.42.0.210   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-redis-c4fcbf6c-r8mhj                   1/1     Running   0          28h     10.42.0.9     izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-settlement-service-6868b9dff9-4mcf4    1/1     Running   0          27m     10.42.0.194   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-user-service-967b8fbb6-fwdgg           1/1     Running   0          27m     10.42.0.192   izf8z9823mhcfvpm8llt12z   <none>           <none>

@@ -292,7 +292,35 @@ tar -xzf reports\perf\hpa-observe-YYYYMMDD-HHMMSS.tgz -C .
 
 如果仍乱码，检查 PowerShell 终端编码，并优先查看 JMeter HTML 报告中的数值指标。
 
-### 11.3 采集脚本一直运行无输出
+### 11.3 需要登录的接口报验证码错误
+
+云端默认可能开启验证码校验。当前 Kubernetes 配置中 `life-assistant-config` 的 `app-auth-captcha-enabled` 如果为 `"true"`，登录接口会要求 `captchaKey` 和 `captchaCode`。自动化压测或探测脚本只传用户名密码时，会返回业务 `code=400`，提示“验证码错误或已过期”。
+
+如果 HPA 压测脚本中加入了需要登录的接口，建议在实验环境临时关闭验证码：
+
+```bash
+kubectl patch configmap life-assistant-config \
+  --type merge \
+  -p '{"data":{"app-auth-captcha-enabled":"false"}}'
+
+kubectl rollout restart deployment/life-assistant-merchant-service
+kubectl rollout restart deployment/life-assistant-user-service
+kubectl rollout restart deployment/life-assistant-fulfillment-service
+```
+
+实验结束后恢复：
+
+```bash
+kubectl patch configmap life-assistant-config \
+  --type merge \
+  -p '{"data":{"app-auth-captcha-enabled":"true"}}'
+
+kubectl rollout restart deployment/life-assistant-merchant-service
+kubectl rollout restart deployment/life-assistant-user-service
+kubectl rollout restart deployment/life-assistant-fulfillment-service
+```
+
+### 11.4 采集脚本一直运行无输出
 
 当前版本采集脚本每个采样周期会输出一行摘要。如果长时间无输出，检查：
 
@@ -303,7 +331,7 @@ kubectl top pods
 
 如果脚本正在运行但压测已结束，可以根据是否还要观察缩容决定是否 `Ctrl+C`。如果要记录缩容，建议等压力结束后至少再采集 5 到 8 分钟。
 
-### 11.4 Push 被 GitHub 拒绝大文件
+### 11.5 Push 被 GitHub 拒绝大文件
 
 `samples.jtl` 可能超过 100MB，不应提交。处理方式：
 

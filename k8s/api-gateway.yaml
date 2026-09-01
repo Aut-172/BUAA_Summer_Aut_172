@@ -33,6 +33,26 @@ spec:
                 configMapKeyRef:
                   name: life-assistant-config
                   key: nacos-server-addr
+            - name: NACOS_CONFIG_SERVER_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: life-assistant-config
+                  key: nacos-config-server-addr
+            - name: NACOS_CONFIG_GROUP
+              valueFrom:
+                configMapKeyRef:
+                  name: life-assistant-config
+                  key: nacos-config-group
+            - name: NACOS_CONFIG_NAMESPACE
+              valueFrom:
+                configMapKeyRef:
+                  name: life-assistant-config
+                  key: nacos-config-namespace
+            - name: NACOS_CONFIG_REFRESH_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: life-assistant-config
+                  key: nacos-config-refresh-enabled
             - name: TZ
               value: Asia/Shanghai
           readinessProbe:

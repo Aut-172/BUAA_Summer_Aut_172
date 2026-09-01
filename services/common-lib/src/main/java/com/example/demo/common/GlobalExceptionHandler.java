@@ -1,5 +1,8 @@
 package com.example.demo.common;
 
+import com.example.demo.common.feign.RemoteServiceException;
+import feign.FeignException;
+import feign.RetryableException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -17,6 +20,29 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(RemoteServiceException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public Result<Void> handleRemoteServiceException(RemoteServiceException e) {
+        log.warn("远程服务异常: code={}, httpStatus={}, methodKey={}, url={}, message={}",
+                e.getCode(), e.getHttpStatus(), e.getMethodKey(), e.getRequestUrl(), e.getMessage());
+        return Result.error(e.getCode(), e.getMessage());
+    }
+
+    @ExceptionHandler(RetryableException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public Result<Void> handleFeignRetryableException(RetryableException e) {
+        log.warn("远程服务连接或超时异常: method={}, message={}", e.method(), e.getMessage());
+        return Result.error(503, "依赖服务连接超时或暂不可用，请稍后重试");
+    }
+
+    @ExceptionHandler(FeignException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public Result<Void> handleFeignException(FeignException e) {
+        int code = e.status() == 429 ? 429 : e.status() >= 500 || e.status() <= 0 ? 503 : e.status();
+        log.warn("远程服务调用异常: code={}, status={}, message={}", code, e.status(), e.getMessage());
+        return Result.error(code, code == 429 ? "依赖服务请求过多，请稍后重试" : "依赖服务暂不可用，请稍后重试");
+    }
 
     @ExceptionHandler(BusinessException.class)
     @ResponseStatus(HttpStatus.OK)
