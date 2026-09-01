@@ -3,7 +3,7 @@ set -euo pipefail
 
 NAMESPACE="${NAMESPACE:-default}"
 INTERVAL_SECONDS="${INTERVAL_SECONDS:-15}"
-DURATION_SECONDS="${DURATION_SECONDS:-900}"
+DURATION_SECONDS="${DURATION_SECONDS:-1200}"
 TARGET_DEPLOYMENTS="${TARGET_DEPLOYMENTS:-life-assistant-merchant-service life-assistant-api-gateway}"
 TARGET_HPAS="${TARGET_HPAS:-life-assistant-merchant-service life-assistant-api-gateway}"
 OUTPUT_DIR="${OUTPUT_DIR:-reports/perf/hpa-observe-$(date +%Y%m%d-%H%M%S)}"
@@ -22,10 +22,32 @@ kubectl get hpa -n "$NAMESPACE" -o wide > "$OUTPUT_DIR/hpa-start.txt" 2>&1 || tr
 kubectl get pods -n "$NAMESPACE" -o wide > "$OUTPUT_DIR/pods-start.txt" 2>&1 || true
 kubectl top pods -n "$NAMESPACE" > "$OUTPUT_DIR/pods-top-start.txt" 2>&1 || true
 
+finished=0
+finish() {
+  if [ "$finished" -eq 1 ]; then
+    return
+  fi
+  finished=1
+  kubectl get hpa -n "$NAMESPACE" -o wide > "$OUTPUT_DIR/hpa-end.txt" 2>&1 || true
+  kubectl describe hpa -n "$NAMESPACE" > "$OUTPUT_DIR/hpa-describe-end.txt" 2>&1 || true
+  kubectl get pods -n "$NAMESPACE" -o wide > "$OUTPUT_DIR/pods-end.txt" 2>&1 || true
+  kubectl top pods -n "$NAMESPACE" > "$OUTPUT_DIR/pods-top-end.txt" 2>&1 || true
+  tar -czf "$OUTPUT_DIR.tgz" "$OUTPUT_DIR"
+  echo "HPA observation files: $OUTPUT_DIR"
+  echo "Archive: $OUTPUT_DIR.tgz"
+}
+
+trap 'echo "Interrupted; finalizing current observation archive..."; finish; exit 130' INT TERM
+
+echo "Collecting HPA observation for ${DURATION_SECONDS}s every ${INTERVAL_SECONDS}s."
+echo "Output directory: $OUTPUT_DIR"
+
 end_at=$((SECONDS + DURATION_SECONDS))
+sample=0
 
 while [ "$SECONDS" -le "$end_at" ]; do
   ts="$(date --iso-8601=seconds)"
+  sample=$((sample + 1))
 
   for hpa in $TARGET_HPAS; do
     current="$(kubectl get hpa "$hpa" -n "$NAMESPACE" -o jsonpath='{.status.currentReplicas}' 2>/dev/null || true)"
@@ -48,14 +70,11 @@ while [ "$SECONDS" -le "$end_at" ]; do
 
   kubectl top pods -n "$NAMESPACE" --no-headers 2>/dev/null | awk -v ts="$ts" '/life-assistant/ { print ts "," $1 "," $2 "," $3 }' >> "$POD_CSV" || true
 
+  hpa_summary="$(kubectl get hpa -n "$NAMESPACE" --no-headers 2>/dev/null | awk '{ printf "%s:replicas=%s targets=%s ", $1, $6, $3 }' || true)"
+  elapsed="$SECONDS"
+  echo "[$ts] sample=$sample elapsed=${elapsed}s ${hpa_summary}"
+
   sleep "$INTERVAL_SECONDS"
 done
 
-kubectl get hpa -n "$NAMESPACE" -o wide > "$OUTPUT_DIR/hpa-end.txt" 2>&1 || true
-kubectl describe hpa -n "$NAMESPACE" > "$OUTPUT_DIR/hpa-describe-end.txt" 2>&1 || true
-kubectl get pods -n "$NAMESPACE" -o wide > "$OUTPUT_DIR/pods-end.txt" 2>&1 || true
-kubectl top pods -n "$NAMESPACE" > "$OUTPUT_DIR/pods-top-end.txt" 2>&1 || true
-
-tar -czf "$OUTPUT_DIR.tgz" "$OUTPUT_DIR"
-echo "HPA observation files: $OUTPUT_DIR"
-echo "Archive: $OUTPUT_DIR.tgz"
+finish
