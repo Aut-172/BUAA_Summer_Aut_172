@@ -57,3 +57,10 @@ backend/src/main/resources/application-local.yaml
 !reports/**/*.tgz
 !reports/**/*.gz
 *.jtl
+
+# Fault tolerance experiments keep concise reports and tabular evidence in git.
+# Raw response dumps, service logs, and archives are reproducible and may be noisy.
+reports/fault/**/*.json
+reports/fault/**/*.log
+reports/fault/**/*.tgz
+reports/fault/**/*.gz
