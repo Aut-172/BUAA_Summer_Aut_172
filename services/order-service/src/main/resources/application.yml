@@ -16,8 +16,9 @@ spring:
       client:
         config:
           default:
-            connect-timeout: ${FEIGN_CONNECT_TIMEOUT:3000}
-            read-timeout: ${FEIGN_READ_TIMEOUT:5000}
+            connect-timeout: ${FEIGN_CONNECT_TIMEOUT:1000}
+            read-timeout: ${FEIGN_READ_TIMEOUT:3000}
+            logger-level: ${FEIGN_LOGGER_LEVEL:basic}
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/order_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
     username: ${SPRING_DATASOURCE_USERNAME:root}
@@ -32,6 +33,8 @@ jwt:
   expiration: ${JWT_EXPIRATION:86400000}
 
 app:
+  feign:
+    logger-level: ${FEIGN_LOGGER_LEVEL:BASIC}
   upload:
     root-dir: ${APP_UPLOAD_ROOT_DIR:uploads}
 

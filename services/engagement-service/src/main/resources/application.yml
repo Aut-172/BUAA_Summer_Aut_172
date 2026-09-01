@@ -12,6 +12,13 @@ spring:
     loadbalancer:
       nacos:
         enabled: true
+    openfeign:
+      client:
+        config:
+          default:
+            connect-timeout: ${FEIGN_CONNECT_TIMEOUT:1000}
+            read-timeout: ${FEIGN_READ_TIMEOUT:3000}
+            logger-level: ${FEIGN_LOGGER_LEVEL:basic}
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/engagement_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true}
     username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:root}}
@@ -46,6 +53,8 @@ jwt:
   expiration: ${JWT_EXPIRATION:86400000}
 
 app:
+  feign:
+    logger-level: ${FEIGN_LOGGER_LEVEL:BASIC}
   upload:
     root-dir: ${APP_UPLOAD_ROOT_DIR:uploads}
     review-dir: ${APP_UPLOAD_REVIEW_DIR:${APP_UPLOAD_ROOT_DIR:uploads}/reviews}

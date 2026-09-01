@@ -68,6 +68,7 @@ docker compose up --build
 `db-init` 会把完整初始化脚本转换为非破坏性执行：补齐缺失的 database/table/初始化数据，但不会 drop 已有表。已有旧 MySQL 卷缺少 `engagement_db` 时，单独执行 `docker compose run --rm db-init` 即可修复。
 
 运行时变量见 `.env.example`，至少要关注 `DB_HOST`、`DB_PORT`、`NACOS_SERVER_ADDR`、`REDIS_HOST` 和 `REDIS_PORT`。本地直连默认是 `localhost`，容器里要改成对应服务名或宿主机地址。
+Feign 服务间调用默认使用 `FEIGN_CONNECT_TIMEOUT=1000`、`FEIGN_READ_TIMEOUT=3000` 和 `FEIGN_LOGGER_LEVEL=basic`，详细治理约定见 [docs/feign-basic-governance.md](docs/feign-basic-governance.md)。
 
 启动后访问：
 
