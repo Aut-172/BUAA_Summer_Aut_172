@@ -28,13 +28,13 @@ if (-not $OutputSql) {
 New-Item -ItemType Directory -Force -Path (Split-Path $OutputSql -Parent) | Out-Null
 
 if ($UploadImages) {
-    $uploadArgs = @(
-        "-Bucket", $Bucket,
-        "-Prefix", $Prefix,
-        "-OssUtil", $OssUtil
-    )
+    $uploadArgs = @{
+        Bucket = $Bucket
+        Prefix = $Prefix
+        OssUtil = $OssUtil
+    }
     if ($SkipImageUpload) {
-        $uploadArgs += "-SkipUpload"
+        $uploadArgs.SkipUpload = $true
     }
     & (Join-Path $PSScriptRoot "upload-demo-oss-images.ps1") @uploadArgs
 }
