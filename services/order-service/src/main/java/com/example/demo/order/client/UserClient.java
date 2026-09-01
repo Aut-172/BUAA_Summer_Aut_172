@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface UserClient {
 
     @DeleteMapping("/{userId}/cart")
-    Result<Void> clearCartByMerchantResult(@PathVariable Long userId, @RequestParam Long merchantId);
+    Result<Void> clearCartByMerchantResult(@PathVariable("userId") Long userId, @RequestParam("merchantId") Long merchantId);
 
     @GetMapping("/{userId}/addresses/{addressId}")
-    Result<AddressSnapshot> getAddressResult(@PathVariable Long userId, @PathVariable Long addressId);
+    Result<AddressSnapshot> getAddressResult(@PathVariable("userId") Long userId, @PathVariable("addressId") Long addressId);
 
     default void clearCartByMerchant(Long userId, Long merchantId) {
         Result<Void> result = clearCartByMerchantResult(userId, merchantId);

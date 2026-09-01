@@ -125,7 +125,6 @@ export default function Search() {
                 <div>
                     <p className="eyebrow">Search & Recommend</p>
                     <h1 className="hero-title">搜索店铺、标签和商品</h1>
-                    <p className="hero-copy">输入想吃的菜品或口味，系统会返回仍在营业状态的匹配商家。</p>
                 </div>
                 <form className="toolbar search-toolbar" onSubmit={handleSubmit}>
                     <input
@@ -160,9 +159,7 @@ export default function Search() {
                 <div className="panel-head">
                     <div>
                         <h2 className="section-title">{hasQuery ? '搜索结果' : '推荐商家'}</h2>
-                        <p className="section-subtitle">
-                            {hasQuery ? `共找到 ${results.length} 家匹配商家` : '根据评分、销量和距离权重生成的推荐列表'}
-                        </p>
+                        {hasQuery ? <p className="section-subtitle">共找到 {results.length} 家匹配商家</p> : null}
                     </div>
                 </div>
 

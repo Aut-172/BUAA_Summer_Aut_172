@@ -163,7 +163,6 @@ export default function Profile() {
                             <div className="panel-head">
                                 <div>
                                     <h1 className="section-title">个人资料</h1>
-                                    <p className="section-subtitle">维护个人基础信息和常用收货地址。</p>
                                 </div>
                             </div>
 
@@ -223,7 +222,6 @@ export default function Profile() {
                             <div className="panel-head">
                                 <div>
                                     <h2 className="section-title">收货地址</h2>
-                                    <p className="section-subtitle">支持新增、编辑、删除和默认地址。</p>
                                 </div>
                                 {editingAddressId ? (
                                     <button className="btn ghost small" type="button" onClick={resetAddressForm}>取消编辑</button>
@@ -296,7 +294,6 @@ export default function Profile() {
                         <div className="panel-head">
                             <div>
                                 <h2 className="section-title">我的收藏商家</h2>
-                                <p className="section-subtitle">只展示当前仍为正常营业状态的收藏商家。</p>
                             </div>
                         </div>
 

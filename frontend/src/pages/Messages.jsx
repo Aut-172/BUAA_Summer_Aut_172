@@ -174,7 +174,6 @@ export default function Messages() {
             <div className="panel-head">
                 <div>
                     <h1 className="section-title">消息</h1>
-                    <p className="section-subtitle">订单相关沟通会在这里汇总。</p>
                 </div>
             </div>
 

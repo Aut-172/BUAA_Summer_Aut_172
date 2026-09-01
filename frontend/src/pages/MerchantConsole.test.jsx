@@ -1,5 +1,5 @@
 import React from 'react'
-import { screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderWithRouter } from '../test/render'
@@ -92,6 +92,18 @@ describe('MerchantConsole page', () => {
         expect(mockSession.notify).toHaveBeenCalledWith('商家资料已更新', 'success')
     })
 
+    it('rejects merchant profile text above the allowed limit before submit', async () => {
+        const user = userEvent.setup()
+        renderWithRouter(<MerchantConsole />)
+
+        const nameInput = await screen.findByLabelText('店铺名称')
+        fireEvent.change(nameInput, { target: { value: '很'.repeat(101) } })
+        await user.click(screen.getByRole('button', { name: '保存商家资料' }))
+
+        expect(mockSession.api.merchant.updateProfile).not.toHaveBeenCalled()
+        expect(mockSession.notify).toHaveBeenCalledWith('店铺名称不能超过 100 个字符', 'warning')
+    })
+
     it('creates a product from the product management tab', async () => {
         const user = userEvent.setup()
         renderWithRouter(<MerchantConsole />)
@@ -118,6 +130,66 @@ describe('MerchantConsole page', () => {
             })
         })
         expect(mockSession.notify).toHaveBeenCalledWith('商品已新增', 'success')
+    })
+
+    it('keeps product categories available when merchant orders fail to load', async () => {
+        const user = userEvent.setup()
+        mockSession.api.merchant.getOrders.mockRejectedValueOnce(new Error('订单服务暂不可用'))
+        renderWithRouter(<MerchantConsole />)
+
+        await screen.findByText('今日订单')
+        await user.click(screen.getByRole('button', { name: '商品管理' }))
+
+        expect(screen.getByRole('option', { name: '招牌米粉' })).toBeInTheDocument()
+        expect(mockSession.notify).toHaveBeenCalledWith('订单服务暂不可用', 'danger')
+    })
+
+    it('rejects a product name above the allowed limit before submit', async () => {
+        const user = userEvent.setup()
+        renderWithRouter(<MerchantConsole />)
+
+        await screen.findByText('今日订单')
+        await user.click(screen.getByRole('button', { name: '商品管理' }))
+        fireEvent.change(screen.getByLabelText('商品名'), { target: { value: '粉'.repeat(101) } })
+        await user.selectOptions(screen.getByLabelText('分类'), '1')
+        await user.type(screen.getByLabelText('价格'), '16')
+        await user.type(screen.getByLabelText('库存'), '30')
+        await user.click(screen.getByRole('button', { name: '新增商品' }))
+
+        expect(mockSession.api.merchant.createProduct).not.toHaveBeenCalled()
+        expect(mockSession.notify).toHaveBeenCalledWith('商品名不能超过 100 个字符', 'warning')
+    })
+
+    it('rejects a product price above the allowed limit before submit', async () => {
+        const user = userEvent.setup()
+        renderWithRouter(<MerchantConsole />)
+
+        await screen.findByText('今日订单')
+        await user.click(screen.getByRole('button', { name: '商品管理' }))
+        await user.type(screen.getByLabelText('商品名'), '天价米粉')
+        await user.selectOptions(screen.getByLabelText('分类'), '1')
+        await user.type(screen.getByLabelText('价格'), '100000')
+        await user.type(screen.getByLabelText('库存'), '30')
+        await user.click(screen.getByRole('button', { name: '新增商品' }))
+
+        expect(mockSession.api.merchant.createProduct).not.toHaveBeenCalled()
+        expect(mockSession.notify).toHaveBeenCalledWith('商品价格不能超过 99999.99 元', 'warning')
+    })
+
+    it('rejects a product stock above the allowed limit before submit', async () => {
+        const user = userEvent.setup()
+        renderWithRouter(<MerchantConsole />)
+
+        await screen.findByText('今日订单')
+        await user.click(screen.getByRole('button', { name: '商品管理' }))
+        await user.type(screen.getByLabelText('商品名'), '超量米粉')
+        await user.selectOptions(screen.getByLabelText('分类'), '1')
+        await user.type(screen.getByLabelText('价格'), '16')
+        await user.type(screen.getByLabelText('库存'), '1000000')
+        await user.click(screen.getByRole('button', { name: '新增商品' }))
+
+        expect(mockSession.api.merchant.createProduct).not.toHaveBeenCalled()
+        expect(mockSession.notify).toHaveBeenCalledWith('商品库存不能超过 999999', 'warning')
     })
 
     it('marks a delivering order as completed', async () => {

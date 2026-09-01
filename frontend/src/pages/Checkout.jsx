@@ -101,7 +101,7 @@ export default function Checkout() {
         try {
             const order = await api.orders.checkout({
                 merchantId: currentGroup.merchantId,
-                addressId: selectedSavedAddress ? Number(selectedSavedAddress.id) : null,
+                addressId: selectedSavedAddress ? selectedSavedAddress.id : null,
                 address: finalAddress,
                 couponId: selectedCoupon ? selectedCoupon.id : null,
                 items: currentGroup.items.map((item) => ({

@@ -16,6 +16,20 @@ const EMPTY_PRODUCT = {
     status: 'active'
 }
 
+const MAX_PRODUCT_PRICE = 99999.99
+const MAX_PRODUCT_STOCK = 999999
+const TEXT_LIMITS = {
+    profileName: 100,
+    profilePhone: 20,
+    profileAddress: 255,
+    profileBusinessHours: 100,
+    profileCategory: 50,
+    profileTags: 255,
+    profileDescription: 500,
+    productName: 100,
+    productDescription: 500
+}
+
 function buildMessagePath({ targetId, targetType, orderId, targetName, orderNo }) {
     const params = new URLSearchParams({
         targetId: String(targetId),
@@ -69,7 +83,7 @@ export default function MerchantConsole() {
     async function loadData() {
         setLoading(true)
         try {
-            const [dashboardData, profileData, categoryData, productData, orderData] = await Promise.all([
+            const [dashboardResult, profileResult, categoryResult, productResult, orderResult] = await Promise.allSettled([
                 api.merchant.getDashboard(),
                 api.merchant.getProfile(),
                 api.public.getCategories(),
@@ -77,11 +91,34 @@ export default function MerchantConsole() {
                 api.merchant.getOrders()
             ])
 
+            const dashboardData = dashboardResult.status === 'fulfilled' ? dashboardResult.value : null
+            const profileData = profileResult.status === 'fulfilled' ? profileResult.value : null
+            const categoryData = categoryResult.status === 'fulfilled' ? categoryResult.value : []
+            const productData = productResult.status === 'fulfilled' ? productResult.value : []
+            const orderData = orderResult.status === 'fulfilled' ? orderResult.value : []
+
             setDashboard(dashboardData?.merchant || null)
             setProfile(profileData)
             setCategories(categoryData || [])
             setProducts(productData || [])
             setOrders(orderData || [])
+
+            if (dashboardResult.status === 'rejected') {
+                notify(dashboardResult.reason?.message || '加载商家概览失败', 'danger')
+            }
+            if (profileResult.status === 'rejected') {
+                notify(profileResult.reason?.message || '加载商家资料失败', 'danger')
+            }
+            if (categoryResult.status === 'rejected') {
+                notify(categoryResult.reason?.message || '加载商品分类失败', 'danger')
+            }
+            if (productResult.status === 'rejected') {
+                notify(productResult.reason?.message || '加载商品列表失败', 'danger')
+            }
+            if (orderResult.status === 'rejected') {
+                notify(orderResult.reason?.message || '加载商家订单失败', 'danger')
+            }
+
             if (profileData?.id) {
                 try {
                     const reviewData = await api.reviews.getMerchant(profileData.id)
@@ -115,8 +152,37 @@ export default function MerchantConsole() {
         loadData()
     }, [])
 
+    function getLengthValidationMessage(source, fields) {
+        for (const field of fields) {
+            const value = source[field.key] || ''
+            if (value.length > field.max) {
+                return `${field.label}不能超过 ${field.max} 个字符`
+            }
+        }
+        return null
+    }
+
+    function getProfileValidationMessage() {
+        return getLengthValidationMessage(profileForm, [
+            { key: 'name', label: '店铺名称', max: TEXT_LIMITS.profileName },
+            { key: 'phone', label: '联系电话', max: TEXT_LIMITS.profilePhone },
+            { key: 'address', label: '地址', max: TEXT_LIMITS.profileAddress },
+            { key: 'category', label: '分类', max: TEXT_LIMITS.profileCategory },
+            { key: 'businessHours', label: '营业时间', max: TEXT_LIMITS.profileBusinessHours },
+            { key: 'tags', label: '标签', max: TEXT_LIMITS.profileTags },
+            { key: 'description', label: '商家介绍', max: TEXT_LIMITS.profileDescription }
+        ])
+    }
+
     async function handleSaveProfile(event) {
         event.preventDefault()
+
+        const validationMessage = getProfileValidationMessage()
+        if (validationMessage) {
+            notify(validationMessage, 'warning')
+            return
+        }
+
         setSavingProfile(true)
         try {
             const data = await api.merchant.updateProfile({
@@ -189,6 +255,33 @@ export default function MerchantConsole() {
         setProductForm(EMPTY_PRODUCT)
     }
 
+    function getProductValidationMessage() {
+        const price = Number(productForm.price)
+        const stock = Number(productForm.stock)
+        const lengthMessage = getLengthValidationMessage(productForm, [
+            { key: 'name', label: '商品名', max: TEXT_LIMITS.productName },
+            { key: 'description', label: '描述', max: TEXT_LIMITS.productDescription }
+        ])
+
+        if (lengthMessage) {
+            return lengthMessage
+        }
+
+        if (!Number.isFinite(price) || price < 0) {
+            return '商品价格必须大于等于 0'
+        }
+        if (price > MAX_PRODUCT_PRICE) {
+            return `商品价格不能超过 ${MAX_PRODUCT_PRICE} 元`
+        }
+        if (!Number.isFinite(stock) || stock < 0 || !Number.isInteger(stock)) {
+            return '商品库存必须是大于等于 0 的整数'
+        }
+        if (stock > MAX_PRODUCT_STOCK) {
+            return `商品库存不能超过 ${MAX_PRODUCT_STOCK}`
+        }
+        return null
+    }
+
     async function handleSaveProduct(event) {
         event.preventDefault()
 
@@ -199,6 +292,12 @@ export default function MerchantConsole() {
 
         if (!productForm.categoryId) {
             notify('请选择商品分类，否则商品不会在商家详情页中展示', 'warning')
+            return
+        }
+
+        const validationMessage = getProductValidationMessage()
+        if (validationMessage) {
+            notify(validationMessage, 'warning')
             return
         }
 
@@ -353,26 +452,26 @@ export default function MerchantConsole() {
                                     </div>
                                 </div>
 
-                                <form className="form-grid" onSubmit={handleSaveProfile}>
+                                <form className="form-grid" onSubmit={handleSaveProfile} noValidate>
                                     <label className="form-row">
                                         <span>店铺名称</span>
-                                        <input className="input" value={profileForm.name} onChange={(event) => setProfileForm((current) => ({ ...current, name: event.target.value }))} />
+                                        <input className="input" maxLength={TEXT_LIMITS.profileName} value={profileForm.name} onChange={(event) => setProfileForm((current) => ({ ...current, name: event.target.value }))} />
                                     </label>
                                     <label className="form-row">
                                         <span>联系电话</span>
-                                        <input className="input" value={profileForm.phone} onChange={(event) => setProfileForm((current) => ({ ...current, phone: event.target.value }))} />
+                                        <input className="input" maxLength={TEXT_LIMITS.profilePhone} value={profileForm.phone} onChange={(event) => setProfileForm((current) => ({ ...current, phone: event.target.value }))} />
                                     </label>
                                     <label className="form-row">
                                         <span>地址</span>
-                                        <input className="input" value={profileForm.address} onChange={(event) => setProfileForm((current) => ({ ...current, address: event.target.value }))} />
+                                        <input className="input" maxLength={TEXT_LIMITS.profileAddress} value={profileForm.address} onChange={(event) => setProfileForm((current) => ({ ...current, address: event.target.value }))} />
                                     </label>
                                     <label className="form-row">
                                         <span>营业时间</span>
-                                        <input className="input" value={profileForm.businessHours} onChange={(event) => setProfileForm((current) => ({ ...current, businessHours: event.target.value }))} />
+                                        <input className="input" maxLength={TEXT_LIMITS.profileBusinessHours} value={profileForm.businessHours} onChange={(event) => setProfileForm((current) => ({ ...current, businessHours: event.target.value }))} />
                                     </label>
                                     <label className="form-row">
                                         <span>分类</span>
-                                        <input className="input" value={profileForm.category} onChange={(event) => setProfileForm((current) => ({ ...current, category: event.target.value }))} />
+                                        <input className="input" maxLength={TEXT_LIMITS.profileCategory} value={profileForm.category} onChange={(event) => setProfileForm((current) => ({ ...current, category: event.target.value }))} />
                                     </label>
                                     <label className="form-row">
                                         <span>头像</span>
@@ -393,7 +492,7 @@ export default function MerchantConsole() {
                                     </label>
                                     <label className="form-row">
                                         <span>标签</span>
-                                        <input className="input" value={profileForm.tags} onChange={(event) => setProfileForm((current) => ({ ...current, tags: event.target.value }))} placeholder="使用英文逗号分隔" />
+                                        <input className="input" maxLength={TEXT_LIMITS.profileTags} value={profileForm.tags} onChange={(event) => setProfileForm((current) => ({ ...current, tags: event.target.value }))} placeholder="使用英文逗号分隔" />
                                     </label>
                                     <label className="form-row">
                                         <span>起送价</span>
@@ -409,7 +508,7 @@ export default function MerchantConsole() {
                                     </label>
                                     <label className="form-row">
                                         <span>商家介绍</span>
-                                        <textarea className="textarea" rows="4" value={profileForm.description} onChange={(event) => setProfileForm((current) => ({ ...current, description: event.target.value }))} />
+                                        <textarea className="textarea" rows="4" maxLength={TEXT_LIMITS.profileDescription} value={profileForm.description} onChange={(event) => setProfileForm((current) => ({ ...current, description: event.target.value }))} />
                                     </label>
                                     <button className="btn primary" type="submit" disabled={savingProfile || uploadingProfileImage}>
                                         {savingProfile ? '保存中...' : '保存商家资料'}
@@ -430,10 +529,10 @@ export default function MerchantConsole() {
                                     {productForm.id ? <button className="btn ghost small" type="button" onClick={resetProductForm}>取消编辑</button> : null}
                                 </div>
 
-                                <form className="form-grid" onSubmit={handleSaveProduct}>
+                                <form className="form-grid" onSubmit={handleSaveProduct} noValidate>
                                     <label className="form-row">
                                         <span>商品名</span>
-                                        <input className="input" value={productForm.name} onChange={(event) => setProductForm((current) => ({ ...current, name: event.target.value }))} />
+                                        <input className="input" maxLength={TEXT_LIMITS.productName} value={productForm.name} onChange={(event) => setProductForm((current) => ({ ...current, name: event.target.value }))} />
                                     </label>
                                     <label className="form-row">
                                         <span>分类</span>
@@ -444,11 +543,11 @@ export default function MerchantConsole() {
                                     </label>
                                     <label className="form-row">
                                         <span>价格</span>
-                                        <input className="input" type="number" min="0" step="0.01" value={productForm.price} onChange={(event) => setProductForm((current) => ({ ...current, price: event.target.value }))} />
+                                        <input className="input" type="number" min="0" max={MAX_PRODUCT_PRICE} step="0.01" value={productForm.price} onChange={(event) => setProductForm((current) => ({ ...current, price: event.target.value }))} />
                                     </label>
                                     <label className="form-row">
                                         <span>库存</span>
-                                        <input className="input" type="number" min="0" value={productForm.stock} onChange={(event) => setProductForm((current) => ({ ...current, stock: event.target.value }))} />
+                                        <input className="input" type="number" min="0" max={MAX_PRODUCT_STOCK} step="1" value={productForm.stock} onChange={(event) => setProductForm((current) => ({ ...current, stock: event.target.value }))} />
                                     </label>
                                     <label className="form-row">
                                         <span>商品图片</span>
@@ -481,7 +580,7 @@ export default function MerchantConsole() {
                                     </label>
                                     <label className="form-row">
                                         <span>描述</span>
-                                        <textarea className="textarea" rows="4" value={productForm.description} onChange={(event) => setProductForm((current) => ({ ...current, description: event.target.value }))} />
+                                        <textarea className="textarea" rows="4" maxLength={TEXT_LIMITS.productDescription} value={productForm.description} onChange={(event) => setProductForm((current) => ({ ...current, description: event.target.value }))} />
                                     </label>
                                     <button className="btn primary" type="submit" disabled={savingProduct || uploadingProductImage || featureLocked}>
                                         {savingProduct ? '保存中...' : productForm.id ? '更新商品' : '新增商品'}

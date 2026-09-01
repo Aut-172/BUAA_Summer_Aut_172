@@ -4,6 +4,7 @@ import com.example.demo.common.Result;
 import com.example.demo.common.JwtUtil;
 import com.example.demo.common.contract.merchant.ProductQuoteResponse;
 import com.example.demo.common.contract.merchant.StockChangeResponse;
+import com.example.demo.common.contract.user.AddressSnapshot;
 import com.example.demo.order.client.MerchantCatalogClient;
 import com.example.demo.order.client.MerchantProductClient;
 import com.example.demo.order.client.SettlementCouponClient;
@@ -162,6 +163,66 @@ class OrderServiceApiTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.status").value("已完成"));
+    }
+
+    @Test
+    void checkoutUsesSavedAddressSnapshotFromUserService() throws Exception {
+        String consumerToken = consumerToken();
+
+        ProductQuoteResponse quoteResponse = new ProductQuoteResponse();
+        quoteResponse.setMerchantId(20001L);
+        quoteResponse.setAvailable(true);
+        quoteResponse.setTotalAmount(new BigDecimal("22.00"));
+        ProductQuoteResponse.Item quoteItem = new ProductQuoteResponse.Item();
+        quoteItem.setProductId(30001L);
+        quoteItem.setMerchantId(20001L);
+        quoteItem.setName("Braised Pork Rice");
+        quoteItem.setImage("/oss/life-assistant/demo/products/braised-pork-rice.png");
+        quoteItem.setUnitPrice(new BigDecimal("22.00"));
+        quoteItem.setQuantity(1);
+        quoteItem.setStock(100);
+        quoteItem.setSubtotal(new BigDecimal("22.00"));
+        quoteItem.setActive(true);
+        quoteItem.setStockEnough(true);
+        quoteResponse.getItems().add(quoteItem);
+        when(merchantProductClient.quote(any())).thenReturn(Result.success(quoteResponse));
+
+        StockChangeResponse reserveResponse = new StockChangeResponse();
+        reserveResponse.setSuccess(true);
+        reserveResponse.setStatus("reserved");
+        reserveResponse.setMessage("库存预留成功");
+        when(merchantProductClient.reserve(any())).thenReturn(reserveResponse);
+
+        AddressSnapshot savedAddress = new AddressSnapshot();
+        savedAddress.setId(50001L);
+        savedAddress.setName("Demo User");
+        savedAddress.setPhone("13800138001");
+        savedAddress.setDetail("Saved dorm address");
+        when(userClient.getAddress(10001L, 50001L)).thenReturn(savedAddress);
+
+        CheckoutRequest checkoutRequest = new CheckoutRequest();
+        checkoutRequest.setMerchantId(20001L);
+        checkoutRequest.setAddressId(50001L);
+        CheckoutItem checkoutItem = new CheckoutItem();
+        checkoutItem.setProductId(30001L);
+        checkoutItem.setQuantity(1);
+        checkoutRequest.setItems(List.of(checkoutItem));
+
+        String created = mockMvc.perform(post("/api/checkout")
+                        .header(HttpHeaders.AUTHORIZATION, consumerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(checkoutRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.address").value("Demo User 13800138001 Saved dorm address"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Long orderId = Long.valueOf(objectMapper.readTree(created).path("data").path("id").asText());
+        Orders storedOrder = ordersMapper.selectById(orderId);
+        assertThat(storedOrder.getAddressId()).isEqualTo(50001L);
+        assertThat(storedOrder.getAddressDetail()).isEqualTo("Demo User 13800138001 Saved dorm address");
     }
 
     @Test

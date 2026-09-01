@@ -1,14 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useSession } from '../utils/ApiProvider'
 import { FALLBACK_PRODUCT_IMAGE, FALLBACK_STORE_IMAGE, normalizeImageSrc } from '../utils/demoImages'
 import { formatMoney, normalizeTags } from '../utils/format'
 
-const FLOW_STEPS = [
-    { title: '挑选喜欢的店铺', detail: '按分类和关键词快速找到想吃的商家。' },
-    { title: '下单并完成支付', detail: '把商品加入购物车，确认地址后即可结算。' },
-    { title: '等待配送送达', detail: '下单后可以在订单页查看状态并确认完成。' }
-]
+const MERCHANT_PAGE_SIZE = 12
 
 export default function Home() {
     const { api, role, isAuthenticated } = useSession()
@@ -18,30 +14,67 @@ export default function Home() {
     const [keyword, setKeyword] = useState('')
     const [category, setCategory] = useState('')
     const [loading, setLoading] = useState(true)
+    const [loadingMore, setLoadingMore] = useState(false)
+    const [page, setPage] = useState(1)
+    const [total, setTotal] = useState(0)
+    const loadingRef = useRef(false)
 
-    async function loadMerchants(nextKeyword = keyword, nextCategory = category) {
-        setLoading(true)
+    async function loadMerchants(nextKeyword = keyword, nextCategory = category, nextPage = 1, append = false) {
+        if (loadingRef.current) {
+            return
+        }
+
+        loadingRef.current = true
+        if (append) {
+            setLoadingMore(true)
+        } else {
+            setLoading(true)
+        }
         try {
+            const categoryPromise = append ? Promise.resolve(categories) : api.public.getCategories()
             const [categoryList, merchantPage] = await Promise.all([
-                api.public.getCategories(),
+                categoryPromise,
                 api.public.getMerchants({
-                    page: 1,
-                    size: 12,
+                    page: nextPage,
+                    size: MERCHANT_PAGE_SIZE,
                     keyword: nextKeyword || undefined,
                     category: nextCategory || undefined
                 })
             ])
 
             setCategories(Array.isArray(categoryList) ? categoryList : [])
-            setMerchants(merchantPage?.items || [])
+            setMerchants((current) => append ? [...current, ...(merchantPage?.items || [])] : (merchantPage?.items || []))
+            setPage(Number(merchantPage?.page || nextPage))
+            setTotal(Number(merchantPage?.total || 0))
         } finally {
+            loadingRef.current = false
             setLoading(false)
+            setLoadingMore(false)
         }
     }
 
     useEffect(() => {
         loadMerchants('', '')
     }, [])
+
+    const hasMoreMerchants = total > merchants.length
+
+    useEffect(() => {
+        function handleScroll() {
+            if (!hasMoreMerchants || loading || loadingMore) {
+                return
+            }
+
+            const scrollBottom = window.innerHeight + window.scrollY
+            const triggerLine = document.documentElement.scrollHeight - 200
+            if (scrollBottom >= triggerLine) {
+                loadMerchants(keyword, category, page + 1, true)
+            }
+        }
+
+        window.addEventListener('scroll', handleScroll)
+        return () => window.removeEventListener('scroll', handleScroll)
+    }, [hasMoreMerchants, loading, loadingMore, page, keyword, category])
 
     function handleSearch(event) {
         event.preventDefault()
@@ -81,26 +114,11 @@ export default function Home() {
                 <div className="hero-card hero-primary panel">
                     <p className="eyebrow">Campus Service</p>
                     <h1 className="hero-title">想吃什么，几分钟内就能从附近店铺下单到送达。</h1>
-                    <p className="hero-copy">
-                        从早餐、简餐到夜宵，都可以在这里快速找到合适的商家。
-                        收藏口味、填写地址、完成支付后，就能在订单页查看后续状态。
-                    </p>
                     <div className="hero-actions">
                         <Link className="btn primary" to={isAuthenticated ? landingTarget : '/login'}>
                             {isAuthenticated ? '继续逛逛' : '登录 / 注册'}
                         </Link>
                         <a className="btn secondary" href="#merchant-list">浏览商家</a>
-                    </div>
-                    <div className="hero-points">
-                        {FLOW_STEPS.map((step, index) => (
-                            <div className="hero-point" key={step.title}>
-                                <span>{String(index + 1).padStart(2, '0')}</span>
-                                <div>
-                                    <strong>{step.title}</strong>
-                                    <small>{step.detail}</small>
-                                </div>
-                            </div>
-                        ))}
                     </div>
                 </div>
 
@@ -108,9 +126,6 @@ export default function Home() {
                     <div className="panel spotlight-card">
                         <p className="eyebrow">今日推荐</p>
                         <h2 className="section-title">午饭、晚饭还是夜宵，都能在这里快速找到合适的选择。</h2>
-                        <p className="section-subtitle">
-                            先按分类缩小范围，再打开店铺详情看商品和价格。下单后，订单状态会在订单页持续更新。
-                        </p>
                         <div className="spotlight-tags">
                             <span className="mini-chip">快速下单</span>
                             <span className="mini-chip">多角色协同</span>
@@ -165,53 +180,56 @@ export default function Home() {
                 ) : merchants.length === 0 ? (
                     <div className="panel empty-state">当前筛选条件下还没有找到合适的商家。</div>
                 ) : (
-                    <div className="merchant-grid">
-                        {merchants.map((merchant) => {
-                            const tags = normalizeTags(merchant.tags)
+                    <>
+                        <div className="merchant-grid">
+                            {merchants.map((merchant) => {
+                                const tags = normalizeTags(merchant.tags)
 
-                            return (
-                                <article className="merchant-card merchant-card-pro panel" key={merchant.id}>
-                                    <div className="merchant-header">
-                                        <img
-                                            className="merchant-avatar"
-                                            src={normalizeImageSrc(merchant.avatar, FALLBACK_STORE_IMAGE)}
-                                            alt={merchant.name}
-                                        />
-                                        <div className="merchant-meta">
-                                            <h3>{merchant.name}</h3>
-                                            <p>{merchant.description || '这家店正在准备更多店铺介绍。'}</p>
-                                            <div className="badge-row">
-                                                <span className="badge info">{merchant.category || '分类待更新'}</span>
-                                                <span className="badge success">起送 {formatMoney(merchant.minDeliveryFee)}</span>
-                                                <span className="badge warning">配送 {formatMoney(merchant.deliveryFee)}</span>
+                                return (
+                                    <article className="merchant-card merchant-card-pro panel" key={merchant.id}>
+                                        <div className="merchant-header">
+                                            <img
+                                                className="merchant-avatar"
+                                                src={normalizeImageSrc(merchant.avatar, FALLBACK_STORE_IMAGE)}
+                                                alt={merchant.name}
+                                            />
+                                            <div className="merchant-meta">
+                                                <h3>{merchant.name}</h3>
+                                                <p>{merchant.description || '这家店正在准备更多店铺介绍。'}</p>
+                                                <div className="badge-row">
+                                                    <span className="badge info">{merchant.category || '分类待更新'}</span>
+                                                    <span className="badge success">起送 {formatMoney(merchant.minDeliveryFee)}</span>
+                                                    <span className="badge warning">配送 {formatMoney(merchant.deliveryFee)}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    {tags.length > 0 ? (
-                                        <div className="chip-row">
-                                            {tags.map((tag) => <span className="mini-chip" key={tag}>{tag}</span>)}
-                                        </div>
-                                    ) : null}
-
-                                    <div className="mini-product-grid">
-                                        {(merchant.products || []).slice(0, 4).map((product) => (
-                                            <div className="mini-product" key={product.id}>
-                                                <img src={normalizeImageSrc(product.image, FALLBACK_PRODUCT_IMAGE)} alt={product.name} />
-                                                <strong>{product.name}</strong>
-                                                <span>{formatMoney(product.price)}</span>
+                                        {tags.length > 0 ? (
+                                            <div className="chip-row">
+                                                {tags.map((tag) => <span className="mini-chip" key={tag}>{tag}</span>)}
                                             </div>
-                                        ))}
-                                    </div>
+                                        ) : null}
 
-                                    <div className="card-actions">
-                                        <Link className="btn primary small" to={`/merchants/${merchant.id}`}>进入店铺</Link>
-                                        <span className="helper">月售 {merchant.monthlySales || 0} 单</span>
-                                    </div>
-                                </article>
-                            )
-                        })}
-                    </div>
+                                        <div className="mini-product-grid">
+                                            {(merchant.products || []).slice(0, 4).map((product) => (
+                                                <div className="mini-product" key={product.id}>
+                                                    <img src={normalizeImageSrc(product.image, FALLBACK_PRODUCT_IMAGE)} alt={product.name} />
+                                                    <strong>{product.name}</strong>
+                                                    <span>{formatMoney(product.price)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="card-actions">
+                                            <Link className="btn primary small" to={`/merchants/${merchant.id}`}>进入店铺</Link>
+                                            <span className="helper">月售 {merchant.monthlySales || 0} 单</span>
+                                        </div>
+                                    </article>
+                                )
+                            })}
+                        </div>
+                        {loadingMore ? <div className="panel empty-state">正在加载更多商家...</div> : null}
+                    </>
                 )}
             </section>
         </section>

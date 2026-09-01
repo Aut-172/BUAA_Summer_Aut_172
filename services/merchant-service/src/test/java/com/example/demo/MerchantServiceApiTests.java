@@ -170,6 +170,50 @@ public class MerchantServiceApiTests {
     }
 
     @Test
+    void merchantProductCreateRejectsPriceAboveLimit() throws Exception {
+        String token = jwtUtil.generateToken(20001L, "merchant", "merchant1");
+        String body = """
+                {
+                  "categoryId": 1,
+                  "name": "Too Expensive Rice",
+                  "price": 100000.00,
+                  "stock": 30,
+                  "status": "active"
+                }
+                """;
+
+        mockMvc.perform(post("/api/merchant/products")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("商品价格不能超过 99999.99 元"));
+    }
+
+    @Test
+    void merchantProductCreateRejectsStockAboveLimit() throws Exception {
+        String token = jwtUtil.generateToken(20001L, "merchant", "merchant1");
+        String body = """
+                {
+                  "categoryId": 1,
+                  "name": "Too Many Rice",
+                  "price": 16.00,
+                  "stock": 1000000,
+                  "status": "active"
+                }
+                """;
+
+        mockMvc.perform(post("/api/merchant/products")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("商品库存不能超过 999999"));
+    }
+
+    @Test
     void merchantDashboardUsesFallbackWhenOrderServiceFails() throws Exception {
         doThrow(new RuntimeException("order service unavailable"))
                 .when(orderSummaryClient).getMerchantDashboardResult(20001L);

@@ -1,6 +1,11 @@
 .git
 .gitignore
 .gradle
+.gradle-dist
+.gradle-home*
+!.gradle-home-d
+!.gradle-home-d/**
+.tmp-*
 **/.gradle
 **/build
 **/out

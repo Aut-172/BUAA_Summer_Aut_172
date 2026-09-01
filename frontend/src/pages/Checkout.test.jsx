@@ -45,7 +45,7 @@ const cartItems = [
 
 const addresses = [
     {
-        id: 100,
+        id: '1897269742190125056',
         name: '测试用户',
         phone: '13800000001',
         detail: '宿舍 3 号楼 302 室',
@@ -96,7 +96,7 @@ describe('Checkout page', () => {
         await waitFor(() => {
             expect(mockSession.api.orders.checkout).toHaveBeenCalledWith({
                 merchantId: 10,
-                addressId: 100,
+                addressId: '1897269742190125056',
                 address: '宿舍 3 号楼 302 室',
                 couponId: 500,
                 items: [

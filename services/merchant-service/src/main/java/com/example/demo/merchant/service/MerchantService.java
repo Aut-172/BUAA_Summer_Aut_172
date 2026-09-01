@@ -50,6 +50,17 @@ public class MerchantService {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Pattern PRICE_PATTERN = Pattern.compile("\\(\\+?(\\d+(\\.\\d+)?)元\\)");
+    private static final BigDecimal MAX_PRODUCT_PRICE = new BigDecimal("99999.99");
+    private static final int MAX_PRODUCT_STOCK = 999999;
+    private static final int MAX_PRODUCT_NAME_LENGTH = 100;
+    private static final int MAX_PRODUCT_DESCRIPTION_LENGTH = 500;
+    private static final int MAX_MERCHANT_NAME_LENGTH = 100;
+    private static final int MAX_MERCHANT_PHONE_LENGTH = 20;
+    private static final int MAX_MERCHANT_ADDRESS_LENGTH = 255;
+    private static final int MAX_MERCHANT_BUSINESS_HOURS_LENGTH = 100;
+    private static final int MAX_MERCHANT_CATEGORY_LENGTH = 50;
+    private static final int MAX_MERCHANT_TAGS_LENGTH = 255;
+    private static final int MAX_MERCHANT_DESCRIPTION_LENGTH = 500;
 
     /**
      * 获取商家基本信息（不含商品列表）
@@ -364,6 +375,7 @@ public class MerchantService {
         if (existing == null) {
             throw new BusinessException(404, "商家不存在");
         }
+        validateMerchantProfileForSave(merchant);
         merchant.setId(merchantId);
         // 不允许修改状态、评分等字段
         merchant.setStatus(null);
@@ -378,6 +390,7 @@ public class MerchantService {
      */
     public Product addProduct(Long merchantId, Product product) {
         requireActiveMerchant(merchantId);
+        validateProductForSave(product);
 
         product.setId(null);
         product.setMerchantId(merchantId);
@@ -397,6 +410,7 @@ public class MerchantService {
      */
     public Product updateProduct(Long merchantId, Product product) {
         requireActiveMerchant(merchantId);
+        validateProductForSave(product);
 
         Product existing = productMapper.selectById(product.getId());
         if (existing == null) {
@@ -484,6 +498,7 @@ public class MerchantService {
      */
     public void addProductSpec(Long merchantId, ProductSpec productSpec) {
         requireActiveMerchant(merchantId);
+        validateProductSpecForSave(productSpec);
 
         productSpec.setId(null);
         productSpecMapper.insert(productSpec);
@@ -516,6 +531,58 @@ public class MerchantService {
         Merchant merchant = merchantMapper.selectById(merchantId);
         if (merchant == null || !"active".equals(merchant.getStatus())) {
             throw BusinessException.notFound("商家不存在或已下线");
+        }
+    }
+
+    private void validateProductForSave(Product product) {
+        requireTextLength(product.getName(), "商品名", MAX_PRODUCT_NAME_LENGTH);
+        requireTextLength(product.getDescription(), "商品描述", MAX_PRODUCT_DESCRIPTION_LENGTH);
+        requireAmountInRange(product.getPrice(), "商品价格");
+        requireIntegerInRange(product.getStock(), "商品库存");
+    }
+
+    private void validateProductSpecForSave(ProductSpec productSpec) {
+        requireAmountInRange(productSpec.getPrice(), "商品规格价格");
+        requireIntegerInRange(productSpec.getStock(), "商品规格库存");
+    }
+
+    private void validateMerchantProfileForSave(Merchant merchant) {
+        requireTextLength(merchant.getName(), "店铺名称", MAX_MERCHANT_NAME_LENGTH);
+        requireTextLength(merchant.getPhone(), "联系电话", MAX_MERCHANT_PHONE_LENGTH);
+        requireTextLength(merchant.getAddress(), "地址", MAX_MERCHANT_ADDRESS_LENGTH);
+        requireTextLength(merchant.getCategory(), "分类", MAX_MERCHANT_CATEGORY_LENGTH);
+        requireTextLength(merchant.getBusinessHours(), "营业时间", MAX_MERCHANT_BUSINESS_HOURS_LENGTH);
+        requireTextLength(merchant.getTags(), "标签", MAX_MERCHANT_TAGS_LENGTH);
+        requireTextLength(merchant.getDescription(), "商家介绍", MAX_MERCHANT_DESCRIPTION_LENGTH);
+    }
+
+    private void requireTextLength(String value, String fieldName, int maxLength) {
+        if (value != null && value.length() > maxLength) {
+            throw BusinessException.badRequest(fieldName + "不能超过 " + maxLength + " 个字符");
+        }
+    }
+
+    private void requireAmountInRange(BigDecimal value, String fieldName) {
+        if (value == null) {
+            return;
+        }
+        if (value.compareTo(BigDecimal.ZERO) < 0) {
+            throw BusinessException.badRequest(fieldName + "必须大于等于 0");
+        }
+        if (value.compareTo(MAX_PRODUCT_PRICE) > 0) {
+            throw BusinessException.badRequest(fieldName + "不能超过 " + MAX_PRODUCT_PRICE + " 元");
+        }
+    }
+
+    private void requireIntegerInRange(Integer value, String fieldName) {
+        if (value == null) {
+            return;
+        }
+        if (value < 0) {
+            throw BusinessException.badRequest(fieldName + "必须是大于等于 0 的整数");
+        }
+        if (value > MAX_PRODUCT_STOCK) {
+            throw BusinessException.badRequest(fieldName + "不能超过 " + MAX_PRODUCT_STOCK);
         }
     }
 }

@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -90,5 +90,54 @@ describe('Home page', () => {
         await waitFor(() => {
             expect(screen.getByLabelText('current-location')).toHaveTextContent('/search?keyword=%E7%B1%B3%E7%B2%89&category=%E5%BF%AB%E9%A4%90')
         })
+    })
+
+    it('loads the next merchant page when scrolling near the bottom', async () => {
+        const pageOneMerchants = Array.from({ length: 12 }, (_, index) => ({
+            id: index + 1,
+            name: `商家 ${index + 1}`,
+            description: '测试商家',
+            category: '快餐',
+            tags: '',
+            minDeliveryFee: 15,
+            deliveryFee: 2,
+            monthlySales: 10,
+            products: []
+        }))
+        const pageTwoMerchants = [{
+            id: 13,
+            name: '商家 13',
+            description: '测试商家',
+            category: '饮品',
+            tags: '',
+            minDeliveryFee: 10,
+            deliveryFee: 1,
+            monthlySales: 8,
+            products: []
+        }]
+        mockSession.api.public.getMerchants.mockImplementation(({ page }) => Promise.resolve({
+            items: page === 1 ? pageOneMerchants : pageTwoMerchants,
+            total: 13,
+            page,
+            pageSize: 12
+        }))
+
+        renderHome()
+
+        expect(await screen.findByText('商家 12')).toBeInTheDocument()
+        Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 })
+        Object.defineProperty(window, 'scrollY', { configurable: true, value: 900 })
+        Object.defineProperty(document.documentElement, 'scrollHeight', { configurable: true, value: 1000 })
+        fireEvent.scroll(window)
+
+        await waitFor(() => {
+            expect(mockSession.api.public.getMerchants).toHaveBeenCalledWith({
+                page: 2,
+                size: 12,
+                keyword: undefined,
+                category: undefined
+            })
+        })
+        expect(await screen.findByText('商家 13')).toBeInTheDocument()
     })
 })

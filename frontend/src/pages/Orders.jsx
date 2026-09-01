@@ -126,7 +126,6 @@ export default function Orders() {
             <div className="panel-head">
                 <div>
                     <h1 className="section-title">我的订单</h1>
-                    <p className="section-subtitle">管理订单支付、取消、确认完成和支付记录。</p>
                 </div>
             </div>
 
