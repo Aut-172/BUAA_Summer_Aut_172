@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/merchant_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:root}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:123456}}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+app:
+  fault-tolerance:
+    merchant-dashboard:
+      fallback-message: ${MERCHANT_DASHBOARD_FALLBACK_MESSAGE:订单服务暂不可用，已返回临时看板数据，请稍后刷新。}

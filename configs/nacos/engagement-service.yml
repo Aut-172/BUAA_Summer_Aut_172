@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/engagement_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true&allowPublicKeyRetrieval=true}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:root}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:123456}}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  sql:
+    init:
+      mode: ${SPRING_SQL_INIT_MODE:never}
+      schema-locations: ${SPRING_SQL_INIT_SCHEMA_LOCATIONS:classpath:db/engagement-schema.sql}
+      continue-on-error: ${SPRING_SQL_INIT_CONTINUE_ON_ERROR:true}
+  servlet:
+    multipart:
+      max-file-size: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:20MB}
+      max-request-size: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:120MB}
+
+app:
+  upload:
+    review-dir: ${APP_UPLOAD_REVIEW_DIR:${APP_UPLOAD_ROOT_DIR:uploads}/reviews}
+    max-image-size-bytes: ${APP_UPLOAD_MAX_IMAGE_SIZE_BYTES:20971520}
+  oss:
+    enabled: ${OSS_ENABLED:false}
+    endpoint: ${OSS_ENDPOINT:oss-cn-heyuan.aliyuncs.com}
+    bucket: ${OSS_BUCKET:buaa-summer-life-assistant}
+    access-key-id: ${OSS_ACCESS_KEY_ID:}
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
+    public-base-url: ${OSS_PUBLIC_BASE_URL:/oss}
+    upload-prefix: ${OSS_UPLOAD_PREFIX:life-assistant}
+    cname-enabled: ${OSS_CNAME_ENABLED:false}

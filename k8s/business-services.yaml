@@ -26,6 +26,14 @@ spec:
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-version } }
             - name: NACOS_SERVER_ADDR
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-server-addr } }
+            - name: NACOS_CONFIG_SERVER_ADDR
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-server-addr } }
+            - name: NACOS_CONFIG_GROUP
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-group } }
+            - name: NACOS_CONFIG_NAMESPACE
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-namespace } }
+            - name: NACOS_CONFIG_REFRESH_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-refresh-enabled } }
             - { name: FEIGN_CONNECT_TIMEOUT, value: "1000" }
             - { name: FEIGN_READ_TIMEOUT, value: "3000" }
             - name: SPRING_DATASOURCE_URL
@@ -98,6 +106,14 @@ spec:
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-version } }
             - name: NACOS_SERVER_ADDR
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-server-addr } }
+            - name: NACOS_CONFIG_SERVER_ADDR
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-server-addr } }
+            - name: NACOS_CONFIG_GROUP
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-group } }
+            - name: NACOS_CONFIG_NAMESPACE
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-namespace } }
+            - name: NACOS_CONFIG_REFRESH_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-refresh-enabled } }
             - name: SPRING_DATASOURCE_URL
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: user-datasource-url } }
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
@@ -166,6 +182,14 @@ spec:
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-version } }
             - name: NACOS_SERVER_ADDR
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-server-addr } }
+            - name: NACOS_CONFIG_SERVER_ADDR
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-server-addr } }
+            - name: NACOS_CONFIG_GROUP
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-group } }
+            - name: NACOS_CONFIG_NAMESPACE
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-namespace } }
+            - name: NACOS_CONFIG_REFRESH_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-refresh-enabled } }
             - name: SPRING_DATASOURCE_URL
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: order-datasource-url } }
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
@@ -224,6 +248,14 @@ spec:
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-version } }
             - name: NACOS_SERVER_ADDR
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-server-addr } }
+            - name: NACOS_CONFIG_SERVER_ADDR
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-server-addr } }
+            - name: NACOS_CONFIG_GROUP
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-group } }
+            - name: NACOS_CONFIG_NAMESPACE
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-namespace } }
+            - name: NACOS_CONFIG_REFRESH_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-refresh-enabled } }
             - name: SPRING_DATASOURCE_URL
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: settlement-datasource-url } }
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
@@ -282,6 +314,14 @@ spec:
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-version } }
             - name: NACOS_SERVER_ADDR
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-server-addr } }
+            - name: NACOS_CONFIG_SERVER_ADDR
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-server-addr } }
+            - name: NACOS_CONFIG_GROUP
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-group } }
+            - name: NACOS_CONFIG_NAMESPACE
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-namespace } }
+            - name: NACOS_CONFIG_REFRESH_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-refresh-enabled } }
             - name: SPRING_DATASOURCE_URL
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: fulfillment-datasource-url } }
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
@@ -350,6 +390,14 @@ spec:
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-version } }
             - name: NACOS_SERVER_ADDR
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-server-addr } }
+            - name: NACOS_CONFIG_SERVER_ADDR
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-server-addr } }
+            - name: NACOS_CONFIG_GROUP
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-group } }
+            - name: NACOS_CONFIG_NAMESPACE
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-namespace } }
+            - name: NACOS_CONFIG_REFRESH_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-refresh-enabled } }
             - name: SPRING_DATASOURCE_URL
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: engagement-datasource-url } }
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
