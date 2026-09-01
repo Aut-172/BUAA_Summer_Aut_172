@@ -88,5 +88,7 @@ kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-engagement-serv
 apply_manifest_with_images k8s/api-gateway.yaml
 kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-api-gateway --timeout=240s
 
+kubectl apply -n "$NAMESPACE" -f k8s/hpa.yaml
+
 apply_manifest_with_images k8s/frontend.yaml
 kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-frontend --timeout=180s

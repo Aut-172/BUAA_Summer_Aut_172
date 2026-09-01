@@ -46,6 +46,13 @@ spec:
             - { name: TZ, value: Asia/Shanghai }
           readinessProbe: { httpGet: { path: /api/health, port: 8081 }, initialDelaySeconds: 20, periodSeconds: 5, timeoutSeconds: 3, failureThreshold: 20 }
           livenessProbe: { httpGet: { path: /api/health, port: 8081 }, initialDelaySeconds: 60, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 5 }
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "384Mi"
+            limits:
+              cpu: "500m"
+              memory: "768Mi"
           volumeMounts:
             - { name: uploads, mountPath: /app/uploads }
       volumes:
@@ -107,6 +114,13 @@ spec:
             - { name: TZ, value: Asia/Shanghai }
           readinessProbe: { httpGet: { path: /api/health, port: 8082 }, initialDelaySeconds: 20, periodSeconds: 5, timeoutSeconds: 3, failureThreshold: 20 }
           livenessProbe: { httpGet: { path: /api/health, port: 8082 }, initialDelaySeconds: 60, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 5 }
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "384Mi"
+            limits:
+              cpu: "500m"
+              memory: "768Mi"
           volumeMounts:
             - { name: uploads, mountPath: /app/uploads }
       volumes:
@@ -162,6 +176,13 @@ spec:
             - { name: TZ, value: Asia/Shanghai }
           readinessProbe: { httpGet: { path: /api/health, port: 8083 }, initialDelaySeconds: 20, periodSeconds: 5, timeoutSeconds: 3, failureThreshold: 20 }
           livenessProbe: { httpGet: { path: /api/health, port: 8083 }, initialDelaySeconds: 60, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 5 }
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "384Mi"
+            limits:
+              cpu: "500m"
+              memory: "768Mi"
 ---
 apiVersion: v1
 kind: Service
@@ -213,6 +234,13 @@ spec:
             - { name: TZ, value: Asia/Shanghai }
           readinessProbe: { httpGet: { path: /api/health, port: 8084 }, initialDelaySeconds: 20, periodSeconds: 5, timeoutSeconds: 3, failureThreshold: 20 }
           livenessProbe: { httpGet: { path: /api/health, port: 8084 }, initialDelaySeconds: 60, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 5 }
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "384Mi"
+            limits:
+              cpu: "500m"
+              memory: "768Mi"
 ---
 apiVersion: v1
 kind: Service
@@ -270,6 +298,13 @@ spec:
             - { name: TZ, value: Asia/Shanghai }
           readinessProbe: { httpGet: { path: /api/health, port: 8085 }, initialDelaySeconds: 20, periodSeconds: 5, timeoutSeconds: 3, failureThreshold: 20 }
           livenessProbe: { httpGet: { path: /api/health, port: 8085 }, initialDelaySeconds: 60, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 5 }
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "384Mi"
+            limits:
+              cpu: "500m"
+              memory: "768Mi"
           volumeMounts:
             - { name: uploads, mountPath: /app/uploads }
       volumes:
@@ -349,6 +384,13 @@ spec:
             - { name: TZ, value: Asia/Shanghai }
           readinessProbe: { httpGet: { path: /api/health, port: 8086 }, initialDelaySeconds: 20, periodSeconds: 5, timeoutSeconds: 3, failureThreshold: 20 }
           livenessProbe: { httpGet: { path: /api/health, port: 8086 }, initialDelaySeconds: 60, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 5 }
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "384Mi"
+            limits:
+              cpu: "500m"
+              memory: "768Mi"
           volumeMounts:
             - { name: uploads, mountPath: /app/uploads }
       volumes:
