@@ -90,6 +90,13 @@ function nowText() {
     return '2026-08-26 12:00:00'
 }
 
+function revenueTrend() {
+    return Array.from({ length: 14 }, (_, index) => ({
+        date: `2026-08-${String(index + 13).padStart(2, '0')}`,
+        revenue: index === 13 ? 120 : index * 10
+    }))
+}
+
 function makeOrder(overrides = {}) {
     return {
         id: overrides.id,
@@ -366,7 +373,14 @@ export async function installBusinessScenarioMock(page) {
         if (path === '/dashboard' || path === '/merchant/dashboard') {
             return fulfillJson(route, ok({
                 consumer: { orders: state.orders.length, coupons: state.mineCoupons.length },
-                merchant: { todayOrders: state.orders.length, todayRevenue: 120, pendingOrders: 2 },
+                merchant: {
+                    todayOrders: state.orders.length,
+                    todayRevenue: 120,
+                    pendingOrders: 2,
+                    totalOrders: 23,
+                    totalRevenue: 2580,
+                    dailyRevenueTrend: revenueTrend()
+                },
                 rider: { todayDeliveries: 2, todayEarnings: 8, status: state.riderProfile.status }
             }))
         }

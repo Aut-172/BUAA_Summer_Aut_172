@@ -421,6 +421,75 @@ textarea {
   font-size: 1.45rem;
 }
 
+.chart-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.revenue-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chart-summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chart-summary span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.chart-summary strong {
+  font-size: 1.2rem;
+}
+
+.trend-chart {
+  width: 100%;
+  height: 240px;
+}
+
+.trend-grid-line {
+  stroke: rgba(168, 143, 86, 0.16);
+  stroke-width: 1;
+}
+
+.trend-line {
+  fill: none;
+  stroke: var(--primary-deep);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.trend-point {
+  fill: var(--primary-deep);
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.trend-axis {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.trend-axis span {
+  flex: 1 1 0;
+  text-align: center;
+}
+
+.empty-state.compact {
+  padding: 16px 12px;
+}
+
 .stat-card small {
   color: var(--muted);
 }

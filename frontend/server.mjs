@@ -78,7 +78,7 @@ createServer(async (req, res) => {
       return
     }
 
-    if (pathname === '/api' || pathname.startsWith('/api/') || pathname.startsWith('/uploads/')) {
+    if (pathname === '/api' || pathname.startsWith('/api/') || pathname === '/uploads' || pathname.startsWith('/uploads/')) {
       proxyRequest(req, res, gatewayUrl)
       return
     }

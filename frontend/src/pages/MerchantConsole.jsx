@@ -18,6 +18,7 @@ const EMPTY_PRODUCT = {
 
 const MAX_PRODUCT_PRICE = 99999.99
 const MAX_PRODUCT_STOCK = 999999
+const REVENUE_TREND_DAYS = 14
 const TEXT_LIMITS = {
     profileName: 100,
     profilePhone: 20,
@@ -43,6 +44,73 @@ function buildMessagePath({ targetId, targetType, orderId, targetName, orderNo }
         params.set('orderNo', orderNo)
     }
     return `/messages?${params.toString()}`
+}
+
+function formatTrendDate(dateText) {
+    if (!dateText) {
+        return ''
+    }
+    const parts = String(dateText).split('-')
+    if (parts.length !== 3) {
+        return String(dateText)
+    }
+    return `${parts[1]}-${parts[2]}`
+}
+
+function toSafeNumber(value) {
+    const number = Number(value)
+    return Number.isFinite(number) ? number : 0
+}
+
+function RevenueTrendChart({ series }) {
+    const points = Array.isArray(series) ? series.slice(-REVENUE_TREND_DAYS) : []
+
+    if (points.length === 0) {
+        return <div className="empty-state compact">暂无营收趋势数据。</div>
+    }
+
+    const width = 640
+    const height = 240
+    const padding = { top: 18, right: 16, bottom: 36, left: 48 }
+    const plotWidth = width - padding.left - padding.right
+    const plotHeight = height - padding.top - padding.bottom
+    const values = points.map((point) => toSafeNumber(point?.revenue))
+    const maxValue = Math.max(...values, 1)
+    const stepX = points.length > 1 ? plotWidth / (points.length - 1) : 0
+    const path = points.map((point, index) => {
+        const x = padding.left + index * stepX
+        const y = padding.top + plotHeight - (toSafeNumber(point?.revenue) / maxValue) * plotHeight
+        return `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`
+    }).join(' ')
+
+    const gridRatios = [0, 0.25, 0.5, 0.75, 1]
+    const totalRevenue = values.reduce((sum, value) => sum + value, 0)
+
+    return (
+        <div className="revenue-chart">
+            <div className="chart-summary">
+                <span>近 {points.length} 天累计营收</span>
+                <strong>{formatMoney(totalRevenue)}</strong>
+            </div>
+            <svg className="trend-chart" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="近 14 天每日营收趋势图">
+                {gridRatios.map((ratio, index) => {
+                    const y = padding.top + plotHeight * ratio
+                    return <line key={`grid-${index}`} className="trend-grid-line" x1={padding.left} y1={y} x2={width - padding.right} y2={y} />
+                })}
+                <path className="trend-line" d={path} />
+                {points.map((point, index) => {
+                    const x = padding.left + index * stepX
+                    const y = padding.top + plotHeight - (toSafeNumber(point?.revenue) / maxValue) * plotHeight
+                    return <circle key={point?.date || index} className="trend-point" cx={x} cy={y} r="4.5" />
+                })}
+            </svg>
+            <div className="trend-axis">
+                {points.map((point, index) => (
+                    <span key={point?.date || index}>{formatTrendDate(point?.date)}</span>
+                ))}
+            </div>
+        </div>
+    )
 }
 
 export default function MerchantConsole() {
@@ -404,6 +472,14 @@ export default function MerchantConsole() {
                                         <strong>{formatMoney(dashboard?.todayRevenue || 0)}</strong>
                                     </div>
                                     <div className="metric-card">
+                                        <span>总订单数</span>
+                                        <strong>{dashboard?.totalOrders || 0}</strong>
+                                    </div>
+                                    <div className="metric-card">
+                                        <span>总营收</span>
+                                        <strong>{formatMoney(dashboard?.totalRevenue || 0)}</strong>
+                                    </div>
+                                    <div className="metric-card">
                                         <span>待处理订单</span>
                                         <strong>{dashboard?.pendingOrders || 0}</strong>
                                     </div>
@@ -413,6 +489,16 @@ export default function MerchantConsole() {
                                         <small>均分 {averageReviewRating.toFixed(1)}</small>
                                     </div>
                                 </div>
+                            </section>
+
+                            <section className="panel chart-panel">
+                                <div className="panel-head">
+                                    <div>
+                                        <h2 className="section-title">近 14 天营收走势</h2>
+                                        <p className="section-subtitle">按已支付订单金额统计，每天一条记录。</p>
+                                    </div>
+                                </div>
+                                <RevenueTrendChart series={dashboard?.dailyRevenueTrend || []} />
                             </section>
 
                             <section className="panel">

@@ -48,11 +48,24 @@ const profile = {
 const categories = [{ id: 1, name: '招牌米粉' }]
 const products = [{ id: 101, name: '牛肉米粉', categoryId: 1, price: 18, stock: 20, status: 'active' }]
 const orders = [{ id: 900, orderNo: 'NO20260826001', status: 'delivering', total: 38, riderName: '一号骑手', userId: 1 }]
+const dailyRevenueTrend = Array.from({ length: 14 }, (_, index) => ({
+    date: `2026-08-${String(index + 13).padStart(2, '0')}`,
+    revenue: index === 13 ? 120 : index * 10
+}))
 
 describe('MerchantConsole page', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        mockSession.api.merchant.getDashboard.mockResolvedValue({ merchant: { todayOrders: 3, todayRevenue: 120, pendingOrders: 1 } })
+        mockSession.api.merchant.getDashboard.mockResolvedValue({
+            merchant: {
+                todayOrders: 3,
+                todayRevenue: 120,
+                pendingOrders: 1,
+                totalOrders: 23,
+                totalRevenue: 2580,
+                dailyRevenueTrend
+            }
+        })
         mockSession.api.merchant.getProfile.mockResolvedValue(profile)
         mockSession.api.public.getCategories.mockResolvedValue(categories)
         mockSession.api.merchant.getProducts.mockResolvedValue(products)
@@ -67,9 +80,12 @@ describe('MerchantConsole page', () => {
         renderWithRouter(<MerchantConsole />)
 
         expect(await screen.findByText('今日订单')).toBeInTheDocument()
+        expect(screen.getByText('总订单数')).toBeInTheDocument()
+        expect(screen.getByText('近 14 天营收走势')).toBeInTheDocument()
         expect(screen.getByDisplayValue('桂香米粉')).toBeInTheDocument()
         expect(screen.getByText('很好吃')).toBeInTheDocument()
         expect(screen.getByText('￥120.00')).toBeInTheDocument()
+        expect(screen.getByText('￥2,580.00')).toBeInTheDocument()
     })
 
     it('saves merchant profile changes with numeric delivery fields', async () => {

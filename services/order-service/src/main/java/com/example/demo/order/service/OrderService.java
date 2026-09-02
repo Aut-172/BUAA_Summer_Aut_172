@@ -7,6 +7,7 @@ import com.example.demo.common.BusinessException;
 import com.example.demo.common.contract.merchant.ProductQuoteRequest;
 import com.example.demo.common.contract.merchant.ProductQuoteResponse;
 import com.example.demo.common.contract.merchant.MerchantDashboardStats;
+import com.example.demo.common.contract.merchant.MerchantRevenuePoint;
 import com.example.demo.common.contract.merchant.StockChangeRequest;
 import com.example.demo.common.contract.merchant.StockChangeResponse;
 import com.example.demo.common.contract.order.MarkPaidRequest;
@@ -31,10 +32,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,32 +81,63 @@ public class OrderService {
     public MerchantDashboardStats getMerchantDashboard(Long merchantId) {
         merchantCatalogClient.getMerchant(merchantId);
 
-        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
-        long todayOrders = ordersMapper.selectCount(
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfToday = today.atStartOfDay();
+        LocalDateTime trendStart = today.minusDays(13).atStartOfDay();
+
+        List<Orders> merchantOrders = ordersMapper.selectList(
                 new LambdaQueryWrapper<Orders>()
                         .eq(Orders::getMerchantId, merchantId)
-                        .ge(Orders::getCreateTime, startOfToday)
         );
 
-        BigDecimal todayRevenue = ordersMapper.selectList(
-                        new LambdaQueryWrapper<Orders>()
-                                .eq(Orders::getMerchantId, merchantId)
-                                .ge(Orders::getPaidAt, startOfToday)
-                ).stream()
+        long todayOrders = merchantOrders.stream()
+                .filter(order -> order.getCreateTime() != null && !order.getCreateTime().isBefore(startOfToday))
+                .count();
+
+        BigDecimal todayRevenue = merchantOrders.stream()
+                .filter(order -> order.getPaidAt() != null && !order.getPaidAt().isBefore(startOfToday))
                 .map(Orders::getActualAmount)
                 .filter(amount -> amount != null)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        long pendingOrders = ordersMapper.selectCount(
-                new LambdaQueryWrapper<Orders>()
-                        .eq(Orders::getMerchantId, merchantId)
-                        .in(Orders::getStatus, List.of(STATUS_PENDING_PAYMENT, STATUS_PENDING_ACCEPT))
-        );
+        long pendingOrders = merchantOrders.stream()
+                .filter(order -> List.of(STATUS_PENDING_PAYMENT, STATUS_PENDING_ACCEPT).contains(order.getStatus()))
+                .count();
+
+        long totalOrders = merchantOrders.size();
+        BigDecimal totalRevenue = merchantOrders.stream()
+                .filter(order -> order.getPaidAt() != null)
+                .map(Orders::getActualAmount)
+                .filter(amount -> amount != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        Map<LocalDate, BigDecimal> revenueByDay = new LinkedHashMap<>();
+        for (int i = 13; i >= 0; i--) {
+            revenueByDay.put(today.minusDays(i), BigDecimal.ZERO);
+        }
+        merchantOrders.stream()
+                .filter(order -> order.getPaidAt() != null)
+                .filter(order -> !order.getPaidAt().isBefore(trendStart))
+                .forEach(order -> {
+                    LocalDate paidDate = order.getPaidAt().toLocalDate();
+                    revenueByDay.computeIfPresent(paidDate, (date, current) ->
+                            current.add(order.getActualAmount() == null ? BigDecimal.ZERO : order.getActualAmount()));
+                });
 
         MerchantDashboardStats stats = new MerchantDashboardStats();
         stats.setTodayOrders(Math.toIntExact(todayOrders));
         stats.setTodayRevenue(todayRevenue);
         stats.setPendingOrders(Math.toIntExact(pendingOrders));
+        stats.setTotalOrders(totalOrders);
+        stats.setTotalRevenue(totalRevenue);
+        stats.setDailyRevenueTrend(revenueByDay.entrySet().stream()
+                .map(entry -> {
+                    MerchantRevenuePoint point = new MerchantRevenuePoint();
+                    point.setDate(entry.getKey().toString());
+                    point.setRevenue(entry.getValue());
+                    return point;
+                })
+                .collect(Collectors.toList()));
         return stats;
     }
 

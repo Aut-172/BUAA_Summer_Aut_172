@@ -2,11 +2,13 @@ package com.example.demo.merchant.service;
 
 import com.example.demo.common.contract.ServiceNames;
 import com.example.demo.common.contract.merchant.MerchantDashboardStats;
+import com.example.demo.common.contract.merchant.MerchantRevenuePoint;
 import com.example.demo.merchant.dto.MerchantDashboardVO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 
 @Component
 public class MerchantDashboardFallbackProvider {
@@ -24,6 +26,9 @@ public class MerchantDashboardFallbackProvider {
         stats.setTodayOrders(0);
         stats.setTodayRevenue(BigDecimal.ZERO);
         stats.setPendingOrders(0);
+        stats.setTotalOrders(0L);
+        stats.setTotalRevenue(BigDecimal.ZERO);
+        stats.setDailyRevenueTrend(Collections.<MerchantRevenuePoint>emptyList());
         return MerchantDashboardVO.degraded(stats, ServiceNames.ORDER_SERVICE, fallbackMessage, normalizeReason(reason));
     }
 

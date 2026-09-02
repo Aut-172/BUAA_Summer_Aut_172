@@ -28,6 +28,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -82,6 +83,73 @@ public class OrderServiceInternalApiTests {
         merchant.setMinDeliveryFee(new BigDecimal("20.00"));
         merchant.setDeliveryFee(new BigDecimal("5.00"));
         lenient().when(merchantCatalogClient.getMerchant(20001L)).thenReturn(merchant);
+    }
+
+    @Test
+    void getMerchantDashboardReturnsTotalsAndDailyRevenueTrend() throws Exception {
+        LocalDateTime now = LocalDateTime.now().withNano(0);
+        MerchantCatalogClient.MerchantSnapshot merchant = new MerchantCatalogClient.MerchantSnapshot();
+        merchant.setId(30001L);
+        merchant.setName("Trend Kitchen");
+        merchant.setAvatar("/oss/life-assistant/demo/merchants/campus-kitchen.png");
+        merchant.setStatus("active");
+        merchant.setMinDeliveryFee(new BigDecimal("20.00"));
+        merchant.setDeliveryFee(new BigDecimal("5.00"));
+        lenient().when(merchantCatalogClient.getMerchant(30001L)).thenReturn(merchant);
+
+        Orders paidToday = new Orders();
+        paidToday.setOrderNo("ORDTEST-DASH-001");
+        paidToday.setUserId(10001L);
+        paidToday.setMerchantId(30001L);
+        paidToday.setType("delivery");
+        paidToday.setTotalAmount(new BigDecimal("30.00"));
+        paidToday.setActualAmount(new BigDecimal("30.00"));
+        paidToday.setDeliveryFee(new BigDecimal("5.00"));
+        paidToday.setDiscount(BigDecimal.ZERO);
+        paidToday.setStatus("completed");
+        paidToday.setPaidAt(now);
+        paidToday.setCreateTime(now);
+        ordersMapper.insert(paidToday);
+
+        Orders paidYesterday = new Orders();
+        paidYesterday.setOrderNo("ORDTEST-DASH-002");
+        paidYesterday.setUserId(10001L);
+        paidYesterday.setMerchantId(30001L);
+        paidYesterday.setType("delivery");
+        paidYesterday.setTotalAmount(new BigDecimal("20.00"));
+        paidYesterday.setActualAmount(new BigDecimal("20.00"));
+        paidYesterday.setDeliveryFee(new BigDecimal("5.00"));
+        paidYesterday.setDiscount(BigDecimal.ZERO);
+        paidYesterday.setStatus("completed");
+        paidYesterday.setPaidAt(now.minusDays(1));
+        paidYesterday.setCreateTime(now.minusDays(1));
+        ordersMapper.insert(paidYesterday);
+
+        Orders pending = new Orders();
+        pending.setOrderNo("ORDTEST-DASH-003");
+        pending.setUserId(10001L);
+        pending.setMerchantId(30001L);
+        pending.setType("delivery");
+        pending.setTotalAmount(new BigDecimal("18.00"));
+        pending.setActualAmount(new BigDecimal("18.00"));
+        pending.setDeliveryFee(new BigDecimal("5.00"));
+        pending.setDiscount(BigDecimal.ZERO);
+        pending.setStatus("pending_payment");
+        pending.setCreateTime(now);
+        ordersMapper.insert(pending);
+
+        mockMvc.perform(get("/internal/orders/merchant-dashboard")
+                        .param("merchantId", "30001"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.todayOrders").value(2))
+                .andExpect(jsonPath("$.data.todayRevenue").value(30.00))
+                .andExpect(jsonPath("$.data.totalOrders").value(3))
+                .andExpect(jsonPath("$.data.totalRevenue").value(50.00))
+                .andExpect(jsonPath("$.data.pendingOrders").value(1))
+                .andExpect(jsonPath("$.data.dailyRevenueTrend.length()").value(14))
+                .andExpect(jsonPath("$.data.dailyRevenueTrend[13].date").value(now.toLocalDate().toString()))
+                .andExpect(jsonPath("$.data.dailyRevenueTrend[13].revenue").value(30.00));
     }
 
     @Test

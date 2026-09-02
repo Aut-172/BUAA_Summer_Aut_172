@@ -134,6 +134,8 @@ public class MerchantServiceApiTests {
         stats.setTodayOrders(3);
         stats.setTodayRevenue(new java.math.BigDecimal("120.00"));
         stats.setPendingOrders(1);
+        stats.setTotalOrders(23L);
+        stats.setTotalRevenue(new java.math.BigDecimal("2580.00"));
         when(orderSummaryClient.getMerchantDashboardResult(20001L)).thenReturn(Result.success(stats));
 
         String token = jwtUtil.generateToken(20001L, "merchant", "merchant1");
@@ -145,6 +147,8 @@ public class MerchantServiceApiTests {
                 .andExpect(jsonPath("$.data.merchant.todayOrders").value(3))
                 .andExpect(jsonPath("$.data.merchant.todayRevenue").value(120.00))
                 .andExpect(jsonPath("$.data.merchant.pendingOrders").value(1))
+                .andExpect(jsonPath("$.data.merchant.totalOrders").value(23))
+                .andExpect(jsonPath("$.data.merchant.totalRevenue").value(2580.00))
                 .andExpect(jsonPath("$.data.degraded").value(false));
 
         mockMvc.perform(get("/api/merchant/profile")
