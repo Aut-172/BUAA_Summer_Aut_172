@@ -49,7 +49,10 @@ function normalizeStatusCode(status) {
 
 export function formatMoney(value) {
     const amount = Number(value || 0)
-    return `￥${amount.toFixed(2)}`
+    return `￥${amount.toLocaleString('zh-CN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })}`
 }
 
 export function formatDateTime(value) {
