@@ -165,6 +165,8 @@ export default function MerchantDetail() {
                         className="merchant-avatar large"
                         src={normalizeImageSrc(merchant.avatar, FALLBACK_STORE_IMAGE)}
                         alt={merchant.name}
+                        loading="lazy"
+                        decoding="async"
                     />
                     <div className="merchant-meta">
                         <h1>{merchant.name}</h1>

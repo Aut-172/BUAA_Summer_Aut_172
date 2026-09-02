@@ -562,7 +562,7 @@ export default function MerchantConsole() {
                                     <label className="form-row">
                                         <span>头像</span>
                                         {profileForm.avatar ? (
-                                            <img className="profile-avatar" src={normalizeImageSrc(profileForm.avatar, FALLBACK_STORE_IMAGE)} alt="商家头像预览" />
+                                            <img className="profile-avatar" src={normalizeImageSrc(profileForm.avatar, FALLBACK_STORE_IMAGE)} alt="商家头像预览" loading="lazy" decoding="async" />
                                         ) : null}
                                         <input
                                             className="input"

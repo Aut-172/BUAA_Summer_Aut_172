@@ -100,6 +100,8 @@ export default function Cart() {
                                                 className="cart-thumb"
                                                 src={normalizeImageSrc(item.image, FALLBACK_PRODUCT_IMAGE)}
                                                 alt={item.name}
+                                                loading="lazy"
+                                                decoding="async"
                                             />
                                             <div className="stack tight grow">
                                                 <div className="card-line">

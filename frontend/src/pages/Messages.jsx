@@ -200,7 +200,7 @@ export default function Messages() {
                                     onClick={() => openThread(thread)}
                                 >
                                     <span className="thread-avatar">
-                                        {thread.targetAvatar ? <img src={normalizeImageSrc(thread.targetAvatar, FALLBACK_PROFILE_IMAGE)} alt="" /> : (thread.targetName || '?').slice(0, 1)}
+                                        {thread.targetAvatar ? <img src={normalizeImageSrc(thread.targetAvatar, FALLBACK_PROFILE_IMAGE)} alt="" loading="lazy" decoding="async" /> : (thread.targetName || '?').slice(0, 1)}
                                     </span>
                                     <span className="thread-main">
                                         <span className="thread-title-row">

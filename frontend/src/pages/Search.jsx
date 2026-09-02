@@ -15,6 +15,8 @@ function MerchantResultCard({ merchant }) {
                     className="merchant-avatar"
                     src={normalizeImageSrc(merchant.avatar, FALLBACK_STORE_IMAGE)}
                     alt={merchant.name}
+                    loading="lazy"
+                    decoding="async"
                 />
                 <div className="merchant-meta">
                     <h3>{merchant.name}</h3>
@@ -38,7 +40,7 @@ function MerchantResultCard({ merchant }) {
                 <div className="mini-product-grid">
                     {products.slice(0, 4).map((product) => (
                         <div className="mini-product" key={product.id}>
-                            <img src={normalizeImageSrc(product.image, FALLBACK_PRODUCT_IMAGE)} alt={product.name} />
+                            <img src={normalizeImageSrc(product.image, FALLBACK_PRODUCT_IMAGE)} alt={product.name} loading="lazy" decoding="async" />
                             <strong>{product.name}</strong>
                             <span>{formatMoney(product.price)}</span>
                         </div>
