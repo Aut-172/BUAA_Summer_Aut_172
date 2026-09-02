@@ -21,6 +21,28 @@ spring:
     loadbalancer:
       nacos:
         enabled: true
+    sentinel:
+      enabled: ${SENTINEL_ENABLED:true}
+      eager: ${SENTINEL_EAGER:true}
+      transport:
+        dashboard: ${SENTINEL_DASHBOARD:}
+      datasource:
+        flow-rules:
+          nacos:
+            server-addr: ${NACOS_CONFIG_SERVER_ADDR:${NACOS_SERVER_ADDR:127.0.0.1:8848}}
+            namespace: ${NACOS_CONFIG_NAMESPACE:}
+            group-id: ${SENTINEL_RULE_GROUP:${NACOS_CONFIG_GROUP:DEFAULT_GROUP}}
+            data-id: sentinel-${spring.application.name}-flow.json
+            data-type: json
+            rule-type: flow
+        degrade-rules:
+          nacos:
+            server-addr: ${NACOS_CONFIG_SERVER_ADDR:${NACOS_SERVER_ADDR:127.0.0.1:8848}}
+            namespace: ${NACOS_CONFIG_NAMESPACE:}
+            group-id: ${SENTINEL_RULE_GROUP:${NACOS_CONFIG_GROUP:DEFAULT_GROUP}}
+            data-id: sentinel-${spring.application.name}-degrade.json
+            data-type: json
+            rule-type: degrade
     openfeign:
       client:
         config:
@@ -64,6 +86,10 @@ mybatis-plus:
 jwt:
   secret: ${JWT_SECRET:LifeAssistant2025SecretKeyForJWTTokenGenerationMustBe256BitsLong}
   expiration: ${JWT_EXPIRATION:86400000}
+
+feign:
+  sentinel:
+    enabled: ${FEIGN_SENTINEL_ENABLED:true}
 
 app:
   feign:

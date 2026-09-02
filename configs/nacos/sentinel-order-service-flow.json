@@ -1,0 +1,7 @@
+[
+  { "resource": "/api/orders", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/orders/{id}", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/checkout", "limitApp": "default", "grade": 1, "count": 20, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/merchant/orders", "limitApp": "default", "grade": 1, "count": 30, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/orders/merchant-dashboard", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false }
+]

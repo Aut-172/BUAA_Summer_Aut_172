@@ -39,6 +39,11 @@ public class MerchantDashboardService {
             }
             throw new BusinessException(result.getCode(), result.getMessage());
         } catch (BusinessException ex) {
+            if (ex.getCode() >= 500 || ex.getCode() == 503) {
+                log.warn("Order summary dependency returned business error {} for merchant {}: {}",
+                        ex.getCode(), merchantId, ex.getMessage());
+                return fallbackProvider.orderSummaryUnavailable("remote code " + ex.getCode());
+            }
             throw ex;
         } catch (RuntimeException ex) {
             log.warn("Order summary dependency failed for merchant {}", merchantId, ex);

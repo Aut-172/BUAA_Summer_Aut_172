@@ -1,0 +1,7 @@
+[
+  { "resource": "gateway-search-api", "resourceMode": 1, "grade": 1, "count": 50, "intervalSec": 1, "controlBehavior": 0, "burst": 10, "maxQueueingTimeoutMs": 0 },
+  { "resource": "gateway-recommend-api", "resourceMode": 1, "grade": 1, "count": 50, "intervalSec": 1, "controlBehavior": 0, "burst": 10, "maxQueueingTimeoutMs": 0 },
+  { "resource": "gateway-order-api", "resourceMode": 1, "grade": 1, "count": 30, "intervalSec": 1, "controlBehavior": 0, "burst": 5, "maxQueueingTimeoutMs": 0 },
+  { "resource": "gateway-payment-api", "resourceMode": 1, "grade": 1, "count": 20, "intervalSec": 1, "controlBehavior": 0, "burst": 3, "maxQueueingTimeoutMs": 0 },
+  { "resource": "gateway-merchant-dashboard-api", "resourceMode": 1, "grade": 1, "count": 30, "intervalSec": 1, "controlBehavior": 0, "burst": 5, "maxQueueingTimeoutMs": 0 }
+]

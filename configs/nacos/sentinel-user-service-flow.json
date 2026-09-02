@@ -1,0 +1,6 @@
+[
+  { "resource": "/api/auth/login", "limitApp": "default", "grade": 1, "count": 10, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/auth/register", "limitApp": "default", "grade": 1, "count": 10, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/captcha", "limitApp": "default", "grade": 1, "count": 20, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/user/cart", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false }
+]

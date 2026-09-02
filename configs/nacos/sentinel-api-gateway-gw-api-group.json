@@ -1,0 +1,34 @@
+[
+  {
+    "apiName": "gateway-search-api",
+    "predicateItems": [
+      { "pattern": "/api/search", "matchStrategy": 0 }
+    ]
+  },
+  {
+    "apiName": "gateway-recommend-api",
+    "predicateItems": [
+      { "pattern": "/api/recommend", "matchStrategy": 0 }
+    ]
+  },
+  {
+    "apiName": "gateway-order-api",
+    "predicateItems": [
+      { "pattern": "/api/orders/**", "matchStrategy": 1 },
+      { "pattern": "/api/checkout", "matchStrategy": 0 }
+    ]
+  },
+  {
+    "apiName": "gateway-payment-api",
+    "predicateItems": [
+      { "pattern": "/api/orders/*/pay", "matchStrategy": 1 },
+      { "pattern": "/api/payments/**", "matchStrategy": 1 }
+    ]
+  },
+  {
+    "apiName": "gateway-merchant-dashboard-api",
+    "predicateItems": [
+      { "pattern": "/api/merchant/dashboard", "matchStrategy": 0 }
+    ]
+  }
+]

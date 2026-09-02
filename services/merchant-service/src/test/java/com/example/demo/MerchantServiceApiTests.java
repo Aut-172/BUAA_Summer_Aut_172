@@ -2,6 +2,7 @@ package com.example.demo;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.demo.common.BusinessException;
 import com.example.demo.common.JwtUtil;
 import com.example.demo.common.Result;
 import com.example.demo.common.contract.merchant.MerchantDashboardStats;
@@ -234,6 +235,22 @@ public class MerchantServiceApiTests {
                 .andExpect(jsonPath("$.data.merchant.todayOrders").value(0))
                 .andExpect(jsonPath("$.data.merchant.todayRevenue").value(0))
                 .andExpect(jsonPath("$.data.merchant.pendingOrders").value(0));
+    }
+
+    @Test
+    void merchantDashboardUsesFallbackWhenOrderServiceCircuitBreaks() throws Exception {
+        doThrow(new BusinessException(503, "依赖服务暂不可用，请稍后重试"))
+                .when(orderSummaryClient).getMerchantDashboardResult(20001L);
+
+        String token = jwtUtil.generateToken(20001L, "merchant", "merchant1");
+
+        mockMvc.perform(get("/api/merchant/dashboard")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.degraded").value(true))
+                .andExpect(jsonPath("$.data.degradedDependency").value("order-service"))
+                .andExpect(jsonPath("$.data.fallbackReason").value("remote code 503"));
     }
 
     @Test

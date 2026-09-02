@@ -1,0 +1,7 @@
+[
+  { "resource": "/api/reviews", "limitApp": "default", "grade": 1, "count": 20, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/reviews/images", "limitApp": "default", "grade": 1, "count": 10, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/uploads/images", "limitApp": "default", "grade": 1, "count": 10, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/messages", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/messages/threads", "limitApp": "default", "grade": 1, "count": 30, "strategy": 0, "controlBehavior": 0, "clusterMode": false }
+]
