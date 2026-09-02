@@ -4,8 +4,8 @@ import { useSession } from '../utils/ApiProvider'
 import { FALLBACK_PROFILE_IMAGE, normalizeImageSrc } from '../utils/demoImages'
 import { formatDateTime } from '../utils/format'
 
-const POLL_MESSAGES_MS = 5000
-const POLL_THREADS_MS = 10000
+const POLL_MESSAGES_MS = 3000
+const POLL_THREADS_MS = 5000
 
 const roleTypeMap = {
     consumer: 'user',
@@ -104,8 +104,22 @@ export default function Messages() {
 
     useEffect(() => {
         loadThreads()
-        const timer = window.setInterval(() => loadThreads({ silent: true }), POLL_THREADS_MS)
-        return () => window.clearInterval(timer)
+        const refreshThreads = () => {
+            loadThreads({ silent: true })
+        }
+        const timer = window.setInterval(refreshThreads, POLL_THREADS_MS)
+        const handleVisibilityRefresh = () => {
+            if (document.visibilityState === 'visible') {
+                refreshThreads()
+            }
+        }
+        window.addEventListener('focus', handleVisibilityRefresh)
+        document.addEventListener('visibilitychange', handleVisibilityRefresh)
+        return () => {
+            window.clearInterval(timer)
+            window.removeEventListener('focus', handleVisibilityRefresh)
+            document.removeEventListener('visibilitychange', handleVisibilityRefresh)
+        }
     }, [])
 
     useEffect(() => {
@@ -113,8 +127,22 @@ export default function Messages() {
         if (!selection) {
             return undefined
         }
-        const timer = window.setInterval(() => loadMessages({ silent: true }), POLL_MESSAGES_MS)
-        return () => window.clearInterval(timer)
+        const refreshMessages = () => {
+            loadMessages({ silent: true })
+        }
+        const timer = window.setInterval(refreshMessages, POLL_MESSAGES_MS)
+        const handleVisibilityRefresh = () => {
+            if (document.visibilityState === 'visible') {
+                refreshMessages()
+            }
+        }
+        window.addEventListener('focus', handleVisibilityRefresh)
+        document.addEventListener('visibilitychange', handleVisibilityRefresh)
+        return () => {
+            window.clearInterval(timer)
+            window.removeEventListener('focus', handleVisibilityRefresh)
+            document.removeEventListener('visibilitychange', handleVisibilityRefresh)
+        }
     }, [selection?.targetId, selection?.targetType, selection?.orderId])
 
     useEffect(() => {

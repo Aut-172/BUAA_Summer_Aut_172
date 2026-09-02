@@ -79,6 +79,23 @@ describe('Search page', () => {
         })
     })
 
+    it('searches with a clicked merchant or product suggestion', async () => {
+        const user = userEvent.setup()
+        renderWithRouter(<Search />, { route: '/search' })
+
+        await screen.findByText('青柠茶餐厅')
+        await user.type(screen.getByPlaceholderText('商家名、标签或商品名'), '冰')
+        await user.click(screen.getByRole('button', { name: /商品青柠冰茶/ }))
+
+        await waitFor(() => {
+            expect(mockSession.api.public.search).toHaveBeenLastCalledWith({
+                keyword: '青柠冰茶',
+                category: undefined,
+                sort: 'rating'
+            })
+        })
+    })
+
     it('shows an empty state when no open merchant matches the query', async () => {
         mockSession.api.public.search.mockResolvedValue([])
         renderWithRouter(<Search />, { route: '/search?keyword=不存在' })

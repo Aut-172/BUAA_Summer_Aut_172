@@ -513,6 +513,66 @@ textarea {
   min-width: 240px;
 }
 
+.search-suggest {
+  position: relative;
+  flex: 2;
+  min-width: 240px;
+}
+
+.search-suggest .input {
+  width: 100%;
+  min-width: 0;
+}
+
+.suggestion-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  background: var(--panel);
+  border: 1px solid rgba(241, 223, 157, 0.95);
+  border-radius: 14px;
+  box-shadow: 0 14px 34px rgba(111, 84, 10, 0.16);
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  color: var(--text);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.suggestion-item:hover,
+.suggestion-item:focus-visible {
+  background: rgba(var(--primary-rgb), 0.18);
+  outline: none;
+}
+
+.suggestion-item span {
+  flex: 0 0 auto;
+  min-width: 36px;
+  color: var(--primary-deep);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.suggestion-item strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .search-toolbar .select {
   min-width: 150px;
 }

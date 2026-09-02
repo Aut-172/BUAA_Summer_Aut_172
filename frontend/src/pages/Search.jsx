@@ -4,6 +4,35 @@ import { useSession } from '../utils/ApiProvider'
 import { FALLBACK_PRODUCT_IMAGE, FALLBACK_STORE_IMAGE, normalizeImageSrc } from '../utils/demoImages'
 import { formatMoney, normalizeTags } from '../utils/format'
 
+function buildSuggestions(keyword, merchants) {
+    const query = keyword.trim().toLowerCase()
+    if (!query) {
+        return []
+    }
+
+    const seen = new Set()
+    const suggestions = []
+
+    function addSuggestion(type, value) {
+        const label = String(value || '').trim()
+        const key = `${type}:${label.toLowerCase()}`
+
+        if (!label || seen.has(key) || !label.toLowerCase().includes(query)) {
+            return
+        }
+
+        seen.add(key)
+        suggestions.push({ type, label })
+    }
+
+    merchants.forEach((merchant) => {
+        addSuggestion('商家', merchant.name)
+        ;(merchant.products || []).forEach((product) => addSuggestion('商品', product.name))
+    })
+
+    return suggestions.slice(0, 5)
+}
+
 function MerchantResultCard({ merchant }) {
     const tags = normalizeTags(merchant.tags)
     const products = merchant.products || []
@@ -105,9 +134,14 @@ export default function Search() {
 
     function handleSubmit(event) {
         event.preventDefault()
+        submitKeyword(keyword)
+    }
+
+    function submitKeyword(nextKeyword) {
         const next = {}
-        if (keyword.trim()) {
-            next.keyword = keyword.trim()
+        const trimmedKeyword = nextKeyword.trim()
+        if (trimmedKeyword) {
+            next.keyword = trimmedKeyword
         }
         if (category) {
             next.category = category
@@ -120,6 +154,16 @@ export default function Search() {
 
     const primaryList = hasQuery ? results : recommendations
     const secondaryList = hasQuery ? recommendations : results
+    const suggestionSource = useMemo(() => {
+        const merchantMap = new Map()
+        ;[...results, ...recommendations].forEach((merchant) => {
+            if (merchant?.id && !merchantMap.has(merchant.id)) {
+                merchantMap.set(merchant.id, merchant)
+            }
+        })
+        return Array.from(merchantMap.values())
+    }, [results, recommendations])
+    const suggestions = useMemo(() => buildSuggestions(keyword, suggestionSource), [keyword, suggestionSource])
 
     return (
         <section className="page search-page">
@@ -129,12 +173,33 @@ export default function Search() {
                     <h1 className="hero-title">搜索店铺、标签和商品</h1>
                 </div>
                 <form className="toolbar search-toolbar" onSubmit={handleSubmit}>
-                    <input
-                        className="input"
-                        value={keyword}
-                        onChange={(event) => setKeyword(event.target.value)}
-                        placeholder="商家名、标签或商品名"
-                    />
+                    <div className="search-suggest">
+                        <input
+                            className="input"
+                            value={keyword}
+                            onChange={(event) => setKeyword(event.target.value)}
+                            placeholder="商家名、标签或商品名"
+                        />
+                        {suggestions.length > 0 ? (
+                            <div className="suggestion-list">
+                                {suggestions.map((suggestion) => (
+                                    <button
+                                        className="suggestion-item"
+                                        key={`${suggestion.type}-${suggestion.label}`}
+                                        type="button"
+                                        onMouseDown={(event) => event.preventDefault()}
+                                        onClick={() => {
+                                            setKeyword(suggestion.label)
+                                            submitKeyword(suggestion.label)
+                                        }}
+                                    >
+                                        <span>{suggestion.type}</span>
+                                        <strong>{suggestion.label}</strong>
+                                    </button>
+                                ))}
+                            </div>
+                        ) : null}
+                    </div>
                     <select
                         className="select"
                         value={category}
