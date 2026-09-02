@@ -9,6 +9,10 @@ data:
   nacos-config-group: DEFAULT_GROUP
   nacos-config-namespace: ""
   nacos-config-refresh-enabled: "true"
+  sentinel-enabled: "true"
+  sentinel-eager: "true"
+  sentinel-dashboard: ""
+  sentinel-rule-group: DEFAULT_GROUP
   user-datasource-url: jdbc:mysql://mysql:3306/user_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true&allowPublicKeyRetrieval=true
   merchant-datasource-url: jdbc:mysql://mysql:3306/merchant_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
   order-datasource-url: jdbc:mysql://mysql:3306/order_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true

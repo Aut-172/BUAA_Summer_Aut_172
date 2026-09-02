@@ -72,6 +72,8 @@ docker compose up --build
 运行时变量见 `.env.example`，至少要关注 `DB_HOST`、`DB_PORT`、`NACOS_SERVER_ADDR`、`REDIS_HOST` 和 `REDIS_PORT`。本地直连默认是 `localhost`，容器里要改成对应服务名或宿主机地址。
 Feign 服务间调用默认使用 `FEIGN_CONNECT_TIMEOUT=1000`、`FEIGN_READ_TIMEOUT=3000` 和 `FEIGN_LOGGER_LEVEL=basic`，详细治理约定见 [docs/feign-basic-governance.md](docs/feign-basic-governance.md)。
 配置中心已接入 Nacos Config，默认从 `life-assistant-common.yml` 和各服务 `${spring.application.name}.yml` 读取配置；样例配置和发布脚本见 [docs/nacos-config-center.md](docs/nacos-config-center.md)。
+Sentinel 已接入入口限流、业务服务限流和 Feign 熔断规则数据源，云端默认不部署 Dashboard，治理说明见 [docs/sentinel-governance.md](docs/sentinel-governance.md)。
+Sentinel 实验设计和探测脚本见 [docs/sentinel-experiment-guide.md](docs/sentinel-experiment-guide.md)，按时间和窗口划分的复现步骤见 [docs/sentinel-experiment-runbook.md](docs/sentinel-experiment-runbook.md)。
 
 启动后访问：
 
@@ -187,7 +189,7 @@ GitHub Actions 定义在 [.github/workflows/ci.yml](.github/workflows/ci.yml)，
 - `frontend-test`：使用 Node 22 和 npm cache，在 `frontend/` 执行 `npm ci`、`npm run test:ci`，上传 `frontend/test-results/`。
 - `frontend-e2e`：依赖前端单测，通过 `npx playwright install --with-deps chromium` 安装浏览器后执行 `npm run e2e:direct`，上传 Playwright report 和 test-results。
 - `frontend-build`：依赖后端矩阵测试、前端单测和 E2E，执行 `npm run build`。
-- `container-build-and-k8s-deploy`：仅在 `push` 到 `main` 时运行，构建并推送 Gateway、六个业务服务和前端镜像到 Docker Hub，加载镜像到 kind 集群，执行 `bash scripts/deploy-kind.sh`，随后通过 Gateway `/actuator/health` 和前端首页做健康检查。
+- `container-build-and-k8s-deploy`：仅在 `push` 到 `main` 时运行，构建并推送 Gateway、六个业务服务和前端镜像到镜像仓库，上传 `configs`、`k8s`、`scripts`、`db` 到 ECS，执行 `bash scripts/deploy-kind.sh`。部署脚本会在 Nacos 就绪后自动发布 Nacos Config 和 Sentinel 规则，随后通过 Gateway `/actuator/health` 和前端首页做健康检查。
 - 诊断归档：部署 job 无论成功失败都会收集 `kubectl get all -o wide`、`kubectl describe pods`、各 Deployment 最近 200 行日志，以及端口转发日志并上传为 `k8s-diagnostics`。
 
 本地脚本 `scripts/test-microservices.ps1`、`scripts/test-b-side-services.ps1` 和 `scripts/deploy-kind.sh` 与 CI 流程互为补充：前者便于 Windows 本地收尾验证，后者是 GitHub Actions 在 Linux runner 上的正式门禁和发布路径。

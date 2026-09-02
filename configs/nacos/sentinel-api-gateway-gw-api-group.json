@@ -1,0 +1,109 @@
+[
+  {
+    "apiName": "gateway-auth-api",
+    "predicateItems": [
+      { "pattern": "/api/auth/**", "matchStrategy": 1 },
+      { "pattern": "/api/auth/login", "matchStrategy": 0 },
+      { "pattern": "/api/auth/register", "matchStrategy": 0 },
+      { "pattern": "/api/auth/admin/login", "matchStrategy": 0 },
+      { "pattern": "/api/auth/merchant/login", "matchStrategy": 0 },
+      { "pattern": "/api/auth/rider/login", "matchStrategy": 0 },
+      { "pattern": "/api/captcha", "matchStrategy": 0 }
+    ]
+  },
+  {
+    "apiName": "gateway-catalog-api",
+    "predicateItems": [
+      { "pattern": "/api/merchants", "matchStrategy": 0 },
+      { "pattern": "/api/merchants/**", "matchStrategy": 1 },
+      { "pattern": "/api/products/**", "matchStrategy": 1 },
+      { "pattern": "/api/categories", "matchStrategy": 0 }
+    ]
+  },
+  {
+    "apiName": "gateway-search-api",
+    "predicateItems": [
+      { "pattern": "/api/search", "matchStrategy": 0 }
+    ]
+  },
+  {
+    "apiName": "gateway-recommend-api",
+    "predicateItems": [
+      { "pattern": "/api/recommend", "matchStrategy": 0 }
+    ]
+  },
+  {
+    "apiName": "gateway-order-api",
+    "predicateItems": [
+      { "pattern": "/api/orders/**", "matchStrategy": 1 },
+      { "pattern": "/api/orders", "matchStrategy": 0 },
+      { "pattern": "/api/checkout", "matchStrategy": 0 }
+    ]
+  },
+  {
+    "apiName": "gateway-payment-api",
+    "predicateItems": [
+      { "pattern": "/api/orders/*/pay", "matchStrategy": 1 },
+      { "pattern": "/api/orders/*/payments", "matchStrategy": 1 },
+      { "pattern": "/api/coupons", "matchStrategy": 0 },
+      { "pattern": "/api/coupons/**", "matchStrategy": 1 },
+      { "pattern": "/api/payments/**", "matchStrategy": 1 }
+    ]
+  },
+  {
+    "apiName": "gateway-user-api",
+    "predicateItems": [
+      { "pattern": "/api/user/profile", "matchStrategy": 0 },
+      { "pattern": "/api/user/addresses", "matchStrategy": 0 },
+      { "pattern": "/api/user/cart", "matchStrategy": 0 },
+      { "pattern": "/api/user/favorites", "matchStrategy": 0 },
+      { "pattern": "/api/user/**", "matchStrategy": 1 }
+    ]
+  },
+  {
+    "apiName": "gateway-merchant-console-api",
+    "predicateItems": [
+      { "pattern": "/api/merchant/profile", "matchStrategy": 0 },
+      { "pattern": "/api/merchant/products", "matchStrategy": 0 },
+      { "pattern": "/api/merchant/**", "matchStrategy": 1 }
+    ]
+  },
+  {
+    "apiName": "gateway-merchant-dashboard-api",
+    "predicateItems": [
+      { "pattern": "/api/merchant/dashboard", "matchStrategy": 0 }
+    ]
+  },
+  {
+    "apiName": "gateway-rider-api",
+    "predicateItems": [
+      { "pattern": "/api/rider/tasks", "matchStrategy": 0 },
+      { "pattern": "/api/rider/profile", "matchStrategy": 0 },
+      { "pattern": "/api/rider/dashboard", "matchStrategy": 0 },
+      { "pattern": "/api/rider/**", "matchStrategy": 1 },
+      { "pattern": "/api/delivery/**", "matchStrategy": 1 }
+    ]
+  },
+  {
+    "apiName": "gateway-engagement-api",
+    "predicateItems": [
+      { "pattern": "/api/reviews", "matchStrategy": 0 },
+      { "pattern": "/api/reviews/**", "matchStrategy": 1 },
+      { "pattern": "/api/messages", "matchStrategy": 0 },
+      { "pattern": "/api/messages/**", "matchStrategy": 1 },
+      { "pattern": "/api/uploads/images", "matchStrategy": 0 },
+      { "pattern": "/api/uploads/**", "matchStrategy": 1 },
+      { "pattern": "/uploads/**", "matchStrategy": 1 }
+    ]
+  },
+  {
+    "apiName": "gateway-admin-api",
+    "predicateItems": [
+      { "pattern": "/api/admin/users", "matchStrategy": 0 },
+      { "pattern": "/api/admin/merchants", "matchStrategy": 0 },
+      { "pattern": "/api/admin/orders", "matchStrategy": 0 },
+      { "pattern": "/api/admin/riders", "matchStrategy": 0 },
+      { "pattern": "/api/admin/**", "matchStrategy": 1 }
+    ]
+  }
+]

@@ -1,6 +1,8 @@
 package com.example.demo.common;
 
+import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.example.demo.common.feign.RemoteServiceException;
+import com.example.demo.common.sentinel.SentinelBlockResponse;
 import feign.FeignException;
 import feign.RetryableException;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,14 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(BlockException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public Result<Void> handleSentinelBlockException(BlockException e) {
+        int code = SentinelBlockResponse.code(e);
+        log.warn("Sentinel 规则触发: code={}, rule={}, message={}", code, e.getRule(), e.getMessage());
+        return Result.error(code, SentinelBlockResponse.message(e));
+    }
 
     @ExceptionHandler(RemoteServiceException.class)
     @ResponseStatus(HttpStatus.OK)

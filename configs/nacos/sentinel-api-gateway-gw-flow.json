@@ -1,0 +1,14 @@
+[
+  { "resource": "gateway-auth-api", "resourceMode": 1, "grade": 1, "count": 20, "intervalSec": 1, "controlBehavior": 0, "burst": 5, "maxQueueingTimeoutMs": 0 },
+  { "resource": "gateway-catalog-api", "resourceMode": 1, "grade": 1, "count": 80, "intervalSec": 1, "controlBehavior": 0, "burst": 20, "maxQueueingTimeoutMs": 0 },
+  { "resource": "gateway-search-api", "resourceMode": 1, "grade": 1, "count": 50, "intervalSec": 1, "controlBehavior": 0, "burst": 10, "maxQueueingTimeoutMs": 0 },
+  { "resource": "gateway-recommend-api", "resourceMode": 1, "grade": 1, "count": 50, "intervalSec": 1, "controlBehavior": 0, "burst": 10, "maxQueueingTimeoutMs": 0 },
+  { "resource": "gateway-order-api", "resourceMode": 1, "grade": 1, "count": 30, "intervalSec": 1, "controlBehavior": 0, "burst": 5, "maxQueueingTimeoutMs": 0 },
+  { "resource": "gateway-payment-api", "resourceMode": 1, "grade": 1, "count": 20, "intervalSec": 1, "controlBehavior": 0, "burst": 3, "maxQueueingTimeoutMs": 0 },
+  { "resource": "gateway-user-api", "resourceMode": 1, "grade": 1, "count": 50, "intervalSec": 1, "controlBehavior": 0, "burst": 10, "maxQueueingTimeoutMs": 0 },
+  { "resource": "gateway-merchant-console-api", "resourceMode": 1, "grade": 1, "count": 35, "intervalSec": 1, "controlBehavior": 0, "burst": 8, "maxQueueingTimeoutMs": 0 },
+  { "resource": "gateway-merchant-dashboard-api", "resourceMode": 1, "grade": 1, "count": 30, "intervalSec": 1, "controlBehavior": 0, "burst": 5, "maxQueueingTimeoutMs": 0 },
+  { "resource": "gateway-rider-api", "resourceMode": 1, "grade": 1, "count": 35, "intervalSec": 1, "controlBehavior": 0, "burst": 8, "maxQueueingTimeoutMs": 0 },
+  { "resource": "gateway-engagement-api", "resourceMode": 1, "grade": 1, "count": 40, "intervalSec": 1, "controlBehavior": 0, "burst": 10, "maxQueueingTimeoutMs": 0 },
+  { "resource": "gateway-admin-api", "resourceMode": 1, "grade": 1, "count": 15, "intervalSec": 1, "controlBehavior": 0, "burst": 3, "maxQueueingTimeoutMs": 0 }
+]

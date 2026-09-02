@@ -1,0 +1,22 @@
+[
+  { "resource": "/api/orders", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/orders/{id}", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/checkout", "limitApp": "default", "grade": 1, "count": 20, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/orders/{id}/cancel", "limitApp": "default", "grade": 1, "count": 20, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/orders/{id}/complete", "limitApp": "default", "grade": 1, "count": 20, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/merchant/orders", "limitApp": "default", "grade": 1, "count": 30, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/merchant/orders/{id}", "limitApp": "default", "grade": 1, "count": 30, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/admin/orders", "limitApp": "default", "grade": 1, "count": 20, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/admin/orders/{id}", "limitApp": "default", "grade": 1, "count": 20, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/orders/{orderId}", "limitApp": "default", "grade": 1, "count": 80, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/orders/merchant-dashboard", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/orders/{orderId}/mark-paid", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/orders/{orderId}/participants", "limitApp": "default", "grade": 1, "count": 60, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/orders/{orderId}/reviewed-items", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/fulfillment/tasks/available", "limitApp": "default", "grade": 1, "count": 50, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/fulfillment/tasks/assigned", "limitApp": "default", "grade": 1, "count": 50, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/fulfillment/tasks/completed", "limitApp": "default", "grade": 1, "count": 50, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/fulfillment/orders/{orderId}", "limitApp": "default", "grade": 1, "count": 50, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/fulfillment/orders/{orderId}/assign-rider", "limitApp": "default", "grade": 1, "count": 25, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/fulfillment/orders/{orderId}/delivered", "limitApp": "default", "grade": 1, "count": 25, "strategy": 0, "controlBehavior": 0, "clusterMode": false }
+]

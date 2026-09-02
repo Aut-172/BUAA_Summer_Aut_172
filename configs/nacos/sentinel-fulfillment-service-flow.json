@@ -1,0 +1,14 @@
+[
+  { "resource": "/api/auth/rider/login", "limitApp": "default", "grade": 1, "count": 10, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/auth/rider/register", "limitApp": "default", "grade": 1, "count": 10, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/rider/tasks", "limitApp": "default", "grade": 1, "count": 30, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/rider/tasks/{id}", "limitApp": "default", "grade": 1, "count": 25, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/rider/profile", "limitApp": "default", "grade": 1, "count": 30, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/rider/dashboard", "limitApp": "default", "grade": 1, "count": 30, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/delivery/{id}", "limitApp": "default", "grade": 1, "count": 30, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/admin/riders", "limitApp": "default", "grade": 1, "count": 20, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/admin/riders/{id}", "limitApp": "default", "grade": 1, "count": 15, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/admin/riders/{id}/audit", "limitApp": "default", "grade": 1, "count": 10, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/admin/riders/{id}/unfreeze", "limitApp": "default", "grade": 1, "count": 10, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/riders/{riderId}", "limitApp": "default", "grade": 1, "count": 80, "strategy": 0, "controlBehavior": 0, "clusterMode": false }
+]
