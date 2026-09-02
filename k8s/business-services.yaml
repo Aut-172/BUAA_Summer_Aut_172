@@ -19,6 +19,7 @@ spec:
       labels:
         app: life-assistant-merchant-service
     spec:
+      enableServiceLinks: false
       containers:
         - name: merchant-service
           image: life-assistant-merchant-service:dev
@@ -55,11 +56,11 @@ spec:
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: mysql-root-password } }
-            - name: REDIS_HOST
+            - name: APP_REDIS_HOST
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-host } }
-            - name: REDIS_PORT
+            - name: APP_REDIS_PORT
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-port } }
-            - name: REDIS_DATABASE
+            - name: APP_REDIS_DATABASE
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-database } }
             - name: APP_CACHE_ENABLED
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-enabled } }
@@ -131,6 +132,7 @@ spec:
       labels:
         app: life-assistant-user-service
     spec:
+      enableServiceLinks: false
       containers:
         - name: user-service
           image: life-assistant-user-service:dev
@@ -165,9 +167,9 @@ spec:
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: mysql-root-password } }
-            - name: REDIS_HOST
+            - name: APP_REDIS_HOST
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-host } }
-            - name: REDIS_PORT
+            - name: APP_REDIS_PORT
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-port } }
             - name: JWT_SECRET
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: jwt-secret } }
@@ -221,6 +223,7 @@ spec:
       labels:
         app: life-assistant-order-service
     spec:
+      enableServiceLinks: false
       containers:
         - name: order-service
           image: life-assistant-order-service:dev
@@ -255,6 +258,20 @@ spec:
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: mysql-root-password } }
+            - name: APP_REDIS_HOST
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-host } }
+            - name: APP_REDIS_PORT
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-port } }
+            - name: APP_REDIS_DATABASE
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-database } }
+            - name: APP_CACHE_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-enabled } }
+            - name: APP_CACHE_DEFAULT_TTL
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-default-ttl } }
+            - name: APP_CACHE_TTL_JITTER_RATIO
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-ttl-jitter-ratio } }
+            - name: APP_CACHE_ORDER_MERCHANT_SNAPSHOT_TTL
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-order-merchant-snapshot-ttl } }
             - name: JWT_SECRET
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: jwt-secret } }
             - name: APP_UPLOAD_ROOT_DIR
@@ -301,6 +318,7 @@ spec:
       labels:
         app: life-assistant-settlement-service
     spec:
+      enableServiceLinks: false
       containers:
         - name: settlement-service
           image: life-assistant-settlement-service:dev
@@ -381,6 +399,7 @@ spec:
       labels:
         app: life-assistant-fulfillment-service
     spec:
+      enableServiceLinks: false
       containers:
         - name: fulfillment-service
           image: life-assistant-fulfillment-service:dev
@@ -415,9 +434,9 @@ spec:
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: mysql-root-password } }
-            - name: REDIS_HOST
+            - name: APP_REDIS_HOST
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-host } }
-            - name: REDIS_PORT
+            - name: APP_REDIS_PORT
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-port } }
             - name: JWT_SECRET
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: jwt-secret } }
@@ -471,6 +490,7 @@ spec:
       labels:
         app: life-assistant-engagement-service
     spec:
+      enableServiceLinks: false
       containers:
         - name: engagement-service
           image: life-assistant-engagement-service:dev
@@ -505,11 +525,11 @@ spec:
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: mysql-root-password } }
-            - name: REDIS_HOST
+            - name: APP_REDIS_HOST
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-host } }
-            - name: REDIS_PORT
+            - name: APP_REDIS_PORT
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-port } }
-            - name: REDIS_DATABASE
+            - name: APP_REDIS_DATABASE
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-database } }
             - name: APP_CACHE_ENABLED
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-enabled } }

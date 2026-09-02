@@ -19,6 +19,7 @@ spec:
       labels:
         app: life-assistant-api-gateway
     spec:
+      enableServiceLinks: false
       containers:
         - name: api-gateway
           image: life-assistant-api-gateway:dev

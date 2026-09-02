@@ -19,6 +19,7 @@ spec:
       labels:
         app: life-assistant-frontend
     spec:
+      enableServiceLinks: false
       containers:
         - name: frontend
           image: life-assistant-frontend:dev

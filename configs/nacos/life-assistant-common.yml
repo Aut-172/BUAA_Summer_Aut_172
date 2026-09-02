@@ -17,12 +17,12 @@ spring:
             logger-level: ${FEIGN_LOGGER_LEVEL:basic}
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      database: ${REDIS_DATABASE:0}
-      timeout: ${REDIS_TIMEOUT:3000ms}
-      connect-timeout: ${REDIS_CONNECT_TIMEOUT:3000ms}
+      host: ${APP_REDIS_HOST:localhost}
+      port: ${APP_REDIS_PORT:6379}
+      password: ${APP_REDIS_PASSWORD:}
+      database: ${APP_REDIS_DATABASE:0}
+      timeout: ${APP_REDIS_TIMEOUT:3000ms}
+      connect-timeout: ${APP_REDIS_CONNECT_TIMEOUT:3000ms}
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
@@ -39,6 +39,10 @@ feign:
 app:
   auth:
     captcha-enabled: ${APP_AUTH_CAPTCHA_ENABLED:true}
+  logging:
+    controller-enabled: ${APP_LOGGING_CONTROLLER_ENABLED:true}
+    controller-payload-enabled: ${APP_LOGGING_CONTROLLER_PAYLOAD_ENABLED:false}
+    controller-result-max-length: ${APP_LOGGING_CONTROLLER_RESULT_MAX_LENGTH:2000}
   cache:
     enabled: ${APP_CACHE_ENABLED:true}
     default-ttl: ${APP_CACHE_DEFAULT_TTL:10m}
@@ -53,6 +57,7 @@ app:
       merchant.categories: ${APP_CACHE_MERCHANT_CATEGORIES_TTL:1h}
       merchant.search: ${APP_CACHE_MERCHANT_SEARCH_TTL:5m}
       merchant.recommend: ${APP_CACHE_MERCHANT_RECOMMEND_TTL:5m}
+      order.merchant-snapshot: ${APP_CACHE_ORDER_MERCHANT_SNAPSHOT_TTL:10m}
       image.metadata: ${APP_CACHE_IMAGE_METADATA_TTL:1h}
       image.blob: ${APP_CACHE_IMAGE_BLOB_TTL:10m}
     image:
