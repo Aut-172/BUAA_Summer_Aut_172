@@ -16,6 +16,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,16 +64,13 @@ public class SearchService {
                         .eq(Merchant::getStatus, "active")
                         .eq(!normalizedCategory.isEmpty(), Merchant::getCategory, normalizedCategory)
         );
+        Map<Long, List<Product>> productsByMerchant = loadActiveProductsByMerchant(merchants);
 
         List<SearchResultVO> result = new ArrayList<>();
         Map<Long, Integer> merchantSalesMap = new HashMap<>();
 
         for (Merchant merchant : merchants) {
-            List<Product> products = productMapper.selectList(
-                    new LambdaQueryWrapper<Product>()
-                            .eq(Product::getMerchantId, merchant.getId())
-                            .eq(Product::getStatus, "active")
-            );
+            List<Product> products = productsByMerchant.getOrDefault(merchant.getId(), Collections.emptyList());
 
             boolean hasKeyword = !normalizedKeyword.isEmpty();
             boolean merchantMatched = !hasKeyword || matches(merchant.getName(), normalizedKeyword)
@@ -168,6 +166,21 @@ public class SearchService {
         }
 
         return result;
+    }
+
+    private Map<Long, List<Product>> loadActiveProductsByMerchant(List<Merchant> merchants) {
+        if (merchants == null || merchants.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<Long> merchantIds = merchants.stream()
+                .map(Merchant::getId)
+                .collect(Collectors.toList());
+        return productMapper.selectList(
+                        new LambdaQueryWrapper<Product>()
+                                .in(Product::getMerchantId, merchantIds)
+                                .eq(Product::getStatus, "active"))
+                .stream()
+                .collect(Collectors.groupingBy(Product::getMerchantId));
     }
 
     private String normalize(String value) {

@@ -8,6 +8,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -26,12 +27,25 @@ public class LogAspect {
 
     private static final List<String> SENSITIVE_KEYS = List.of("password", "secret", "token", "authorization");
 
+    @Value("${app.logging.controller-enabled:true}")
+    private boolean controllerLoggingEnabled;
+
+    @Value("${app.logging.controller-payload-enabled:false}")
+    private boolean controllerPayloadEnabled;
+
+    @Value("${app.logging.controller-result-max-length:2000}")
+    private int controllerResultMaxLength;
+
     @Pointcut("execution(public * com.example.demo..controller.*.*(..))")
     public void controllerPointcut() {
     }
 
     @Around("controllerPointcut()")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
+        if (!controllerLoggingEnabled) {
+            return joinPoint.proceed();
+        }
+
         long startTime = System.currentTimeMillis();
 
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
@@ -42,19 +56,26 @@ public class LogAspect {
         String httpMethod = request != null ? request.getMethod() : "-";
         String requestUri = request != null ? request.getRequestURI() : "-";
         String queryString = request != null ? StrUtil.nullToEmpty(request.getQueryString()) : "";
-        String args = maskSensitiveArgs(joinPoint.getArgs());
+        String querySuffix = StrUtil.isNotBlank(queryString) ? " ?" + queryString : "";
 
-        log.info("-> [{} {}] {}.{} | args={}{}",
-                httpMethod, requestUri, className, methodName, args,
-                StrUtil.isNotBlank(queryString) ? " ?" + queryString : "");
+        if (controllerPayloadEnabled) {
+            log.info("-> [{} {}] {}.{} | args={}{}",
+                    httpMethod, requestUri, className, methodName, maskSensitiveArgs(joinPoint.getArgs()), querySuffix);
+        } else {
+            log.info("-> [{} {}] {}.{}{}", httpMethod, requestUri, className, methodName, querySuffix);
+        }
 
         try {
             Object result = joinPoint.proceed();
             long elapsed = System.currentTimeMillis() - startTime;
-            String resultStr = maskSensitiveResult(result);
 
-            log.info("<- [{} {}] {}.{} | cost={}ms | result={}",
-                    httpMethod, requestUri, className, methodName, elapsed, resultStr);
+            if (controllerPayloadEnabled) {
+                log.info("<- [{} {}] {}.{} | cost={}ms | result={}",
+                        httpMethod, requestUri, className, methodName, elapsed, maskSensitiveResult(result));
+            } else {
+                log.info("<- [{} {}] {}.{} | cost={}ms",
+                        httpMethod, requestUri, className, methodName, elapsed);
+            }
             return result;
         } catch (Throwable throwable) {
             long elapsed = System.currentTimeMillis() - startTime;
@@ -89,10 +110,14 @@ public class LogAspect {
         }
 
         try {
-            return StrUtil.maxLength(maskSensitiveJson(JSONUtil.toJsonStr(result)), 2000);
+            return StrUtil.maxLength(maskSensitiveJson(JSONUtil.toJsonStr(result)), maxResultLength());
         } catch (Throwable e) {
-            return StrUtil.maxLength(result.toString(), 2000);
+            return StrUtil.maxLength(result.toString(), maxResultLength());
         }
+    }
+
+    private int maxResultLength() {
+        return controllerResultMaxLength <= 0 ? 2000 : controllerResultMaxLength;
     }
 
     private String maskSensitiveJson(String json) {

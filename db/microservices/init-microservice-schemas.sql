@@ -131,7 +131,8 @@ CREATE TABLE `merchant` (
     UNIQUE KEY `uk_merchant_username` (`username`),
     UNIQUE KEY `uk_merchant_phone` (`phone`),
     KEY `idx_merchant_status` (`status`),
-    KEY `idx_merchant_category` (`category`)
+    KEY `idx_merchant_category` (`category`),
+    KEY `idx_merchant_status_category_sales` (`status`, `category`, `monthly_sales`, `id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `category` (
@@ -162,7 +163,8 @@ CREATE TABLE `product` (
     PRIMARY KEY (`id`),
     KEY `idx_product_merchant` (`merchant_id`),
     KEY `idx_product_category` (`category_id`),
-    KEY `idx_product_status` (`status`)
+    KEY `idx_product_status` (`status`),
+    KEY `idx_product_merchant_status_sales` (`merchant_id`, `status`, `monthly_sales`, `id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `spec_group` (
@@ -204,6 +206,38 @@ CREATE TABLE `merchant_stock_change` (
     KEY `idx_merchant_stock_change_merchant` (`merchant_id`),
     KEY `idx_merchant_stock_change_order` (`order_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+SET @idx_merchant_status_category_sales_exists := (
+    SELECT COUNT(*)
+    FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'merchant'
+      AND INDEX_NAME = 'idx_merchant_status_category_sales'
+);
+SET @sql := IF(
+    @idx_merchant_status_category_sales_exists = 0,
+    'ALTER TABLE `merchant` ADD KEY `idx_merchant_status_category_sales` (`status`, `category`, `monthly_sales`, `id`)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @idx_product_merchant_status_sales_exists := (
+    SELECT COUNT(*)
+    FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'product'
+      AND INDEX_NAME = 'idx_product_merchant_status_sales'
+);
+SET @sql := IF(
+    @idx_product_merchant_status_sales_exists = 0,
+    'ALTER TABLE `product` ADD KEY `idx_product_merchant_status_sales` (`merchant_id`, `status`, `monthly_sales`, `id`)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 INSERT INTO `category` (`id`, `name`, `parent_id`, `sort_order`) VALUES
 (1, 'Food', NULL, 1),
@@ -268,7 +302,10 @@ CREATE TABLE `orders` (
     UNIQUE KEY `uk_orders_order_no` (`order_no`),
     KEY `idx_orders_user` (`user_id`),
     KEY `idx_orders_merchant` (`merchant_id`),
-    KEY `idx_orders_rider` (`rider_id`)
+    KEY `idx_orders_rider` (`rider_id`),
+    KEY `idx_orders_user_created` (`user_id`, `create_time`, `id`),
+    KEY `idx_orders_merchant_created` (`merchant_id`, `create_time`, `id`),
+    KEY `idx_orders_status_rider_paid` (`status`, `rider_id`, `paid_at`, `id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `order_compensation` (
@@ -319,6 +356,54 @@ CREATE TABLE `group_coupon` (
     KEY `idx_group_coupon_order` (`order_id`),
     KEY `idx_group_coupon_code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+SET @idx_orders_user_created_exists := (
+    SELECT COUNT(*)
+    FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'orders'
+      AND INDEX_NAME = 'idx_orders_user_created'
+);
+SET @sql := IF(
+    @idx_orders_user_created_exists = 0,
+    'ALTER TABLE `orders` ADD KEY `idx_orders_user_created` (`user_id`, `create_time`, `id`)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @idx_orders_merchant_created_exists := (
+    SELECT COUNT(*)
+    FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'orders'
+      AND INDEX_NAME = 'idx_orders_merchant_created'
+);
+SET @sql := IF(
+    @idx_orders_merchant_created_exists = 0,
+    'ALTER TABLE `orders` ADD KEY `idx_orders_merchant_created` (`merchant_id`, `create_time`, `id`)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @idx_orders_status_rider_paid_exists := (
+    SELECT COUNT(*)
+    FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'orders'
+      AND INDEX_NAME = 'idx_orders_status_rider_paid'
+);
+SET @sql := IF(
+    @idx_orders_status_rider_paid_exists = 0,
+    'ALTER TABLE `orders` ADD KEY `idx_orders_status_rider_paid` (`status`, `rider_id`, `paid_at`, `id`)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 USE `settlement_db`;
 

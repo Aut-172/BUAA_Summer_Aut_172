@@ -71,10 +71,11 @@ public class RecommendService {
 
         // 按得分降序排列
         scored.sort((a, b) -> Double.compare(b.score, a.score));
+        Map<Long, List<Product>> productsByMerchant = loadActiveProductsByMerchant(merchants);
 
         // 3. 构建结果
         return scored.stream()
-                .map(sm -> buildRecommendVO(sm.merchant, lat, lng))
+                .map(sm -> buildRecommendVO(sm.merchant, productsByMerchant.getOrDefault(sm.merchant.getId(), Collections.emptyList()), lat, lng))
                 .collect(Collectors.toList());
     }
 
@@ -129,16 +130,8 @@ public class RecommendService {
     /**
      * 构建推荐 VO
      */
-    private RecommendVO buildRecommendVO(Merchant merchant, BigDecimal userLat, BigDecimal userLng) {
-        // 查询商品
-        List<Product> products = productMapper.selectList(
-                new LambdaQueryWrapper<Product>()
-                        .eq(Product::getMerchantId, merchant.getId())
-                        .eq(Product::getStatus, "active")
-                        .last("LIMIT 3") // 最多取3个
-        );
-
-        List<RecommendVO.ProductItem> productItems = products.stream().map(p ->
+    private RecommendVO buildRecommendVO(Merchant merchant, List<Product> products, BigDecimal userLat, BigDecimal userLng) {
+        List<RecommendVO.ProductItem> productItems = products.stream().limit(3).map(p ->
                 RecommendVO.ProductItem.builder()
                         .id(p.getId())
                         .name(p.getName())
@@ -197,6 +190,23 @@ public class RecommendService {
                 .tags(tags)
                 .products(productItems)
                 .build();
+    }
+
+    private Map<Long, List<Product>> loadActiveProductsByMerchant(List<Merchant> merchants) {
+        if (merchants == null || merchants.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<Long> merchantIds = merchants.stream()
+                .map(Merchant::getId)
+                .collect(Collectors.toList());
+        return productMapper.selectList(
+                        new LambdaQueryWrapper<Product>()
+                                .in(Product::getMerchantId, merchantIds)
+                                .eq(Product::getStatus, "active")
+                                .orderByDesc(Product::getMonthlySales)
+                                .orderByAsc(Product::getId))
+                .stream()
+                .collect(Collectors.groupingBy(Product::getMerchantId));
     }
 
     /**

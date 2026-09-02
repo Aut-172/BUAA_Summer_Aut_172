@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demo.common.BusinessException;
+import com.example.demo.common.cache.CacheProperties;
+import com.example.demo.common.cache.RedisJsonCacheService;
 import com.example.demo.common.contract.merchant.ProductQuoteRequest;
 import com.example.demo.common.contract.merchant.ProductQuoteResponse;
 import com.example.demo.common.contract.merchant.MerchantDashboardStats;
@@ -26,16 +28,18 @@ import com.example.demo.order.entity.OrderItem;
 import com.example.demo.order.entity.Orders;
 import com.example.demo.order.mapper.OrderItemMapper;
 import com.example.demo.order.mapper.OrdersMapper;
-import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.List;
@@ -54,6 +58,7 @@ public class OrderService {
     public static final String STATUS_COMPLETED = "completed";
     public static final String STATUS_CANCELLED = "cancelled";
     public static final String STATUS_PENDING_USE = "pending_use";
+    private static final Duration MERCHANT_SNAPSHOT_TTL = Duration.ofMinutes(10);
 
     private final OrdersMapper ordersMapper;
     private final OrderItemMapper orderItemMapper;
@@ -63,6 +68,8 @@ public class OrderService {
     private final MerchantCatalogClient merchantCatalogClient;
     private final SettlementCouponClient settlementCouponClient;
     private final UserClient userClient;
+    private final RedisJsonCacheService cacheService;
+    private final CacheProperties cacheProperties;
 
     public List<OrderVO> getUserOrders(Long userId) {
         List<Orders> orders = ordersMapper.selectList(
@@ -70,7 +77,14 @@ public class OrderService {
                         .eq(Orders::getUserId, userId)
                         .orderByDesc(Orders::getCreateTime)
         );
-        return orders.stream().map(this::toOrderVO).collect(Collectors.toList());
+        Map<Long, MerchantCatalogClient.MerchantSnapshot> merchantSnapshots = loadMerchantSnapshots(orders);
+        Map<Long, List<OrderItem>> itemsByOrder = loadItemsByOrder(orders);
+        return orders.stream()
+                .map(order -> toOrderVO(
+                        order,
+                        merchantSnapshots.get(order.getMerchantId()),
+                        itemsByOrder.getOrDefault(order.getId(), Collections.emptyList())))
+                .collect(Collectors.toList());
     }
 
     public OrderVO getOrderDetail(Long userId, Long orderId) {
@@ -223,7 +237,7 @@ public class OrderService {
             }
 
             clearCartBestEffort(userId, request.getMerchantId());
-            return toOrderVO(order);
+            return toOrderVO(order, merchant);
         } catch (RuntimeException ex) {
             releaseReservedInventoryAfterFailure(stockRequest, order == null ? null : order.getId(), ex);
             throw ex;
@@ -282,7 +296,14 @@ public class OrderService {
                         .eq(Orders::getMerchantId, merchantId)
                         .orderByDesc(Orders::getCreateTime)
         );
-        return orders.stream().map(this::toOrderVO).collect(Collectors.toList());
+        Map<Long, MerchantCatalogClient.MerchantSnapshot> merchantSnapshots = loadMerchantSnapshots(orders);
+        Map<Long, List<OrderItem>> itemsByOrder = loadItemsByOrder(orders);
+        return orders.stream()
+                .map(order -> toOrderVO(
+                        order,
+                        merchantSnapshots.get(order.getMerchantId()),
+                        itemsByOrder.getOrDefault(order.getId(), Collections.emptyList())))
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -354,36 +375,33 @@ public class OrderService {
     }
 
     public List<OrderInternalResponse> getAvailableFulfillmentTasks() {
-        return ordersMapper.selectList(
+        List<Orders> orders = ordersMapper.selectList(
                         new LambdaQueryWrapper<Orders>()
                                 .eq(Orders::getStatus, STATUS_PENDING_ACCEPT)
                                 .isNull(Orders::getRiderId)
                                 .orderByAsc(Orders::getPaidAt)
-                ).stream()
-                .map(this::toInternalResponse)
-                .collect(Collectors.toList());
+                );
+        return toInternalResponses(orders);
     }
 
     public List<OrderInternalResponse> getAssignedFulfillmentTasks(Long riderId) {
-        return ordersMapper.selectList(
+        List<Orders> orders = ordersMapper.selectList(
                         new LambdaQueryWrapper<Orders>()
                                 .eq(Orders::getRiderId, riderId)
                                 .eq(Orders::getStatus, STATUS_DELIVERING)
                                 .orderByDesc(Orders::getUpdateTime)
-                ).stream()
-                .map(this::toInternalResponse)
-                .collect(Collectors.toList());
+                );
+        return toInternalResponses(orders);
     }
 
     public List<OrderInternalResponse> getCompletedFulfillmentTasks(Long riderId) {
-        return ordersMapper.selectList(
+        List<Orders> orders = ordersMapper.selectList(
                         new LambdaQueryWrapper<Orders>()
                                 .eq(Orders::getRiderId, riderId)
                                 .eq(Orders::getStatus, STATUS_COMPLETED)
                                 .orderByDesc(Orders::getCompletedAt)
-                ).stream()
-                .map(this::toInternalResponse)
-                .collect(Collectors.toList());
+                );
+        return toInternalResponses(orders);
     }
 
     @Transactional
@@ -740,14 +758,14 @@ public class OrderService {
     }
 
     private OrderVO toOrderVO(Orders order) {
-        MerchantCatalogClient.MerchantSnapshot merchant = null;
-        if (order.getMerchantId() != null) {
-            merchant = merchantCatalogClient.getMerchant(order.getMerchantId());
-        }
-        List<OrderItem> items = orderItemMapper.selectList(
-                new LambdaQueryWrapper<OrderItem>()
-                        .eq(OrderItem::getOrderId, order.getId())
-        );
+        return toOrderVO(order, order.getMerchantId() == null ? null : cachedMerchantSnapshot(order.getMerchantId()));
+    }
+
+    private OrderVO toOrderVO(Orders order, MerchantCatalogClient.MerchantSnapshot merchant) {
+        return toOrderVO(order, merchant, loadItems(order.getId()));
+    }
+
+    private OrderVO toOrderVO(Orders order, MerchantCatalogClient.MerchantSnapshot merchant, List<OrderItem> items) {
         List<OrderVO.OrderItemVO> itemVOs = items.stream()
                 .map(item -> OrderVO.OrderItemVO.builder()
                         .productId(item.getProductId())
@@ -786,6 +804,29 @@ public class OrderService {
                 .build();
     }
 
+    private Map<Long, MerchantCatalogClient.MerchantSnapshot> loadMerchantSnapshots(List<Orders> orders) {
+        if (orders == null || orders.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, MerchantCatalogClient.MerchantSnapshot> snapshots = new HashMap<>();
+        orders.stream()
+                .map(Orders::getMerchantId)
+                .filter(id -> id != null)
+                .distinct()
+                .forEach(id -> snapshots.put(id, cachedMerchantSnapshot(id)));
+        return snapshots;
+    }
+
+    private MerchantCatalogClient.MerchantSnapshot cachedMerchantSnapshot(Long merchantId) {
+        return cacheService.getOrLoad(merchantSnapshotKey(merchantId), MerchantCatalogClient.MerchantSnapshot.class,
+                cacheProperties.ttl("order.merchant-snapshot", MERCHANT_SNAPSHOT_TTL),
+                () -> merchantCatalogClient.getMerchant(merchantId));
+    }
+
+    private String merchantSnapshotKey(Long merchantId) {
+        return "la:order:merchant-snapshot:" + merchantId + ":v1";
+    }
+
     private List<OrderVO.TimelineItem> buildTimeline(Orders order) {
         List<OrderVO.TimelineItem> timeline = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd HH:mm");
@@ -805,10 +846,17 @@ public class OrderService {
     }
 
     private OrderInternalResponse toInternalResponse(Orders order) {
-        List<OrderItem> items = orderItemMapper.selectList(
-                new LambdaQueryWrapper<OrderItem>()
-                        .eq(OrderItem::getOrderId, order.getId())
-        );
+        return toInternalResponse(order, loadItems(order.getId()));
+    }
+
+    private List<OrderInternalResponse> toInternalResponses(List<Orders> orders) {
+        Map<Long, List<OrderItem>> itemsByOrder = loadItemsByOrder(orders);
+        return orders.stream()
+                .map(order -> toInternalResponse(order, itemsByOrder.getOrDefault(order.getId(), Collections.emptyList())))
+                .collect(Collectors.toList());
+    }
+
+    private OrderInternalResponse toInternalResponse(Orders order, List<OrderItem> items) {
         OrderInternalResponse response = new OrderInternalResponse();
         response.setId(order.getId());
         response.setOrderNo(order.getOrderNo());
@@ -840,6 +888,29 @@ public class OrderService {
             response.getItems().add(responseItem);
         }
         return response;
+    }
+
+    private List<OrderItem> loadItems(Long orderId) {
+        return orderItemMapper.selectList(
+                new LambdaQueryWrapper<OrderItem>()
+                        .eq(OrderItem::getOrderId, orderId)
+                        .orderByAsc(OrderItem::getId)
+        );
+    }
+
+    private Map<Long, List<OrderItem>> loadItemsByOrder(List<Orders> orders) {
+        if (orders == null || orders.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> orderIds = orders.stream()
+                .map(Orders::getId)
+                .collect(Collectors.toList());
+        return orderItemMapper.selectList(
+                        new LambdaQueryWrapper<OrderItem>()
+                                .in(OrderItem::getOrderId, orderIds)
+                                .orderByAsc(OrderItem::getId))
+                .stream()
+                .collect(Collectors.groupingBy(OrderItem::getOrderId));
     }
 
     private ResolvedCheckoutAddress resolveCheckoutAddress(Long userId, CheckoutRequest request) {

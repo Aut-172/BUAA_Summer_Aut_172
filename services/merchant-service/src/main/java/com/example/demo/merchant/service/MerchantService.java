@@ -36,6 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -134,9 +135,12 @@ public class MerchantService {
                 .orderByDesc(Merchant::getMonthlySales);
         Page<Merchant> merchantPage = merchantMapper.selectPage(page, wrapper);
 
+        List<Merchant> merchants = merchantPage.getRecords();
+        Map<Long, List<Product>> productsByMerchant = loadActiveProductsByMerchant(merchants);
+
         // 转换为 DTO 并填充商品
         List<MerchantListDTO> dtoList = merchantPage.getRecords().stream()
-                .map(this::convertToMerchantListDTO)
+                .map(merchant -> convertToMerchantListDTO(merchant, productsByMerchant.getOrDefault(merchant.getId(), Collections.emptyList())))
                 .collect(Collectors.toList());
 
         Page<MerchantListDTO> resultPage = new Page<>(merchantPage.getCurrent(), merchantPage.getSize(), merchantPage.getTotal());
@@ -147,19 +151,11 @@ public class MerchantService {
     /**
      * 将 Merchant 转换为 MerchantListDTO（含推荐商品）
      */
-    private MerchantListDTO convertToMerchantListDTO(Merchant merchant) {
+    private MerchantListDTO convertToMerchantListDTO(Merchant merchant, List<Product> products) {
         MerchantListDTO dto = new MerchantListDTO();
         BeanUtil.copyProperties(merchant, dto);
 
-        // 查询该商家的上架商品，取前3个
-        List<Product> products = productMapper.selectList(
-                new LambdaQueryWrapper<Product>()
-                        .eq(Product::getMerchantId, merchant.getId())
-                        .eq(Product::getStatus, "active")
-                        .last("LIMIT 3")
-        );
-
-        List<MerchantListDTO.ProductItem> productItems = products.stream().map(p -> {
+        List<MerchantListDTO.ProductItem> productItems = products.stream().limit(3).map(p -> {
             MerchantListDTO.ProductItem item = new MerchantListDTO.ProductItem();
             item.setId(p.getId());
             item.setName(p.getName());
@@ -171,6 +167,24 @@ public class MerchantService {
 
         dto.setProducts(productItems);
         return dto;
+    }
+
+    private Map<Long, List<Product>> loadActiveProductsByMerchant(List<Merchant> merchants) {
+        if (merchants == null || merchants.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<Long> merchantIds = merchants.stream()
+                .map(Merchant::getId)
+                .collect(Collectors.toList());
+        return productMapper.selectList(
+                        new LambdaQueryWrapper<Product>()
+                                .in(Product::getMerchantId, merchantIds)
+                                .eq(Product::getStatus, "active"))
+                .stream()
+                .sorted(Comparator
+                        .comparing(Product::getMonthlySales, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(Product::getId))
+                .collect(Collectors.groupingBy(Product::getMerchantId));
     }
 
     /**
