@@ -224,9 +224,23 @@ jobs:
       ACR_PULL_REGISTRY: ${{ secrets.ACR_PULL_REGISTRY }}
       ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
       ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+      ECS_SSH_KEY: ${{ secrets.ECS_SSH_KEY }}
+      ECS_SSH_PORT: ${{ secrets.ECS_SSH_PORT }}
+      ECS_HOST: ${{ secrets.ECS_HOST }}
+      ECS_USER: ${{ secrets.ECS_USER }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Check deployment secrets
+        id: deploy-secrets
+        run: |
+          if [ -n "${ECS_SSH_KEY}" ] && [ -n "${ECS_SSH_PORT}" ] && [ -n "${ECS_HOST}" ] && [ -n "${ECS_USER}" ]; then
+            echo "ssh_ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ssh_ready=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping ECS deployment because SSH secrets are not configured."
+          fi
 
       - name: Login to Alibaba Cloud ACR
         uses: docker/login-action@v4
@@ -258,19 +272,22 @@ jobs:
           docker push "${FRONTEND_IMAGE}"
 
       - name: Configure SSH
+        if: steps.deploy-secrets.outputs.ssh_ready == 'true'
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.ECS_SSH_KEY }}" > ~/.ssh/ecs_key
+          printf '%s\n' "${ECS_SSH_KEY}" > ~/.ssh/ecs_key
           chmod 600 ~/.ssh/ecs_key
-          ssh-keyscan -p "${{ secrets.ECS_SSH_PORT }}" "${{ secrets.ECS_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "${ECS_SSH_PORT}" "${ECS_HOST}" >> ~/.ssh/known_hosts
 
       - name: Upload deployment files
+        if: steps.deploy-secrets.outputs.ssh_ready == 'true'
         run: |
           tar -czf life-service-deploy.tgz k8s scripts db
-          ssh -i ~/.ssh/ecs_key -p "${{ secrets.ECS_SSH_PORT }}" "${{ secrets.ECS_USER }}@${{ secrets.ECS_HOST }}" 'mkdir -p ~/life-service'
-          scp -i ~/.ssh/ecs_key -P "${{ secrets.ECS_SSH_PORT }}" life-service-deploy.tgz "${{ secrets.ECS_USER }}@${{ secrets.ECS_HOST }}:~/life-service/life-service-deploy.tgz"
+          ssh -i ~/.ssh/ecs_key -p "${ECS_SSH_PORT}" "${ECS_USER}@${ECS_HOST}" 'mkdir -p ~/life-service'
+          scp -i ~/.ssh/ecs_key -P "${ECS_SSH_PORT}" life-service-deploy.tgz "${ECS_USER}@${ECS_HOST}:~/life-service/life-service-deploy.tgz"
 
       - name: Deploy to ECS K3s
+        if: steps.deploy-secrets.outputs.ssh_ready == 'true'
         run: |
           MYSQL_ROOT_PASSWORD_B64="$(printf '%s' "${MYSQL_ROOT_PASSWORD}" | base64 -w0)"
           JWT_SECRET_B64="$(printf '%s' "${JWT_SECRET}" | base64 -w0)"
@@ -289,7 +306,7 @@ jobs:
           FULFILLMENT_SERVICE_PULL_IMAGE="${FULFILLMENT_SERVICE_IMAGE/$ACR_REGISTRY/$PULL_REGISTRY}"
           ENGAGEMENT_SERVICE_PULL_IMAGE="${ENGAGEMENT_SERVICE_IMAGE/$ACR_REGISTRY/$PULL_REGISTRY}"
           FRONTEND_PULL_IMAGE="${FRONTEND_IMAGE/$ACR_REGISTRY/$PULL_REGISTRY}"
-          ssh -i ~/.ssh/ecs_key -p "${{ secrets.ECS_SSH_PORT }}" "${{ secrets.ECS_USER }}@${{ secrets.ECS_HOST }}" \
+          ssh -i ~/.ssh/ecs_key -p "${ECS_SSH_PORT}" "${ECS_USER}@${ECS_HOST}" \
             "IMAGE_TAG='${IMAGE_TAG}' \
             ACR_REGISTRY='${PULL_REGISTRY}' \
             ACR_USERNAME='${ACR_USERNAME}' \
@@ -319,9 +336,10 @@ jobs:
           REMOTE_DEPLOY
 
       - name: Health check
+        if: steps.deploy-secrets.outputs.ssh_ready == 'true'
         run: |
           for i in {1..40}; do
-            if curl -fsS "http://${{ secrets.ECS_HOST }}:30081/actuator/health" && curl -fsS "http://${{ secrets.ECS_HOST }}:30080/" > /dev/null; then
+            if curl -fsS "http://${ECS_HOST}:30081/actuator/health" && curl -fsS "http://${ECS_HOST}:30080/" > /dev/null; then
               exit 0
             fi
             sleep 3
@@ -330,10 +348,10 @@ jobs:
           exit 1
 
       - name: Collect Kubernetes diagnostics
-        if: always()
+        if: always() && steps.deploy-secrets.outputs.ssh_ready == 'true'
         run: |
           mkdir -p k8s-diagnostics
-          ssh -i ~/.ssh/ecs_key -p "${{ secrets.ECS_SSH_PORT }}" "${{ secrets.ECS_USER }}@${{ secrets.ECS_HOST }}" 'bash -s' <<'REMOTE_DIAGNOSTICS'
+          ssh -i ~/.ssh/ecs_key -p "${ECS_SSH_PORT}" "${ECS_USER}@${ECS_HOST}" 'bash -s' <<'REMOTE_DIAGNOSTICS'
           set +e
           cd ~/life-service
           rm -rf k8s-diagnostics
@@ -345,11 +363,11 @@ jobs:
           done
           tar -czf k8s-diagnostics.tgz k8s-diagnostics
           REMOTE_DIAGNOSTICS
-          scp -i ~/.ssh/ecs_key -P "${{ secrets.ECS_SSH_PORT }}" "${{ secrets.ECS_USER }}@${{ secrets.ECS_HOST }}:~/life-service/k8s-diagnostics.tgz" k8s-diagnostics.tgz || true
+          scp -i ~/.ssh/ecs_key -P "${ECS_SSH_PORT}" "${ECS_USER}@${ECS_HOST}:~/life-service/k8s-diagnostics.tgz" k8s-diagnostics.tgz || true
           tar -xzf k8s-diagnostics.tgz || true
 
       - name: Upload Kubernetes diagnostics
-        if: always()
+        if: always() && steps.deploy-secrets.outputs.ssh_ready == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: k8s-diagnostics
