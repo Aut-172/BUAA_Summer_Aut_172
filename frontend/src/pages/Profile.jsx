@@ -171,6 +171,8 @@ export default function Profile() {
                                     className="profile-avatar"
                                     src={normalizeImageSrc(profileForm.avatar, FALLBACK_PROFILE_IMAGE)}
                                     alt={profile?.nickname || profile?.username || '用户头像'}
+                                    loading="lazy"
+                                    decoding="async"
                                 />
                                 <div className="stack tight">
                                     <strong>{profile?.nickname || profile?.username}</strong>
@@ -311,6 +313,8 @@ export default function Profile() {
                                                     className="merchant-avatar"
                                                     src={normalizeImageSrc(merchant.avatar, FALLBACK_STORE_IMAGE)}
                                                     alt={merchant.name}
+                                                    loading="lazy"
+                                                    decoding="async"
                                                 />
                                                 <div className="merchant-meta">
                                                     <h3>{merchant.name}</h3>

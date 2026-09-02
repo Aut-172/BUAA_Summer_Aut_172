@@ -27,7 +27,7 @@ export function LightboxImage({ src, alt, className, buttonClassName }) {
     return (
         <>
             <button className={buttonClassName || 'lightbox-image-button'} type="button" onClick={() => setActiveImage(imageSrc)}>
-                <img className={className} src={imageSrc} alt={alt} />
+                <img className={className} src={imageSrc} alt={alt} loading="lazy" decoding="async" />
             </button>
 
             {activeImage ? (
@@ -35,7 +35,7 @@ export function LightboxImage({ src, alt, className, buttonClassName }) {
                     <button className="review-lightbox-close" type="button" onClick={() => setActiveImage(null)}>
                         关闭
                     </button>
-                    <img className="review-lightbox-image" src={activeImage} alt={alt} onClick={(event) => event.stopPropagation()} />
+                    <img className="review-lightbox-image" src={activeImage} alt={alt} decoding="async" onClick={(event) => event.stopPropagation()} />
                 </div>
             ) : null}
         </>

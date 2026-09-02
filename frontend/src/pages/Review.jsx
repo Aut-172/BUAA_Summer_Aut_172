@@ -184,6 +184,8 @@ export default function Review() {
                                             className="review-thumb"
                                             src={normalizeImageSrc(item.image, FALLBACK_PRODUCT_IMAGE)}
                                             alt={item.name}
+                                            loading="lazy"
+                                            decoding="async"
                                         />
                                         <div className="merchant-meta grow">
                                             <div className="card-line">

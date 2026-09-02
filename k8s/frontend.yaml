@@ -23,6 +23,12 @@ spec:
           env:
             - name: API_GATEWAY_URL
               value: http://api-gateway:8080
+            - name: OSS_PROXY_TARGET
+              value: http://buaa-summer-life-assistant.oss-cn-heyuan-internal.aliyuncs.com
+            - name: OSS_PROXY_MAX_IN_FLIGHT
+              value: "32"
+            - name: PROXY_TIMEOUT_MS
+              value: "12000"
           readinessProbe:
             exec:
               command:
