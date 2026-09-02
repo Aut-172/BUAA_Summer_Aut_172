@@ -1,5 +1,16 @@
 [
+  { "resource": "/api/auth/merchant/login", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/merchants", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/merchants/{id}", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/products/{id}", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/search", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/recommend", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
   { "resource": "/api/merchant/dashboard", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/merchant/profile", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/merchant/products", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/internal/merchants/{merchantId}", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/internal/products/{productId}", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
   { "resource": "/internal/products/quote", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
-  { "resource": "/internal/products/reserve", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 }
+  { "resource": "/internal/products/reserve", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/internal/products/release", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 }
 ]

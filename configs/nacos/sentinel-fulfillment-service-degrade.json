@@ -1,4 +1,8 @@
 [
+  { "resource": "/api/auth/rider/login", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
   { "resource": "/api/rider/tasks", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/rider/tasks/{id}", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/rider/profile", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/rider/dashboard", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
   { "resource": "/api/delivery/{id}", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 }
 ]

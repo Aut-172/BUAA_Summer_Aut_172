@@ -1,5 +1,14 @@
 [
+  { "resource": "/api/orders", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
   { "resource": "/api/orders/{id}", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
   { "resource": "/api/checkout", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
-  { "resource": "/internal/orders/merchant-dashboard", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 }
+  { "resource": "/api/orders/{id}/cancel", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/merchant/orders", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/admin/orders", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/internal/orders/{orderId}", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/internal/orders/merchant-dashboard", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/internal/orders/{orderId}/mark-paid", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/internal/orders/{orderId}/participants", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/internal/fulfillment/tasks/available", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/internal/fulfillment/tasks/assigned", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 }
 ]

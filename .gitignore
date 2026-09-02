@@ -64,3 +64,11 @@ reports/fault/**/*.json
 reports/fault/**/*.log
 reports/fault/**/*.tgz
 reports/fault/**/*.gz
+
+# Sentinel experiments keep summaries and CSV evidence in git.
+# Raw response dumps and archives are reproducible and may be noisy.
+reports/sentinel/**/*.json
+reports/sentinel/**/*.jsonl
+reports/sentinel/**/*.log
+reports/sentinel/**/*.tgz
+reports/sentinel/**/*.gz

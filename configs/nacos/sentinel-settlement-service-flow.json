@@ -1,6 +1,12 @@
 [
   { "resource": "/api/coupons", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
   { "resource": "/api/coupons/available", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/coupons/{id}/claim", "limitApp": "default", "grade": 1, "count": 20, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
   { "resource": "/api/orders/{id}/pay", "limitApp": "default", "grade": 1, "count": 20, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
-  { "resource": "/internal/coupon-locks", "limitApp": "default", "grade": 1, "count": 30, "strategy": 0, "controlBehavior": 0, "clusterMode": false }
+  { "resource": "/api/orders/{id}/payments", "limitApp": "default", "grade": 1, "count": 30, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/payments/{id}", "limitApp": "default", "grade": 1, "count": 30, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/payments/mock-success", "limitApp": "default", "grade": 1, "count": 20, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/coupon-locks", "limitApp": "default", "grade": 1, "count": 30, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/coupon-locks/{orderId}/release", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/coupon-locks/{orderId}/confirm", "limitApp": "default", "grade": 1, "count": 30, "strategy": 0, "controlBehavior": 0, "clusterMode": false }
 ]

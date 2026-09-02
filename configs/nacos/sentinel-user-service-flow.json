@@ -1,6 +1,19 @@
 [
   { "resource": "/api/auth/login", "limitApp": "default", "grade": 1, "count": 10, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
   { "resource": "/api/auth/register", "limitApp": "default", "grade": 1, "count": 10, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/auth/admin/login", "limitApp": "default", "grade": 1, "count": 8, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
   { "resource": "/api/captcha", "limitApp": "default", "grade": 1, "count": 20, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
-  { "resource": "/api/user/cart", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false }
+  { "resource": "/api/user/profile", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/user/addresses", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/user/addresses/{id}", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/user/cart", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/user/cart/{id}", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/user/favorites", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/user/favorites/{merchantId}", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/admin/users", "limitApp": "default", "grade": 1, "count": 20, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/admin/users/{id}", "limitApp": "default", "grade": 1, "count": 20, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/admin/users/{id}/unfreeze", "limitApp": "default", "grade": 1, "count": 10, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/users/{userId}", "limitApp": "default", "grade": 1, "count": 80, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/users/{userId}/addresses/{addressId}", "limitApp": "default", "grade": 1, "count": 80, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/users/{userId}/cart", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false }
 ]

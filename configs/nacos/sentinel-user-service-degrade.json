@@ -1,3 +1,11 @@
 [
-  { "resource": "/api/auth/login", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 }
+  { "resource": "/api/auth/login", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/auth/register", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/auth/admin/login", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/user/profile", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/user/addresses", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/user/cart", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/user/favorites", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/internal/users/{userId}", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/internal/users/{userId}/addresses/{addressId}", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 }
 ]

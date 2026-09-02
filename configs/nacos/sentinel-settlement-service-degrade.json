@@ -1,4 +1,12 @@
 [
   { "resource": "/api/orders/{id}/pay", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
-  { "resource": "/internal/coupon-locks", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 }
+  { "resource": "/api/orders/{id}/payments", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/payments/{id}", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/coupons", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/coupons/available", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/api/coupons/{id}/claim", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/internal/payments/mock-success", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/internal/coupon-locks", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/internal/coupon-locks/{orderId}/release", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 },
+  { "resource": "/internal/coupon-locks/{orderId}/confirm", "grade": 1, "count": 0.5, "timeWindow": 10, "minRequestAmount": 5, "statIntervalMs": 10000 }
 ]

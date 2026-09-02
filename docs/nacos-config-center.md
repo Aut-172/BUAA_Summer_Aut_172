@@ -19,8 +19,8 @@ Gateway 和六个业务服务均已增加 `com.alibaba.cloud:spring-cloud-starte
 | ---: | --- | --- | --- | --- |
 | 1 | 启动参数 / JVM 系统属性 | `java -jar --xxx=yyy`、`-Dxxx=yyy`、临时调试参数 | 启动服务时追加参数；Docker/K8s 可通过容器 `args` 或临时命令传入 | 一次性验证、临时排障、短时间覆盖配置。 |
 | 2 | 环境变量 / Secret | Windows `.env`、`docker-compose.yml`、K8s `ConfigMap`、K8s `Secret` | 本机改 `.env` 后重启容器；云端改 `k8s/configmap.yaml` 或 Secret 后 `kubectl apply` 并重启 Deployment | 启动前必须确定的连接参数、端口、密钥、密码、不同环境的基础设施地址。 |
-| 3 | Nacos 服务私有配置 | `configs/nacos/${spring.application.name}.yml`，发布后对应 Nacos Data ID | 改 Nacos 控制台，或改仓库样例后执行 `scripts/publish-nacos-config.ps1` | 单个服务的业务配置，例如网关 CORS、某服务数据源 URL、上传大小、OSS 开关、降级提示。 |
-| 4 | Nacos 公共配置 | `configs/nacos/life-assistant-common.yml` | 改 Nacos 控制台，或改样例后发布 | 跨服务统一配置，例如 Feign 超时、Redis 通用参数、JWT 过期时间、Actuator 暴露项。 |
+| 3 | Nacos 服务私有配置 | `configs/nacos/${spring.application.name}.yml`，发布后对应 Nacos Data ID | 改 Nacos 控制台，或改仓库样例后执行发布脚本；GitHub Actions 部署会自动发布 | 单个服务的业务配置，例如网关 CORS、某服务数据源 URL、上传大小、OSS 开关、降级提示。 |
+| 4 | Nacos 公共配置 | `configs/nacos/life-assistant-common.yml` | 改 Nacos 控制台，或改样例后执行发布脚本；GitHub Actions 部署会自动发布 | 跨服务统一配置，例如 Feign 超时、Redis 通用参数、JWT 过期时间、Actuator 暴露项。 |
 | 5 | 本地应用默认配置 | 各服务 `src/main/resources/application.yml` | 修改对应服务仓库文件，重新构建/重启 | 没有 Nacos 配置时的 fallback，新配置项的默认值，服务启动所需的最低配置。 |
 | 6 | 代码默认值 | `@Value("${key:default}")`、配置类默认字段、常量 | 修改 Java 代码，补测试，重新构建发布 | 配置不存在时的最后兜底，或者改变代码级默认行为。 |
 
@@ -41,6 +41,7 @@ Gateway 和六个业务服务均已增加 `com.alibaba.cloud:spring-cloud-starte
 | 修改 Gateway CORS | Nacos `api-gateway.yml` | 只影响网关，属于服务私有配置。 |
 | 修改上传大小、评价图片目录、OSS 开关 | Nacos `engagement-service.yml` | 只影响互动服务，属于服务私有业务配置；OSS 密钥仍放环境变量或 Secret。 |
 | 修改商家看板降级提示 | Nacos `merchant-service.yml` | 单服务业务文案，适合配置中心管理。 |
+| 修改 Sentinel 限流或熔断规则 | `configs/nacos/sentinel-*.json` | 规则随 Nacos Config 发布，适合进入版本管理；临时调参可直接改 Nacos 控制台。 |
 | 新增一个配置项并要求无 Nacos 时也能跑 | 本地 `application.yml` + Nacos 样例 | 先给本地 fallback，再放入 Nacos 样例。 |
 | 新增 Sentinel、Prometheus、链路追踪配置 | Nacos common 或服务私有配置 | 公共开关放 common，单服务规则或 endpoint 放服务私有配置。 |
 | 改服务发现地址、配置中心 group、namespace | `.env`、Compose、K8s ConfigMap | 服务必须先知道去哪里找 Nacos，不能依赖 Nacos 自己下发。 |
@@ -67,6 +68,12 @@ Gateway 和六个业务服务均已增加 `com.alibaba.cloud:spring-cloud-starte
 | `sentinel-*-degrade.json` | 业务服务熔断降级规则。 |
 
 默认 group 为 `DEFAULT_GROUP`。如果使用 namespace，需要先在 Nacos 控制台创建 namespace，并把 namespace ID 配到环境变量 `NACOS_CONFIG_NAMESPACE`。
+
+## CI/CD 自动发布
+
+GitHub Actions 的 `container-build-and-k8s-deploy` job 在 `push main` 时会把 `configs/`、`k8s/`、`scripts/` 和 `db/` 一起打包上传到 ECS。远端执行 `scripts/deploy-kind.sh` 时，会在 Nacos Deployment 就绪后通过临时 `kubectl port-forward` 调用 `scripts/publish-nacos-config.sh`，自动发布 `configs/nacos/` 下的 `.yml`、`.yaml` 和 `.json` 文件。
+
+因此走 CI/CD 正常发版时，不需要再手工把规则发布到 Nacos。仍需要手工发布的场景主要有三类：本机调试、云端临时热改、或者只改配置不希望触发完整镜像构建发布。若要临时跳过自动发布，可在远端部署环境设置 `PUBLISH_NACOS_CONFIG=false`。
 
 ## Windows 本机改配置
 
@@ -171,12 +178,12 @@ kubectl port-forward -n life-assistant svc/nacos 8848:8848
 保持这个终端不关闭。然后在另一个终端发布配置：
 
 ```bash
-pwsh scripts/publish-nacos-config.ps1 \
-  -NacosUrl "http://127.0.0.1:8848" \
-  -Group "DEFAULT_GROUP"
+bash scripts/publish-nacos-config.sh \
+  --nacos-url "http://127.0.0.1:8848" \
+  --group "DEFAULT_GROUP"
 ```
 
-如果云服务器没有 PowerShell，可以在 Windows 本机使用已经连到 k3s 的 `kubectl` 做端口转发：
+如果云服务器没有 Bash/curl 环境，或者你想从 Windows 本机发布，可以在 Windows 本机使用已经连到 k3s 的 `kubectl` 做端口转发：
 
 ```powershell
 kubectl port-forward -n life-assistant svc/nacos 8848:8848

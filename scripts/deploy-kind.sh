@@ -10,6 +10,10 @@ OSS_ACCESS_KEY_SECRET="${OSS_ACCESS_KEY_SECRET:-}"
 ACR_REGISTRY="${ACR_REGISTRY:-}"
 ACR_USERNAME="${ACR_USERNAME:-}"
 ACR_PASSWORD="${ACR_PASSWORD:-}"
+PUBLISH_NACOS_CONFIG="${PUBLISH_NACOS_CONFIG:-true}"
+NACOS_LOCAL_PORT="${NACOS_LOCAL_PORT:-8848}"
+NACOS_GROUP="${NACOS_GROUP:-${SENTINEL_RULE_GROUP:-DEFAULT_GROUP}}"
+NACOS_NAMESPACE="${NACOS_NAMESPACE:-}"
 
 API_GATEWAY_IMAGE="${API_GATEWAY_IMAGE:-life-assistant-api-gateway:${IMAGE_TAG}}"
 MERCHANT_SERVICE_IMAGE="${MERCHANT_SERVICE_IMAGE:-life-assistant-merchant-service:${IMAGE_TAG}}"
@@ -32,6 +36,48 @@ apply_manifest_with_images() {
     -e "s|image: life-assistant-engagement-service:dev|image: ${ENGAGEMENT_SERVICE_IMAGE}|g" \
     -e "s|image: life-assistant-frontend:dev|image: ${FRONTEND_IMAGE}|g" \
     "$manifest" | kubectl apply -n "$NAMESPACE" -f -
+}
+
+NACOS_PORT_FORWARD_PID=""
+
+cleanup_nacos_port_forward() {
+  if [[ -n "$NACOS_PORT_FORWARD_PID" ]] && kill -0 "$NACOS_PORT_FORWARD_PID" >/dev/null 2>&1; then
+    kill "$NACOS_PORT_FORWARD_PID" >/dev/null 2>&1 || true
+  fi
+}
+
+publish_nacos_config() {
+  if [[ "$PUBLISH_NACOS_CONFIG" == "false" ]]; then
+    echo "Skipping Nacos config publish because PUBLISH_NACOS_CONFIG=false."
+    return
+  fi
+
+  if [[ ! -d configs/nacos ]]; then
+    echo "Skipping Nacos config publish because configs/nacos is not present."
+    return
+  fi
+
+  kubectl port-forward -n "$NAMESPACE" svc/nacos "${NACOS_LOCAL_PORT}:8848" >/tmp/life-assistant-nacos-port-forward.log 2>&1 &
+  NACOS_PORT_FORWARD_PID="$!"
+  trap cleanup_nacos_port_forward EXIT
+
+  for _ in {1..30}; do
+    if curl -fsS "http://127.0.0.1:${NACOS_LOCAL_PORT}/nacos/actuator/health" >/dev/null 2>&1; then
+      bash scripts/publish-nacos-config.sh \
+        --nacos-url "http://127.0.0.1:${NACOS_LOCAL_PORT}" \
+        --group "$NACOS_GROUP" \
+        --namespace "$NACOS_NAMESPACE"
+      cleanup_nacos_port_forward
+      trap - EXIT
+      NACOS_PORT_FORWARD_PID=""
+      return
+    fi
+    sleep 2
+  done
+
+  echo "Nacos port-forward did not become ready." >&2
+  cat /tmp/life-assistant-nacos-port-forward.log >&2 || true
+  exit 1
 }
 
 kubectl apply -n "$NAMESPACE" -f k8s/configmap.yaml
@@ -76,6 +122,8 @@ kubectl apply -n "$NAMESPACE" -f k8s/nacos.yaml
 kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-mysql --timeout=240s
 kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-redis --timeout=120s
 kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-nacos --timeout=240s
+
+publish_nacos_config
 
 apply_manifest_with_images k8s/business-services.yaml
 kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-merchant-service --timeout=240s

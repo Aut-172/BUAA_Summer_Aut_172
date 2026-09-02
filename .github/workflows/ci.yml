@@ -282,7 +282,7 @@ jobs:
       - name: Upload deployment files
         if: steps.deploy-secrets.outputs.ssh_ready == 'true'
         run: |
-          tar -czf life-service-deploy.tgz k8s scripts db
+          tar -czf life-service-deploy.tgz k8s scripts db configs
           ssh -i ~/.ssh/ecs_key -p "${ECS_SSH_PORT}" "${ECS_USER}@${ECS_HOST}" 'mkdir -p ~/life-service'
           scp -i ~/.ssh/ecs_key -P "${ECS_SSH_PORT}" life-service-deploy.tgz "${ECS_USER}@${ECS_HOST}:~/life-service/life-service-deploy.tgz"
 
