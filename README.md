@@ -126,6 +126,14 @@ powershell -ExecutionPolicy Bypass -File scripts\init-db.ps1
 
 注意：初始化 SQL 会重建业务表，重复执行会清空已有本地数据。
 
+如果只是想给商家仪表盘补一批可视化用的历史订单数据，可以执行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\seed-merchant-revenue-demo.ps1
+```
+
+这会往 `order_db` 里插入两家示例商家的 14 天完成订单，用来直接测试总营收、总订单数和折线图。
+
 ## 鉴权与服务间调用
 
 - 前端请求进入 `api-gateway`，Gateway 根据路径转发到业务服务。
