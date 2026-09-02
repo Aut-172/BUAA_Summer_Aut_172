@@ -35,6 +35,7 @@ data:
   app-cache-merchant-categories-ttl: 1h
   app-cache-merchant-search-ttl: 5m
   app-cache-merchant-recommend-ttl: 5m
+  app-cache-order-merchant-snapshot-ttl: 10m
   app-cache-image-metadata-ttl: 1h
   app-cache-image-blob-ttl: 10m
   app-cache-image-metadata-enabled: "true"
