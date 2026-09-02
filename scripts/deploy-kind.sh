@@ -11,6 +11,8 @@ ACR_REGISTRY="${ACR_REGISTRY:-}"
 ACR_USERNAME="${ACR_USERNAME:-}"
 ACR_PASSWORD="${ACR_PASSWORD:-}"
 PUBLISH_NACOS_CONFIG="${PUBLISH_NACOS_CONFIG:-true}"
+APPLY_HPA="${APPLY_HPA:-true}"
+SUSPEND_HPA_DURING_DEPLOY="${SUSPEND_HPA_DURING_DEPLOY:-true}"
 NACOS_LOCAL_PORT="${NACOS_LOCAL_PORT:-8848}"
 NACOS_GROUP="${NACOS_GROUP:-${SENTINEL_RULE_GROUP:-DEFAULT_GROUP}}"
 NACOS_NAMESPACE="${NACOS_NAMESPACE:-}"
@@ -23,6 +25,40 @@ SETTLEMENT_SERVICE_IMAGE="${SETTLEMENT_SERVICE_IMAGE:-life-assistant-settlement-
 FULFILLMENT_SERVICE_IMAGE="${FULFILLMENT_SERVICE_IMAGE:-life-assistant-fulfillment-service:${IMAGE_TAG}}"
 ENGAGEMENT_SERVICE_IMAGE="${ENGAGEMENT_SERVICE_IMAGE:-life-assistant-engagement-service:${IMAGE_TAG}}"
 FRONTEND_IMAGE="${FRONTEND_IMAGE:-life-assistant-frontend:${IMAGE_TAG}}"
+
+wait_rollout() {
+  local deployment="$1"
+  local timeout="$2"
+
+  if kubectl rollout status -n "$NAMESPACE" "deployment/${deployment}" --timeout="$timeout"; then
+    return 0
+  fi
+
+  echo "Rollout failed for deployment/${deployment}. Recent Kubernetes diagnostics:" >&2
+  kubectl get deployment "$deployment" -n "$NAMESPACE" -o wide >&2 || true
+  kubectl get pods -n "$NAMESPACE" -l "app=${deployment}" -o wide >&2 || true
+  kubectl describe pods -n "$NAMESPACE" -l "app=${deployment}" >&2 || true
+  kubectl get events -n "$NAMESPACE" --sort-by='.lastTimestamp' | tail -80 >&2 || true
+  return 1
+}
+
+suspend_hpa_for_deploy() {
+  if [[ "$SUSPEND_HPA_DURING_DEPLOY" != "true" ]]; then
+    return
+  fi
+
+  echo "Temporarily removing HPAs before rollout to avoid autoscaling during deployment."
+  kubectl delete -n "$NAMESPACE" --ignore-not-found=true -f k8s/hpa.yaml
+}
+
+apply_hpa() {
+  if [[ "$APPLY_HPA" == "false" ]]; then
+    echo "Skipping HPA apply because APPLY_HPA=false."
+    return
+  fi
+
+  kubectl apply -n "$NAMESPACE" -f k8s/hpa.yaml
+}
 
 apply_manifest_with_images() {
   local manifest="$1"
@@ -119,24 +155,26 @@ kubectl create configmap life-assistant-db-init \
 kubectl apply -n "$NAMESPACE" -f k8s/mysql.yaml
 kubectl apply -n "$NAMESPACE" -f k8s/redis.yaml
 kubectl apply -n "$NAMESPACE" -f k8s/nacos.yaml
-kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-mysql --timeout=240s
-kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-redis --timeout=120s
-kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-nacos --timeout=240s
+wait_rollout life-assistant-mysql 240s
+wait_rollout life-assistant-redis 120s
+wait_rollout life-assistant-nacos 240s
 
 publish_nacos_config
 
+suspend_hpa_for_deploy
+
 apply_manifest_with_images k8s/business-services.yaml
-kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-merchant-service --timeout=240s
-kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-user-service --timeout=240s
-kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-order-service --timeout=240s
-kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-settlement-service --timeout=240s
-kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-fulfillment-service --timeout=240s
-kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-engagement-service --timeout=240s
+wait_rollout life-assistant-merchant-service 240s
+wait_rollout life-assistant-user-service 240s
+wait_rollout life-assistant-order-service 240s
+wait_rollout life-assistant-settlement-service 240s
+wait_rollout life-assistant-fulfillment-service 240s
+wait_rollout life-assistant-engagement-service 240s
 
 apply_manifest_with_images k8s/api-gateway.yaml
-kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-api-gateway --timeout=240s
-
-kubectl apply -n "$NAMESPACE" -f k8s/hpa.yaml
+wait_rollout life-assistant-api-gateway 240s
 
 apply_manifest_with_images k8s/frontend.yaml
-kubectl rollout status -n "$NAMESPACE" deployment/life-assistant-frontend --timeout=180s
+wait_rollout life-assistant-frontend 180s
+
+apply_hpa

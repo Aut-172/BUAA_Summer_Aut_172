@@ -6,6 +6,11 @@ metadata:
     app: life-assistant-merchant-service
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: life-assistant-merchant-service
@@ -95,6 +100,11 @@ metadata:
     app: life-assistant-user-service
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: life-assistant-user-service
@@ -180,6 +190,11 @@ metadata:
     app: life-assistant-order-service
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: life-assistant-order-service
@@ -255,6 +270,11 @@ metadata:
     app: life-assistant-settlement-service
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: life-assistant-settlement-service
@@ -330,6 +350,11 @@ metadata:
     app: life-assistant-fulfillment-service
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: life-assistant-fulfillment-service
@@ -415,6 +440,11 @@ metadata:
     app: life-assistant-engagement-service
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: life-assistant-engagement-service
