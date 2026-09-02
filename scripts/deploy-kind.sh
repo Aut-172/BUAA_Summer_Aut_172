@@ -13,6 +13,7 @@ ACR_PASSWORD="${ACR_PASSWORD:-}"
 PUBLISH_NACOS_CONFIG="${PUBLISH_NACOS_CONFIG:-true}"
 APPLY_HPA="${APPLY_HPA:-true}"
 SUSPEND_HPA_DURING_DEPLOY="${SUSPEND_HPA_DURING_DEPLOY:-true}"
+BUSINESS_ROLLOUT_TIMEOUT="${BUSINESS_ROLLOUT_TIMEOUT:-420s}"
 NACOS_LOCAL_PORT="${NACOS_LOCAL_PORT:-8848}"
 NACOS_GROUP="${NACOS_GROUP:-${SENTINEL_RULE_GROUP:-DEFAULT_GROUP}}"
 NACOS_NAMESPACE="${NACOS_NAMESPACE:-}"
@@ -38,6 +39,10 @@ wait_rollout() {
   kubectl get deployment "$deployment" -n "$NAMESPACE" -o wide >&2 || true
   kubectl get pods -n "$NAMESPACE" -l "app=${deployment}" -o wide >&2 || true
   kubectl describe pods -n "$NAMESPACE" -l "app=${deployment}" >&2 || true
+  kubectl logs -n "$NAMESPACE" "deployment/${deployment}" --tail=200 >&2 || true
+  for pod in $(kubectl get pods -n "$NAMESPACE" -l "app=${deployment}" -o jsonpath='{.items[*].metadata.name}' 2>/dev/null || true); do
+    kubectl logs -n "$NAMESPACE" "$pod" --previous --tail=200 >&2 || true
+  done
   kubectl get events -n "$NAMESPACE" --sort-by='.lastTimestamp' | tail -80 >&2 || true
   return 1
 }
@@ -72,6 +77,51 @@ apply_manifest_with_images() {
     -e "s|image: life-assistant-engagement-service:dev|image: ${ENGAGEMENT_SERVICE_IMAGE}|g" \
     -e "s|image: life-assistant-frontend:dev|image: ${FRONTEND_IMAGE}|g" \
     "$manifest" | kubectl apply -n "$NAMESPACE" -f -
+}
+
+apply_manifest_resources_with_images() {
+  local manifest="$1"
+  shift
+  local wanted="$*"
+
+  sed \
+    -e "s|image: life-assistant-api-gateway:dev|image: ${API_GATEWAY_IMAGE}|g" \
+    -e "s|image: life-assistant-merchant-service:dev|image: ${MERCHANT_SERVICE_IMAGE}|g" \
+    -e "s|image: life-assistant-user-service:dev|image: ${USER_SERVICE_IMAGE}|g" \
+    -e "s|image: life-assistant-order-service:dev|image: ${ORDER_SERVICE_IMAGE}|g" \
+    -e "s|image: life-assistant-settlement-service:dev|image: ${SETTLEMENT_SERVICE_IMAGE}|g" \
+    -e "s|image: life-assistant-fulfillment-service:dev|image: ${FULFILLMENT_SERVICE_IMAGE}|g" \
+    -e "s|image: life-assistant-engagement-service:dev|image: ${ENGAGEMENT_SERVICE_IMAGE}|g" \
+    -e "s|image: life-assistant-frontend:dev|image: ${FRONTEND_IMAGE}|g" \
+    "$manifest" | awk -v wanted="$wanted" '
+      BEGIN {
+        RS = "---[[:space:]]*\n"
+        ORS = "\n---\n"
+        split(wanted, names, " ")
+        for (i in names) {
+          if (names[i] != "") {
+            keep[names[i]] = 1
+          }
+        }
+      }
+      {
+        for (name in keep) {
+          pattern = "(^|\n)[[:space:]]*name:[[:space:]]*" name "([[:space:]]|\n|$)"
+          if ($0 ~ pattern) {
+            print $0
+            next
+          }
+        }
+      }
+    ' | kubectl apply -n "$NAMESPACE" -f -
+}
+
+apply_business_service() {
+  local deployment="$1"
+  local service="$2"
+
+  apply_manifest_resources_with_images k8s/business-services.yaml "$deployment" "$service"
+  wait_rollout "$deployment" "$BUSINESS_ROLLOUT_TIMEOUT"
 }
 
 NACOS_PORT_FORWARD_PID=""
@@ -163,13 +213,12 @@ publish_nacos_config
 
 suspend_hpa_for_deploy
 
-apply_manifest_with_images k8s/business-services.yaml
-wait_rollout life-assistant-merchant-service 240s
-wait_rollout life-assistant-user-service 240s
-wait_rollout life-assistant-order-service 240s
-wait_rollout life-assistant-settlement-service 240s
-wait_rollout life-assistant-fulfillment-service 240s
-wait_rollout life-assistant-engagement-service 240s
+apply_business_service life-assistant-merchant-service merchant-service
+apply_business_service life-assistant-user-service user-service
+apply_business_service life-assistant-order-service order-service
+apply_business_service life-assistant-settlement-service settlement-service
+apply_business_service life-assistant-fulfillment-service fulfillment-service
+apply_business_service life-assistant-engagement-service engagement-service
 
 apply_manifest_with_images k8s/api-gateway.yaml
 wait_rollout life-assistant-api-gateway 240s

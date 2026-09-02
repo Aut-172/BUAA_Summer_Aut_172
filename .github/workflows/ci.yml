@@ -357,9 +357,14 @@ jobs:
           rm -rf k8s-diagnostics
           mkdir -p k8s-diagnostics
           kubectl get all -o wide > k8s-diagnostics/resources.txt 2>&1
+          kubectl get hpa -o wide > k8s-diagnostics/hpa.txt 2>&1
+          kubectl get events --sort-by='.lastTimestamp' > k8s-diagnostics/events.txt 2>&1
           kubectl describe pods > k8s-diagnostics/pods.txt 2>&1
           for deployment in life-assistant-api-gateway life-assistant-merchant-service life-assistant-user-service life-assistant-order-service life-assistant-settlement-service life-assistant-fulfillment-service life-assistant-engagement-service life-assistant-frontend life-assistant-mysql life-assistant-redis life-assistant-nacos; do
             kubectl logs deployment/${deployment} --tail=200 > k8s-diagnostics/${deployment}.log 2>&1
+            for pod in $(kubectl get pods -l app=${deployment} -o jsonpath='{.items[*].metadata.name}' 2>/dev/null || true); do
+              kubectl logs ${pod} --previous --tail=200 > k8s-diagnostics/${pod}-previous.log 2>&1 || true
+            done
           done
           tar -czf k8s-diagnostics.tgz k8s-diagnostics
           REMOTE_DIAGNOSTICS
