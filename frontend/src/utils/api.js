@@ -12,8 +12,51 @@ export class ApiError extends Error {
     }
 }
 
+const DEFAULT_API_BASE_URL = '/api'
+
+function appendApiPath(url) {
+    const trimmed = String(url || '').trim().replace(/\/+$/, '')
+
+    if (!trimmed) {
+        return ''
+    }
+
+    if (trimmed === DEFAULT_API_BASE_URL || trimmed.endsWith('/api')) {
+        return trimmed
+    }
+
+    if (/^https?:\/\//i.test(trimmed)) {
+        try {
+            const parsed = new URL(trimmed)
+            if (!parsed.pathname || parsed.pathname === '/') {
+                parsed.pathname = '/api'
+                return parsed.toString().replace(/\/+$/, '')
+            }
+        } catch (_error) {
+            return trimmed
+        }
+    }
+
+    return trimmed
+}
+
+export function resolveApiBaseUrl(location = globalThis.location, configuredBaseUrl = import.meta.env?.VITE_API_BASE_URL) {
+    const configured = appendApiPath(configuredBaseUrl)
+
+    if (configured) {
+        return configured
+    }
+
+    if (location?.port === '30080') {
+        const protocol = location.protocol || 'http:'
+        return `${protocol}//${location.hostname}:30081/api`
+    }
+
+    return DEFAULT_API_BASE_URL
+}
+
 const client = axios.create({
-    baseURL: '/api',
+    baseURL: resolveApiBaseUrl(),
     timeout: 12000
 })
 

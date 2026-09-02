@@ -20,10 +20,15 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
+          env:
+            - name: API_GATEWAY_URL
+              value: http://api-gateway:8080
           readinessProbe:
-            httpGet:
-              path: /
-              port: 80
+            exec:
+              command:
+                - sh
+                - -c
+                - wget -q -O - http://127.0.0.1/api/health | grep -q '"code":200'
             initialDelaySeconds: 5
             periodSeconds: 5
             timeoutSeconds: 3
