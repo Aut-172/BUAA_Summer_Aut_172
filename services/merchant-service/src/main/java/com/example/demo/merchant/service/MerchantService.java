@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demo.common.BusinessException;
+import com.example.demo.common.cache.CacheProperties;
+import com.example.demo.common.cache.RedisJsonCacheService;
 import com.example.demo.merchant.dto.MerchantListDTO;
 import com.example.demo.merchant.dto.MerchantProfileDTO;
 import com.example.demo.merchant.dto.ProductDTO;
@@ -21,11 +23,17 @@ import com.example.demo.merchant.mapper.ProductSpecMapper;
 import com.example.demo.merchant.mapper.SpecGroupMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -47,9 +55,18 @@ public class MerchantService {
     private final ProductMapper productMapper;
     private final SpecGroupMapper specGroupMapper;
     private final ProductSpecMapper productSpecMapper;
+    private final RedisJsonCacheService cacheService;
+    private final CacheProperties cacheProperties;
+    private final MerchantCatalogCacheService catalogCacheService;
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final TypeReference<List<Category>> CATEGORY_LIST_TYPE = new TypeReference<>() {
+    };
     private static final Pattern PRICE_PATTERN = Pattern.compile("\\(\\+?(\\d+(\\.\\d+)?)元\\)");
+    private static final Duration MERCHANT_LIST_TTL = Duration.ofMinutes(5);
+    private static final Duration MERCHANT_DETAIL_TTL = Duration.ofMinutes(10);
+    private static final Duration PRODUCT_DETAIL_TTL = Duration.ofMinutes(10);
+    private static final Duration CATEGORY_TTL = Duration.ofHours(1);
     private static final BigDecimal MAX_PRODUCT_PRICE = new BigDecimal("99999.99");
     private static final int MAX_PRODUCT_STOCK = 999999;
     private static final int MAX_PRODUCT_NAME_LENGTH = 100;
@@ -95,6 +112,15 @@ public class MerchantService {
      * 获取商家列表（分页，含推荐商品）
      */
     public Page<MerchantListDTO> getMerchantListWithProducts(String keyword, String category, Integer pageNum, Integer pageSize) {
+        MerchantListPageCache cached = cacheService.getOrLoad(
+                merchantListKey(keyword, category, pageNum, pageSize),
+                MerchantListPageCache.class,
+                cacheProperties.ttl("merchant.list", MERCHANT_LIST_TTL),
+                () -> MerchantListPageCache.from(loadMerchantListWithProducts(keyword, category, pageNum, pageSize)));
+        return cached.toPage();
+    }
+
+    private Page<MerchantListDTO> loadMerchantListWithProducts(String keyword, String category, Integer pageNum, Integer pageSize) {
         Page<Merchant> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<Merchant> wrapper = new LambdaQueryWrapper<Merchant>()
                 .eq(Merchant::getStatus, "active")
@@ -151,6 +177,12 @@ public class MerchantService {
      * 获取商家详情（含商品分类和商品列表）
      */
     public MerchantProfileDTO getMerchantDetail(Long merchantId) {
+        return cacheService.getOrLoad(merchantDetailKey(merchantId), MerchantProfileDTO.class,
+                cacheProperties.ttl("merchant.detail", MERCHANT_DETAIL_TTL),
+                () -> loadMerchantDetail(merchantId));
+    }
+
+    private MerchantProfileDTO loadMerchantDetail(Long merchantId) {
         // 1. 查询商家信息
         Merchant merchant = merchantMapper.selectById(merchantId);
         if (merchant == null) {
@@ -292,6 +324,12 @@ public class MerchantService {
      * 获取商品详情
      */
     public ProductDTO getProductDetail(Long productId) {
+        return cacheService.getOrLoad(productDetailKey(productId), ProductDTO.class,
+                cacheProperties.ttl("merchant.product-detail", PRODUCT_DETAIL_TTL),
+                () -> loadProductDetail(productId));
+    }
+
+    private ProductDTO loadProductDetail(Long productId) {
         Product product = productMapper.selectById(productId);
         if (product == null) {
             throw new BusinessException(404, "商品不存在");
@@ -363,8 +401,9 @@ public class MerchantService {
      * 获取所有商品分类
      */
     public List<Category> getAllCategories() {
-        return categoryMapper.selectList(
-                new LambdaQueryWrapper<Category>().orderByAsc(Category::getSortOrder));
+        return cacheService.getOrLoad(categoriesKey(), CATEGORY_LIST_TYPE,
+                cacheProperties.ttl("merchant.categories", CATEGORY_TTL),
+                () -> categoryMapper.selectList(new LambdaQueryWrapper<Category>().orderByAsc(Category::getSortOrder)));
     }
 
     /**
@@ -382,6 +421,7 @@ public class MerchantService {
         merchant.setRating(null);
         merchant.setMonthlySales(null);
         merchantMapper.updateById(merchant);
+        catalogCacheService.invalidatePublicCatalog();
         return merchantMapper.selectById(merchantId);
     }
 
@@ -402,6 +442,7 @@ public class MerchantService {
             product.setType("normal");
         }
         productMapper.insert(product);
+        catalogCacheService.invalidatePublicCatalog();
         return productMapper.selectById(product.getId());
     }
 
@@ -422,6 +463,7 @@ public class MerchantService {
         product.setMerchantId(null);
         product.setMonthlySales(null);
         productMapper.updateById(product);
+        catalogCacheService.invalidatePublicCatalog();
         return productMapper.selectById(existing.getId());
     }
 
@@ -439,6 +481,7 @@ public class MerchantService {
             throw new BusinessException(403, "无权操作该商品");
         }
         productMapper.deleteById(productId);
+        catalogCacheService.invalidatePublicCatalog();
     }
 
     /**
@@ -475,6 +518,7 @@ public class MerchantService {
         specGroup.setId(null);
         // spec_group 表使用 product_id，不再设置 merchantId
         specGroupMapper.insert(specGroup);
+        catalogCacheService.invalidatePublicCatalog();
     }
 
     /**
@@ -491,6 +535,7 @@ public class MerchantService {
         productSpecMapper.delete(new LambdaQueryWrapper<ProductSpec>()
                 .eq(ProductSpec::getProductId, existing.getProductId()));
         specGroupMapper.deleteById(groupId);
+        catalogCacheService.invalidatePublicCatalog();
     }
 
     /**
@@ -502,6 +547,7 @@ public class MerchantService {
 
         productSpec.setId(null);
         productSpecMapper.insert(productSpec);
+        catalogCacheService.invalidatePublicCatalog();
     }
 
     /**
@@ -515,6 +561,54 @@ public class MerchantService {
             throw new BusinessException(404, "规格值不存在");
         }
         productSpecMapper.deleteById(specId);
+        catalogCacheService.invalidatePublicCatalog();
+    }
+
+    private String merchantListKey(String keyword, String category, Integer pageNum, Integer pageSize) {
+        return "la:merchant:catalog:list:k:" + keyPart(keyword)
+                + ":c:" + keyPart(category)
+                + ":p:" + (pageNum == null ? 1 : pageNum)
+                + ":s:" + (pageSize == null ? 20 : pageSize)
+                + ":v1";
+    }
+
+    private String merchantDetailKey(Long merchantId) {
+        return "la:merchant:catalog:detail:" + merchantId + ":v1";
+    }
+
+    private String productDetailKey(Long productId) {
+        return "la:merchant:catalog:product:" + productId + ":v1";
+    }
+
+    private String categoriesKey() {
+        return "la:merchant:catalog:categories:v1";
+    }
+
+    private String keyPart(String value) {
+        if (value == null || value.isBlank()) {
+            return "_";
+        }
+        return URLEncoder.encode(value.trim().toLowerCase(), StandardCharsets.UTF_8);
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MerchantListPageCache {
+        private long current;
+        private long size;
+        private long total;
+        private List<MerchantListDTO> records;
+
+        static MerchantListPageCache from(Page<MerchantListDTO> page) {
+            return new MerchantListPageCache(page.getCurrent(), page.getSize(), page.getTotal(), page.getRecords());
+        }
+
+        Page<MerchantListDTO> toPage() {
+            Page<MerchantListDTO> page = new Page<>(current, size, total);
+            page.setRecords(records == null ? Collections.emptyList() : records);
+            return page;
+        }
     }
 
     private void requireActiveMerchant(Long merchantId) {

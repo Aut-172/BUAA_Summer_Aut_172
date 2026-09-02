@@ -27,6 +27,11 @@ jwt:
   expiration: 86400000
 
 app:
+  cache:
+    enabled: false
+    image:
+      metadata-enabled: false
+      blob-enabled: false
   upload:
     root-dir: ${java.io.tmpdir}/engagement-test-uploads
     review-dir: ${java.io.tmpdir}/engagement-test-uploads/reviews

@@ -8,6 +8,7 @@ import com.example.demo.auth.entity.Merchant;
 import com.example.demo.auth.mapper.MerchantMapper;
 import com.example.demo.common.BusinessException;
 import com.example.demo.common.PageResult;
+import com.example.demo.merchant.service.MerchantCatalogCacheService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminMerchantService {
 
     private final MerchantMapper merchantMapper;
+    private final MerchantCatalogCacheService catalogCacheService;
 
     public PageResult<Merchant> listMerchants(int page, int pageSize, String keyword, String status) {
         LambdaQueryWrapper<Merchant> wrapper = new LambdaQueryWrapper<Merchant>()
@@ -55,6 +57,7 @@ public class AdminMerchantService {
         }
         merchant.setStatus(normalized);
         merchantMapper.updateById(merchant);
+        catalogCacheService.invalidatePublicCatalog();
         return merchantMapper.selectById(merchantId);
     }
 
@@ -63,6 +66,7 @@ public class AdminMerchantService {
         Merchant merchant = requireMerchant(merchantId);
         merchant.setStatus("frozen");
         merchantMapper.updateById(merchant);
+        catalogCacheService.invalidatePublicCatalog();
         return merchantMapper.selectById(merchantId);
     }
 
@@ -71,6 +75,7 @@ public class AdminMerchantService {
         Merchant merchant = requireMerchant(merchantId);
         merchant.setStatus("active");
         merchantMapper.updateById(merchant);
+        catalogCacheService.invalidatePublicCatalog();
         return merchantMapper.selectById(merchantId);
     }
 

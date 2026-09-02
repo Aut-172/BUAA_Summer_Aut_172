@@ -1,14 +1,20 @@
 package com.example.demo.search.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.example.demo.common.cache.CacheProperties;
+import com.example.demo.common.cache.RedisJsonCacheService;
 import com.example.demo.auth.entity.Merchant;
 import com.example.demo.auth.mapper.MerchantMapper;
 import com.example.demo.merchant.entity.Product;
 import com.example.demo.merchant.mapper.ProductMapper;
 import com.example.demo.search.dto.SearchResultVO;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,16 +28,34 @@ import java.util.stream.Collectors;
 @Service
 public class SearchService {
 
+    private static final Duration SEARCH_TTL = Duration.ofMinutes(5);
+    private static final TypeReference<List<SearchResultVO>> SEARCH_RESULT_LIST_TYPE = new TypeReference<>() {
+    };
+
     private final MerchantMapper merchantMapper;
     private final ProductMapper productMapper;
+    private final RedisJsonCacheService cacheService;
+    private final CacheProperties cacheProperties;
 
-    public SearchService(MerchantMapper merchantMapper, ProductMapper productMapper) {
+    public SearchService(MerchantMapper merchantMapper,
+                         ProductMapper productMapper,
+                         RedisJsonCacheService cacheService,
+                         CacheProperties cacheProperties) {
         this.merchantMapper = merchantMapper;
         this.productMapper = productMapper;
+        this.cacheService = cacheService;
+        this.cacheProperties = cacheProperties;
     }
 
     public List<SearchResultVO> search(String keyword, String category, String sort,
                                        BigDecimal lat, BigDecimal lng) {
+        return cacheService.getOrLoad(searchKey(keyword, category, sort, lat, lng), SEARCH_RESULT_LIST_TYPE,
+                cacheProperties.ttl("merchant.search", SEARCH_TTL),
+                () -> loadSearch(keyword, category, sort, lat, lng));
+    }
+
+    private List<SearchResultVO> loadSearch(String keyword, String category, String sort,
+                                            BigDecimal lat, BigDecimal lng) {
         String normalizedKeyword = normalize(keyword);
         String normalizedCategory = category == null ? "" : category.trim();
         List<Merchant> merchants = merchantMapper.selectList(
@@ -148,6 +172,26 @@ public class SearchService {
 
     private String normalize(String value) {
         return value == null ? "" : value.trim().toLowerCase();
+    }
+
+    private String searchKey(String keyword, String category, String sort, BigDecimal lat, BigDecimal lng) {
+        return "la:merchant:search:k:" + keyPart(keyword)
+                + ":c:" + keyPart(category)
+                + ":sort:" + keyPart(sort)
+                + ":lat:" + decimalKey(lat)
+                + ":lng:" + decimalKey(lng)
+                + ":v1";
+    }
+
+    private String keyPart(String value) {
+        if (value == null || value.isBlank()) {
+            return "_";
+        }
+        return URLEncoder.encode(value.trim().toLowerCase(), StandardCharsets.UTF_8);
+    }
+
+    private String decimalKey(BigDecimal value) {
+        return value == null ? "_" : value.stripTrailingZeros().toPlainString();
     }
 
     private boolean matches(String value, String keyword) {

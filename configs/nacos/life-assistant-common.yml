@@ -39,6 +39,26 @@ feign:
 app:
   auth:
     captcha-enabled: ${APP_AUTH_CAPTCHA_ENABLED:true}
+  cache:
+    enabled: ${APP_CACHE_ENABLED:true}
+    default-ttl: ${APP_CACHE_DEFAULT_TTL:10m}
+    ttl-jitter-ratio: ${APP_CACHE_TTL_JITTER_RATIO:0.1}
+    ttl:
+      engagement.review-list: ${APP_CACHE_ENGAGEMENT_REVIEW_LIST_TTL:5m}
+      engagement.rating: ${APP_CACHE_ENGAGEMENT_RATING_TTL:10m}
+      engagement.snapshot: ${APP_CACHE_ENGAGEMENT_SNAPSHOT_TTL:30m}
+      merchant.list: ${APP_CACHE_MERCHANT_LIST_TTL:5m}
+      merchant.detail: ${APP_CACHE_MERCHANT_DETAIL_TTL:10m}
+      merchant.product-detail: ${APP_CACHE_MERCHANT_PRODUCT_DETAIL_TTL:10m}
+      merchant.categories: ${APP_CACHE_MERCHANT_CATEGORIES_TTL:1h}
+      merchant.search: ${APP_CACHE_MERCHANT_SEARCH_TTL:5m}
+      merchant.recommend: ${APP_CACHE_MERCHANT_RECOMMEND_TTL:5m}
+      image.metadata: ${APP_CACHE_IMAGE_METADATA_TTL:1h}
+      image.blob: ${APP_CACHE_IMAGE_BLOB_TTL:10m}
+    image:
+      metadata-enabled: ${APP_CACHE_IMAGE_METADATA_ENABLED:true}
+      blob-enabled: ${APP_CACHE_IMAGE_BLOB_ENABLED:true}
+      max-blob-size-bytes: ${APP_CACHE_IMAGE_MAX_BLOB_SIZE_BYTES:524288}
   feign:
     logger-level: ${FEIGN_LOGGER_LEVEL:BASIC}
   upload:

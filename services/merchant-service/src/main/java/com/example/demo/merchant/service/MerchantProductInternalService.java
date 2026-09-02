@@ -32,6 +32,7 @@ public class MerchantProductInternalService {
     private final ProductMapper productMapper;
     private final ProductSpecMapper productSpecMapper;
     private final MerchantStockChangeService merchantStockChangeService;
+    private final MerchantCatalogCacheService catalogCacheService;
 
     public ProductQuoteResponse quote(ProductQuoteRequest request) {
         ProductQuoteResponse response = new ProductQuoteResponse();
@@ -145,6 +146,7 @@ public class MerchantProductInternalService {
             response.setMessage(reserve ? "库存预留成功" : "库存释放成功");
 
             merchantStockChangeService.updateFinished(record.getRequestId(), response.getStatus(), response.getMessage());
+            catalogCacheService.invalidatePublicCatalog();
             return response;
         } catch (RuntimeException ex) {
             merchantStockChangeService.markFailed(record.getRequestId(), ex.getMessage());

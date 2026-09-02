@@ -23,6 +23,23 @@ data:
   redis-host: redis
   redis-port: "6379"
   redis-database: "0"
+  app-cache-enabled: "true"
+  app-cache-default-ttl: 10m
+  app-cache-ttl-jitter-ratio: "0.1"
+  app-cache-engagement-review-list-ttl: 5m
+  app-cache-engagement-rating-ttl: 10m
+  app-cache-engagement-snapshot-ttl: 30m
+  app-cache-merchant-list-ttl: 5m
+  app-cache-merchant-detail-ttl: 10m
+  app-cache-merchant-product-detail-ttl: 10m
+  app-cache-merchant-categories-ttl: 1h
+  app-cache-merchant-search-ttl: 5m
+  app-cache-merchant-recommend-ttl: 5m
+  app-cache-image-metadata-ttl: 1h
+  app-cache-image-blob-ttl: 10m
+  app-cache-image-metadata-enabled: "true"
+  app-cache-image-blob-enabled: "true"
+  app-cache-image-max-blob-size-bytes: "524288"
   app-upload-root-dir: /app/uploads
   app-upload-review-dir: /app/uploads/reviews
   app-upload-max-image-size-bytes: "20971520"

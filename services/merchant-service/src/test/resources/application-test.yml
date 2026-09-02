@@ -23,6 +23,8 @@ jwt:
 app:
   auth:
     captcha-enabled: false
+  cache:
+    enabled: false
   upload:
     root-dir: uploads
 

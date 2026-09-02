@@ -78,6 +78,17 @@ feign:
 app:
   feign:
     logger-level: ${FEIGN_LOGGER_LEVEL:BASIC}
+  cache:
+    enabled: ${APP_CACHE_ENABLED:true}
+    default-ttl: ${APP_CACHE_DEFAULT_TTL:10m}
+    ttl-jitter-ratio: ${APP_CACHE_TTL_JITTER_RATIO:0.1}
+    ttl:
+      merchant.list: ${APP_CACHE_MERCHANT_LIST_TTL:5m}
+      merchant.detail: ${APP_CACHE_MERCHANT_DETAIL_TTL:10m}
+      merchant.product-detail: ${APP_CACHE_MERCHANT_PRODUCT_DETAIL_TTL:10m}
+      merchant.categories: ${APP_CACHE_MERCHANT_CATEGORIES_TTL:1h}
+      merchant.search: ${APP_CACHE_MERCHANT_SEARCH_TTL:5m}
+      merchant.recommend: ${APP_CACHE_MERCHANT_RECOMMEND_TTL:5m}
   fault-tolerance:
     merchant-dashboard:
       fallback-message: ${MERCHANT_DASHBOARD_FALLBACK_MESSAGE:订单服务暂不可用，已返回临时看板数据，请稍后刷新。}

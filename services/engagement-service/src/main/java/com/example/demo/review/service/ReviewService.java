@@ -2,6 +2,8 @@ package com.example.demo.review.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.demo.common.BusinessException;
+import com.example.demo.common.cache.CacheProperties;
+import com.example.demo.common.cache.RedisJsonCacheService;
 import com.example.demo.engagement.client.MerchantCatalogClient;
 import com.example.demo.engagement.client.OrderClient;
 import com.example.demo.engagement.client.UserClient;
@@ -23,11 +25,13 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,6 +42,11 @@ public class ReviewService {
     private static final int MAX_IMAGE_COUNT = 6;
     private static final int MAX_IMAGE_URL_LENGTH = 500;
     private static final long DEFAULT_MAX_IMAGE_SIZE = 20 * 1024 * 1024L;
+    private static final Duration REVIEW_LIST_TTL = Duration.ofMinutes(5);
+    private static final Duration RATING_TTL = Duration.ofMinutes(10);
+    private static final Duration SNAPSHOT_TTL = Duration.ofMinutes(30);
+    private static final TypeReference<List<ReviewVO>> REVIEW_VO_LIST_TYPE = new TypeReference<>() {
+    };
 
     private final ReviewMapper reviewMapper;
     private final OrderClient orderClient;
@@ -46,6 +55,8 @@ public class ReviewService {
     private final EngagementEventPublisher eventPublisher;
     private final ObjectMapper objectMapper;
     private final ImageStorageService imageStorageService;
+    private final RedisJsonCacheService cacheService;
+    private final CacheProperties cacheProperties;
 
     @Value("${app.upload.max-image-size-bytes:20971520}")
     private long maxImageSizeBytes;
@@ -110,11 +121,18 @@ public class ReviewService {
         eventPublisher.publishReviewCreated(reviews);
         orderClient.markReviewedItems(request.getOrderId(),
                 reviews.stream().map(Review::getProductId).filter(Objects::nonNull).collect(Collectors.toList()));
+        invalidateReviewCaches(reviews);
 
         return reviews.stream().map(this::toReviewVO).collect(Collectors.toList());
     }
 
     public List<ReviewVO> getProductReviews(Long productId) {
+        return cacheService.getOrLoad(productReviewsKey(productId), REVIEW_VO_LIST_TYPE,
+                cacheProperties.ttl("engagement.review-list", REVIEW_LIST_TTL),
+                () -> loadProductReviews(productId));
+    }
+
+    private List<ReviewVO> loadProductReviews(Long productId) {
         List<Review> reviews = reviewMapper.selectList(
                 new LambdaQueryWrapper<Review>()
                         .eq(Review::getProductId, productId)
@@ -124,6 +142,12 @@ public class ReviewService {
     }
 
     public List<ReviewVO> getMerchantReviews(Long merchantId) {
+        return cacheService.getOrLoad(merchantReviewsKey(merchantId), REVIEW_VO_LIST_TYPE,
+                cacheProperties.ttl("engagement.review-list", REVIEW_LIST_TTL),
+                () -> loadMerchantReviews(merchantId));
+    }
+
+    private List<ReviewVO> loadMerchantReviews(Long merchantId) {
         List<Review> reviews = reviewMapper.selectList(
                 new LambdaQueryWrapper<Review>()
                         .eq(Review::getMerchantId, merchantId)
@@ -133,6 +157,12 @@ public class ReviewService {
     }
 
     public List<ReviewVO> getUserReviews(Long userId) {
+        return cacheService.getOrLoad(userReviewsKey(userId), REVIEW_VO_LIST_TYPE,
+                cacheProperties.ttl("engagement.review-list", REVIEW_LIST_TTL),
+                () -> loadUserReviews(userId));
+    }
+
+    private List<ReviewVO> loadUserReviews(Long userId) {
         List<Review> reviews = reviewMapper.selectList(
                 new LambdaQueryWrapper<Review>()
                         .eq(Review::getUserId, userId)
@@ -142,6 +172,12 @@ public class ReviewService {
     }
 
     public BigDecimal getMerchantRating(Long merchantId) {
+        return cacheService.getOrLoad(merchantRatingKey(merchantId), BigDecimal.class,
+                cacheProperties.ttl("engagement.rating", RATING_TTL),
+                () -> loadMerchantRating(merchantId));
+    }
+
+    private BigDecimal loadMerchantRating(Long merchantId) {
         List<Review> reviews = reviewMapper.selectList(
                 new LambdaQueryWrapper<Review>()
                         .eq(Review::getMerchantId, merchantId)
@@ -214,15 +250,17 @@ public class ReviewService {
                 .map(Review::getUserId)
                 .filter(Objects::nonNull)
                 .distinct()
-                .map(userClient::getUser)
-                .collect(Collectors.toMap(UserClient.UserSnapshot::getId, u -> u));
+                .map(this::getCachedUserSnapshot)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(UserClient.UserSnapshot::getId, Function.identity(), (left, right) -> left));
 
         Map<Long, MerchantCatalogClient.ProductSnapshot> productMap = reviews.stream()
                 .map(Review::getProductId)
                 .filter(Objects::nonNull)
                 .distinct()
-                .map(merchantCatalogClient::getProduct)
-                .collect(Collectors.toMap(MerchantCatalogClient.ProductSnapshot::getId, p -> p));
+                .map(this::getCachedProductSnapshot)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(MerchantCatalogClient.ProductSnapshot::getId, Function.identity(), (left, right) -> left));
 
         return reviews.stream().map(review -> {
             ReviewVO.ReviewVOBuilder builder = ReviewVO.builder()
@@ -252,6 +290,58 @@ public class ReviewService {
 
     private ReviewVO toReviewVO(Review review) {
         return buildReviewVOs(List.of(review)).get(0);
+    }
+
+    private UserClient.UserSnapshot getCachedUserSnapshot(Long userId) {
+        return cacheService.getOrLoad(userSnapshotKey(userId), UserClient.UserSnapshot.class,
+                cacheProperties.ttl("engagement.snapshot", SNAPSHOT_TTL),
+                () -> userClient.getUser(userId));
+    }
+
+    private MerchantCatalogClient.ProductSnapshot getCachedProductSnapshot(Long productId) {
+        return cacheService.getOrLoad(productSnapshotKey(productId), MerchantCatalogClient.ProductSnapshot.class,
+                cacheProperties.ttl("engagement.snapshot", SNAPSHOT_TTL),
+                () -> merchantCatalogClient.getProduct(productId));
+    }
+
+    private void invalidateReviewCaches(List<Review> reviews) {
+        if (reviews == null || reviews.isEmpty()) {
+            return;
+        }
+        List<String> keys = new ArrayList<>();
+        reviews.stream().map(Review::getProductId).filter(Objects::nonNull).distinct()
+                .map(this::productReviewsKey).forEach(keys::add);
+        reviews.stream().map(Review::getMerchantId).filter(Objects::nonNull).distinct().forEach(merchantId -> {
+            keys.add(merchantReviewsKey(merchantId));
+            keys.add(merchantRatingKey(merchantId));
+        });
+        reviews.stream().map(Review::getUserId).filter(Objects::nonNull).distinct()
+                .map(this::userReviewsKey).forEach(keys::add);
+        cacheService.delete(keys);
+    }
+
+    private String productReviewsKey(Long productId) {
+        return "la:engagement:reviews:product:" + productId + ":v1";
+    }
+
+    private String merchantReviewsKey(Long merchantId) {
+        return "la:engagement:reviews:merchant:" + merchantId + ":v1";
+    }
+
+    private String userReviewsKey(Long userId) {
+        return "la:engagement:reviews:user:" + userId + ":v1";
+    }
+
+    private String merchantRatingKey(Long merchantId) {
+        return "la:engagement:rating:merchant:" + merchantId + ":v1";
+    }
+
+    private String userSnapshotKey(Long userId) {
+        return "la:engagement:snapshot:user:" + userId + ":v1";
+    }
+
+    private String productSnapshotKey(Long productId) {
+        return "la:engagement:snapshot:product:" + productId + ":v1";
     }
 
     private boolean isCompletedStatus(String status) {

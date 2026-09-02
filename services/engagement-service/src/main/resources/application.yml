@@ -90,6 +90,20 @@ feign:
 app:
   feign:
     logger-level: ${FEIGN_LOGGER_LEVEL:BASIC}
+  cache:
+    enabled: ${APP_CACHE_ENABLED:true}
+    default-ttl: ${APP_CACHE_DEFAULT_TTL:10m}
+    ttl-jitter-ratio: ${APP_CACHE_TTL_JITTER_RATIO:0.1}
+    ttl:
+      engagement.review-list: ${APP_CACHE_ENGAGEMENT_REVIEW_LIST_TTL:5m}
+      engagement.rating: ${APP_CACHE_ENGAGEMENT_RATING_TTL:10m}
+      engagement.snapshot: ${APP_CACHE_ENGAGEMENT_SNAPSHOT_TTL:30m}
+      image.metadata: ${APP_CACHE_IMAGE_METADATA_TTL:1h}
+      image.blob: ${APP_CACHE_IMAGE_BLOB_TTL:10m}
+    image:
+      metadata-enabled: ${APP_CACHE_IMAGE_METADATA_ENABLED:true}
+      blob-enabled: ${APP_CACHE_IMAGE_BLOB_ENABLED:true}
+      max-blob-size-bytes: ${APP_CACHE_IMAGE_MAX_BLOB_SIZE_BYTES:524288}
   upload:
     root-dir: ${APP_UPLOAD_ROOT_DIR:uploads}
     review-dir: ${APP_UPLOAD_REVIEW_DIR:${APP_UPLOAD_ROOT_DIR:uploads}/reviews}

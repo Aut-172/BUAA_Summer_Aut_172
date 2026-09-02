@@ -61,6 +61,24 @@ spec:
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-port } }
             - name: REDIS_DATABASE
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-database } }
+            - name: APP_CACHE_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-enabled } }
+            - name: APP_CACHE_DEFAULT_TTL
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-default-ttl } }
+            - name: APP_CACHE_TTL_JITTER_RATIO
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-ttl-jitter-ratio } }
+            - name: APP_CACHE_MERCHANT_LIST_TTL
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-merchant-list-ttl } }
+            - name: APP_CACHE_MERCHANT_DETAIL_TTL
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-merchant-detail-ttl } }
+            - name: APP_CACHE_MERCHANT_PRODUCT_DETAIL_TTL
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-merchant-product-detail-ttl } }
+            - name: APP_CACHE_MERCHANT_CATEGORIES_TTL
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-merchant-categories-ttl } }
+            - name: APP_CACHE_MERCHANT_SEARCH_TTL
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-merchant-search-ttl } }
+            - name: APP_CACHE_MERCHANT_RECOMMEND_TTL
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-merchant-recommend-ttl } }
             - name: APP_AUTH_CAPTCHA_ENABLED
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-auth-captcha-enabled } }
             - name: JWT_SECRET
@@ -487,6 +505,34 @@ spec:
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: mysql-root-password } }
+            - name: REDIS_HOST
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-host } }
+            - name: REDIS_PORT
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-port } }
+            - name: REDIS_DATABASE
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-database } }
+            - name: APP_CACHE_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-enabled } }
+            - name: APP_CACHE_DEFAULT_TTL
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-default-ttl } }
+            - name: APP_CACHE_TTL_JITTER_RATIO
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-ttl-jitter-ratio } }
+            - name: APP_CACHE_ENGAGEMENT_REVIEW_LIST_TTL
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-engagement-review-list-ttl } }
+            - name: APP_CACHE_ENGAGEMENT_RATING_TTL
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-engagement-rating-ttl } }
+            - name: APP_CACHE_ENGAGEMENT_SNAPSHOT_TTL
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-engagement-snapshot-ttl } }
+            - name: APP_CACHE_IMAGE_METADATA_TTL
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-image-metadata-ttl } }
+            - name: APP_CACHE_IMAGE_BLOB_TTL
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-image-blob-ttl } }
+            - name: APP_CACHE_IMAGE_METADATA_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-image-metadata-enabled } }
+            - name: APP_CACHE_IMAGE_BLOB_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-image-blob-enabled } }
+            - name: APP_CACHE_IMAGE_MAX_BLOB_SIZE_BYTES
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-image-max-blob-size-bytes } }
             - name: JWT_SECRET
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: jwt-secret } }
             - name: APP_UPLOAD_ROOT_DIR

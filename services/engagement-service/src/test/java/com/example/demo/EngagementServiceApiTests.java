@@ -7,6 +7,7 @@ import com.example.demo.engagement.client.OrderClient;
 import com.example.demo.engagement.client.UserClient;
 import com.example.demo.engagement.event.EngagementEventPublisher;
 import com.example.demo.review.entity.Review;
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -31,8 +33,10 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.containsString;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -213,6 +217,29 @@ class EngagementServiceApiTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("单张图片不能超过1MB"));
+    }
+
+    @Test
+    void uploadedImagesAreServedWithHttpCachingHeaders() throws Exception {
+        MockMultipartFile image = new MockMultipartFile("files", "meal.png", "image/png", "image".getBytes());
+
+        MvcResult upload = mockMvc.perform(multipart("/api/uploads/images")
+                        .file(image)
+                        .param("scene", "chat")
+                        .header(HttpHeaders.AUTHORIZATION, consumerToken(10001L)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String imageUrl = JsonPath.read(upload.getResponse().getContentAsString(), "$.data[0]");
+        MvcResult read = mockMvc.perform(get(imageUrl))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("max-age=86400")))
+                .andExpect(header().exists(HttpHeaders.ETAG))
+                .andReturn();
+
+        String etag = read.getResponse().getHeader(HttpHeaders.ETAG);
+        mockMvc.perform(get(imageUrl).header(HttpHeaders.IF_NONE_MATCH, etag))
+                .andExpect(status().isNotModified());
     }
 
     @Test

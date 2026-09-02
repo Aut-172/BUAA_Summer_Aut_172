@@ -1,14 +1,18 @@
 package com.example.demo.recommend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.example.demo.common.cache.CacheProperties;
+import com.example.demo.common.cache.RedisJsonCacheService;
 import com.example.demo.auth.entity.Merchant;
 import com.example.demo.auth.mapper.MerchantMapper;
 import com.example.demo.merchant.entity.Product;
 import com.example.demo.merchant.mapper.ProductMapper;
 import com.example.demo.recommend.dto.RecommendVO;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -19,12 +23,23 @@ import java.util.stream.Collectors;
 @Service
 public class RecommendService {
 
+    private static final Duration RECOMMEND_TTL = Duration.ofMinutes(5);
+    private static final TypeReference<List<RecommendVO>> RECOMMEND_LIST_TYPE = new TypeReference<>() {
+    };
+
     private final MerchantMapper merchantMapper;
     private final ProductMapper productMapper;
+    private final RedisJsonCacheService cacheService;
+    private final CacheProperties cacheProperties;
 
-    public RecommendService(MerchantMapper merchantMapper, ProductMapper productMapper) {
+    public RecommendService(MerchantMapper merchantMapper,
+                            ProductMapper productMapper,
+                            RedisJsonCacheService cacheService,
+                            CacheProperties cacheProperties) {
         this.merchantMapper = merchantMapper;
         this.productMapper = productMapper;
+        this.cacheService = cacheService;
+        this.cacheProperties = cacheProperties;
     }
 
     /**
@@ -35,6 +50,12 @@ public class RecommendService {
      * @return 推荐商家列表（按综合权重排序）
      */
     public List<RecommendVO> getRecommendations(BigDecimal lat, BigDecimal lng) {
+        return cacheService.getOrLoad(recommendKey(lat, lng), RECOMMEND_LIST_TYPE,
+                cacheProperties.ttl("merchant.recommend", RECOMMEND_TTL),
+                () -> loadRecommendations(lat, lng));
+    }
+
+    private List<RecommendVO> loadRecommendations(BigDecimal lat, BigDecimal lng) {
         // 1. 查询所有活跃商家
         List<Merchant> merchants = merchantMapper.selectList(
                 new LambdaQueryWrapper<Merchant>()
@@ -55,6 +76,14 @@ public class RecommendService {
         return scored.stream()
                 .map(sm -> buildRecommendVO(sm.merchant, lat, lng))
                 .collect(Collectors.toList());
+    }
+
+    private String recommendKey(BigDecimal lat, BigDecimal lng) {
+        return "la:merchant:recommend:lat:" + decimalKey(lat) + ":lng:" + decimalKey(lng) + ":v1";
+    }
+
+    private String decimalKey(BigDecimal value) {
+        return value == null ? "_" : value.stripTrailingZeros().toPlainString();
     }
 
     /**

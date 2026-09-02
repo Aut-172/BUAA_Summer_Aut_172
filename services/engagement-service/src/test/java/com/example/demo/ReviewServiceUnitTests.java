@@ -1,6 +1,8 @@
 package com.example.demo;
 
 import com.example.demo.common.BusinessException;
+import com.example.demo.common.cache.CacheProperties;
+import com.example.demo.common.cache.RedisJsonCacheService;
 import com.example.demo.engagement.client.MerchantCatalogClient;
 import com.example.demo.engagement.client.OrderClient;
 import com.example.demo.engagement.client.UserClient;
@@ -36,6 +38,10 @@ class ReviewServiceUnitTests {
     private MerchantCatalogClient merchantCatalogClient;
     @Mock
     private EngagementEventPublisher eventPublisher;
+    @Mock
+    private RedisJsonCacheService cacheService;
+    @Mock
+    private CacheProperties cacheProperties;
 
     @TempDir
     private Path tempDir;
@@ -83,7 +89,9 @@ class ReviewServiceUnitTests {
                 merchantCatalogClient,
                 eventPublisher,
                 new ObjectMapper(),
-                localImageStorageService()
+                localImageStorageService(),
+                cacheService,
+                cacheProperties
         );
         ReflectionTestUtils.setField(reviewService, "maxImageSizeBytes", 1024L);
         return reviewService;
