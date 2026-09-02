@@ -51,6 +51,8 @@ life-service/
 | mysql | 3306 | 3306 | 多库数据服务器 |
 | redis | 6379 | 6379 | 验证码等公共缓存 |
 
+Kubernetes 示例中，前端 NodePort 是 `30080`，Gateway NodePort 是 `30081`。前端静态包默认请求同源 `/api`；当页面运行在 `:30080` 时，会自动把 API 基址切到同主机 `:30081/api`。如果改成域名、Ingress 或 HTTPS，构建前端镜像时可显式传入 `VITE_API_BASE_URL`，例如 `https://api.example.com/api`。
+
 ## 本地启动
 
 推荐使用 Docker Compose：
@@ -218,3 +220,12 @@ bash scripts/deploy-kind.sh
 ```
 
 脚本会创建多库初始化 ConfigMap、Secret，依次部署 MySQL、Redis、Nacos、六个业务服务、Gateway 和前端。
+
+公网联调时可先分别验证前端和 Gateway：
+
+```bash
+curl http://<server-ip>:30080/
+curl http://<server-ip>:30081/api/captcha
+```
+
+如果 `http://<server-ip>:30080/api/captcha` 返回的是前端 `index.html`，说明当前前端入口没有代理到 Gateway 或前端镜像不是最新构建；重新构建并发布前端镜像后，再滚动重启 `life-assistant-frontend`。

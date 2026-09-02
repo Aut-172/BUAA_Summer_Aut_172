@@ -14,7 +14,7 @@ vi.mock('axios', () => ({
     }
 }))
 
-const { default: api, setAuthToken, setUnauthorizedHandler, ApiError } = await import('./api')
+const { default: api, setAuthToken, setUnauthorizedHandler, ApiError, resolveApiBaseUrl } = await import('./api')
 
 describe('api client', () => {
     beforeEach(() => {
@@ -78,5 +78,18 @@ describe('api client', () => {
             message: '登录已过期，请重新登录'
         })
         expect(unauthorizedHandler).toHaveBeenCalledWith(expect.any(ApiError))
+    })
+
+    it('targets the gateway node port when served from the frontend node port', () => {
+        expect(resolveApiBaseUrl({
+            protocol: 'http:',
+            hostname: '47.120.37.61',
+            port: '30080'
+        })).toBe('http://47.120.37.61:30081/api')
+    })
+
+    it('uses an explicit API base URL and appends /api for gateway origins', () => {
+        expect(resolveApiBaseUrl(null, 'http://example.com:30081')).toBe('http://example.com:30081/api')
+        expect(resolveApiBaseUrl(null, 'https://api.example.com/custom-api')).toBe('https://api.example.com/custom-api')
     })
 })

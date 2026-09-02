@@ -270,6 +270,8 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
     image: life-assistant-frontend:${APP_VERSION:-dev}
     container_name: life-assistant-frontend
     ports:
