@@ -1,0 +1,6 @@
+[
+  { "resource": "/api/rider/tasks", "limitApp": "default", "grade": 1, "count": 30, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/rider/dashboard", "limitApp": "default", "grade": 1, "count": 30, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/delivery/{id}", "limitApp": "default", "grade": 1, "count": 30, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/auth/rider/login", "limitApp": "default", "grade": 1, "count": 10, "strategy": 0, "controlBehavior": 0, "clusterMode": false }
+]

@@ -53,6 +53,26 @@ spec:
                 configMapKeyRef:
                   name: life-assistant-config
                   key: nacos-config-refresh-enabled
+            - name: SENTINEL_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: life-assistant-config
+                  key: sentinel-enabled
+            - name: SENTINEL_EAGER
+              valueFrom:
+                configMapKeyRef:
+                  name: life-assistant-config
+                  key: sentinel-eager
+            - name: SENTINEL_DASHBOARD
+              valueFrom:
+                configMapKeyRef:
+                  name: life-assistant-config
+                  key: sentinel-dashboard
+            - name: SENTINEL_RULE_GROUP
+              valueFrom:
+                configMapKeyRef:
+                  name: life-assistant-config
+                  key: sentinel-rule-group
             - name: TZ
               value: Asia/Shanghai
           readinessProbe:

@@ -1,5 +1,27 @@
 spring:
   cloud:
+    sentinel:
+      enabled: ${SENTINEL_ENABLED:true}
+      eager: ${SENTINEL_EAGER:true}
+      transport:
+        dashboard: ${SENTINEL_DASHBOARD:}
+      datasource:
+        gw-flow-rules:
+          nacos:
+            server-addr: ${NACOS_CONFIG_SERVER_ADDR:${NACOS_SERVER_ADDR:127.0.0.1:8848}}
+            namespace: ${NACOS_CONFIG_NAMESPACE:}
+            group-id: ${SENTINEL_RULE_GROUP:${NACOS_CONFIG_GROUP:DEFAULT_GROUP}}
+            data-id: sentinel-${spring.application.name}-gw-flow.json
+            data-type: json
+            rule-type: gw-flow
+        gw-api-groups:
+          nacos:
+            server-addr: ${NACOS_CONFIG_SERVER_ADDR:${NACOS_SERVER_ADDR:127.0.0.1:8848}}
+            namespace: ${NACOS_CONFIG_NAMESPACE:}
+            group-id: ${SENTINEL_RULE_GROUP:${NACOS_CONFIG_GROUP:DEFAULT_GROUP}}
+            data-id: sentinel-${spring.application.name}-gw-api-group.json
+            data-type: json
+            rule-type: gw-api-group
     gateway:
       globalcors:
         cors-configurations:

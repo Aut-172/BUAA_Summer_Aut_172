@@ -72,6 +72,7 @@ docker compose up --build
 运行时变量见 `.env.example`，至少要关注 `DB_HOST`、`DB_PORT`、`NACOS_SERVER_ADDR`、`REDIS_HOST` 和 `REDIS_PORT`。本地直连默认是 `localhost`，容器里要改成对应服务名或宿主机地址。
 Feign 服务间调用默认使用 `FEIGN_CONNECT_TIMEOUT=1000`、`FEIGN_READ_TIMEOUT=3000` 和 `FEIGN_LOGGER_LEVEL=basic`，详细治理约定见 [docs/feign-basic-governance.md](docs/feign-basic-governance.md)。
 配置中心已接入 Nacos Config，默认从 `life-assistant-common.yml` 和各服务 `${spring.application.name}.yml` 读取配置；样例配置和发布脚本见 [docs/nacos-config-center.md](docs/nacos-config-center.md)。
+Sentinel 已接入入口限流、业务服务限流和 Feign 熔断规则数据源，云端默认不部署 Dashboard，治理说明见 [docs/sentinel-governance.md](docs/sentinel-governance.md)。
 
 启动后访问：
 

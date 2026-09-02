@@ -1,0 +1,7 @@
+[
+  { "resource": "/api/search", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/recommend", "limitApp": "default", "grade": 1, "count": 40, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/api/merchant/dashboard", "limitApp": "default", "grade": 1, "count": 25, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/products/quote", "limitApp": "default", "grade": 1, "count": 60, "strategy": 0, "controlBehavior": 0, "clusterMode": false },
+  { "resource": "/internal/products/reserve", "limitApp": "default", "grade": 1, "count": 30, "strategy": 0, "controlBehavior": 0, "clusterMode": false }
+]

@@ -61,6 +61,10 @@ Gateway 和六个业务服务均已增加 `com.alibaba.cloud:spring-cloud-starte
 | `settlement-service.yml` | 结算服务数据源。 |
 | `fulfillment-service.yml` | 履约服务数据源和 SQL 初始化开关。 |
 | `engagement-service.yml` | 互动服务数据源、上传和 OSS 配置。 |
+| `sentinel-api-gateway-gw-api-group.json` | Gateway API 分组规则。 |
+| `sentinel-api-gateway-gw-flow.json` | Gateway 入口限流规则。 |
+| `sentinel-*-flow.json` | 业务服务 URL 限流规则。 |
+| `sentinel-*-degrade.json` | 业务服务熔断降级规则。 |
 
 默认 group 为 `DEFAULT_GROUP`。如果使用 namespace，需要先在 Nacos 控制台创建 namespace，并把 namespace ID 配到环境变量 `NACOS_CONFIG_NAMESPACE`。
 
@@ -98,7 +102,7 @@ docker compose up -d nacos
 http://localhost:8848/nacos
 ```
 
-当前 Compose 中 `NACOS_AUTH_ENABLE=false`，控制台和脚本不需要账号密码。
+当前 Compose 中 `NACOS_AUTH_ENABLE=false`，控制台和脚本不需要账号密码。发布脚本会自动发布 `configs/nacos/` 下的 `.yml`、`.yaml` 和 `.json` 文件，因此 Sentinel 规则样例会和基础配置一起发布。
 
 可以直接在控制台编辑对应 Data ID；也可以先修改仓库里的样例文件：
 

@@ -20,28 +20,25 @@ if (-not $SkipHealthCheck) {
     }
 }
 
-$dataIds = @(
-    "life-assistant-common.yml",
-    "api-gateway.yml",
-    "merchant-service.yml",
-    "user-service.yml",
-    "order-service.yml",
-    "settlement-service.yml",
-    "fulfillment-service.yml",
-    "engagement-service.yml"
-)
+$configFiles = Get-ChildItem -LiteralPath $resolvedConfigDir -File |
+    Where-Object { $_.Extension -in @(".yml", ".yaml", ".json") } |
+    Sort-Object Name
 
-foreach ($dataId in $dataIds) {
-    $path = Join-Path $resolvedConfigDir $dataId
-    if (-not (Test-Path $path)) {
-        throw "Missing Nacos config file: $path"
+if ($configFiles.Count -eq 0) {
+    throw "No .yml, .yaml or .json config files found in $resolvedConfigDir"
+}
+
+foreach ($file in $configFiles) {
+    $dataId = $file.Name
+    $content = Get-Content -LiteralPath $file.FullName -Raw -Encoding UTF8
+    $type = switch ($file.Extension.ToLowerInvariant()) {
+        ".json" { "json" }
+        default { "yaml" }
     }
-
-    $content = Get-Content -LiteralPath $path -Raw -Encoding UTF8
     $body = @{
         dataId = $dataId
         group = $Group
-        type = "yaml"
+        type = $type
         content = $content
     }
 
@@ -60,7 +57,7 @@ foreach ($dataId in $dataIds) {
         throw "Failed to publish $dataId to Nacos. Response: $result"
     }
 
-    Write-Host "Published $dataId to group=$Group namespace=$Namespace"
+    Write-Host "Published $dataId type=$type to group=$Group namespace=$Namespace"
 }
 
 Write-Host "Nacos config publish completed."

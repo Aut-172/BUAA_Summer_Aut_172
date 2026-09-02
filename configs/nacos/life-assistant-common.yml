@@ -3,6 +3,11 @@ spring:
     nacos:
       discovery:
         fail-fast: ${NACOS_DISCOVERY_FAIL_FAST:false}
+    sentinel:
+      enabled: ${SENTINEL_ENABLED:true}
+      eager: ${SENTINEL_EAGER:true}
+      transport:
+        dashboard: ${SENTINEL_DASHBOARD:}
     openfeign:
       client:
         config:
@@ -26,6 +31,10 @@ spring:
 jwt:
   secret: ${JWT_SECRET:LifeAssistant2025SecretKeyForJWTTokenGenerationMustBe256BitsLong}
   expiration: ${JWT_EXPIRATION:86400000}
+
+feign:
+  sentinel:
+    enabled: ${FEIGN_SENTINEL_ENABLED:true}
 
 app:
   auth:

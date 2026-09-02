@@ -36,6 +36,15 @@ spec:
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-refresh-enabled } }
             - { name: FEIGN_CONNECT_TIMEOUT, value: "1000" }
             - { name: FEIGN_READ_TIMEOUT, value: "3000" }
+            - { name: FEIGN_SENTINEL_ENABLED, value: "true" }
+            - name: SENTINEL_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-enabled } }
+            - name: SENTINEL_EAGER
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-eager } }
+            - name: SENTINEL_DASHBOARD
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-dashboard } }
+            - name: SENTINEL_RULE_GROUP
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-rule-group } }
             - name: SPRING_DATASOURCE_URL
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: merchant-datasource-url } }
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
@@ -114,6 +123,15 @@ spec:
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-namespace } }
             - name: NACOS_CONFIG_REFRESH_ENABLED
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-refresh-enabled } }
+            - { name: FEIGN_SENTINEL_ENABLED, value: "true" }
+            - name: SENTINEL_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-enabled } }
+            - name: SENTINEL_EAGER
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-eager } }
+            - name: SENTINEL_DASHBOARD
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-dashboard } }
+            - name: SENTINEL_RULE_GROUP
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-rule-group } }
             - name: SPRING_DATASOURCE_URL
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: user-datasource-url } }
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
@@ -190,6 +208,15 @@ spec:
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-namespace } }
             - name: NACOS_CONFIG_REFRESH_ENABLED
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-refresh-enabled } }
+            - { name: FEIGN_SENTINEL_ENABLED, value: "true" }
+            - name: SENTINEL_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-enabled } }
+            - name: SENTINEL_EAGER
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-eager } }
+            - name: SENTINEL_DASHBOARD
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-dashboard } }
+            - name: SENTINEL_RULE_GROUP
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-rule-group } }
             - name: SPRING_DATASOURCE_URL
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: order-datasource-url } }
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
@@ -256,6 +283,15 @@ spec:
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-namespace } }
             - name: NACOS_CONFIG_REFRESH_ENABLED
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-refresh-enabled } }
+            - { name: FEIGN_SENTINEL_ENABLED, value: "true" }
+            - name: SENTINEL_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-enabled } }
+            - name: SENTINEL_EAGER
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-eager } }
+            - name: SENTINEL_DASHBOARD
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-dashboard } }
+            - name: SENTINEL_RULE_GROUP
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-rule-group } }
             - name: SPRING_DATASOURCE_URL
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: settlement-datasource-url } }
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
@@ -322,6 +358,15 @@ spec:
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-namespace } }
             - name: NACOS_CONFIG_REFRESH_ENABLED
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-refresh-enabled } }
+            - { name: FEIGN_SENTINEL_ENABLED, value: "true" }
+            - name: SENTINEL_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-enabled } }
+            - name: SENTINEL_EAGER
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-eager } }
+            - name: SENTINEL_DASHBOARD
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-dashboard } }
+            - name: SENTINEL_RULE_GROUP
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-rule-group } }
             - name: SPRING_DATASOURCE_URL
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: fulfillment-datasource-url } }
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
@@ -398,6 +443,15 @@ spec:
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-namespace } }
             - name: NACOS_CONFIG_REFRESH_ENABLED
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: nacos-config-refresh-enabled } }
+            - { name: FEIGN_SENTINEL_ENABLED, value: "true" }
+            - name: SENTINEL_ENABLED
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-enabled } }
+            - name: SENTINEL_EAGER
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-eager } }
+            - name: SENTINEL_DASHBOARD
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-dashboard } }
+            - name: SENTINEL_RULE_GROUP
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: sentinel-rule-group } }
             - name: SPRING_DATASOURCE_URL
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: engagement-datasource-url } }
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
