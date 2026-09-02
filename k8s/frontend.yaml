@@ -24,7 +24,7 @@ spec:
             - name: API_GATEWAY_URL
               value: http://api-gateway:8080
             - name: OSS_PROXY_TARGET
-              value: http://buaa-summer-life-assistant.oss-cn-heyuan-internal.aliyuncs.com
+              value: https://buaa-summer-life-assistant.oss-cn-heyuan.aliyuncs.com
             - name: OSS_PROXY_MAX_IN_FLIGHT
               value: "32"
             - name: PROXY_TIMEOUT_MS
