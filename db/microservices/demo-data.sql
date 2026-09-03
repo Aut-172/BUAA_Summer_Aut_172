@@ -6,8 +6,9 @@ USE `user_db`;
 DELETE FROM `user_favorite_merchant` WHERE `id` BETWEEN 70001 AND 70010;
 DELETE FROM `cart` WHERE `id` BETWEEN 12001 AND 12010;
 DELETE FROM `address` WHERE `id` BETWEEN 11001 AND 11010;
-DELETE FROM `user` WHERE `id` IN (10001, 10002, 10003, 10004);
 DELETE FROM `admin` WHERE `id` IN (1, 2);
+DELETE FROM `user` WHERE `id` IN (10001, 10002, 10003, 10004);
+
 
 INSERT INTO `admin` (`id`, `username`, `password`) VALUES
 (1, 'admin', '$2a$10$HvAnImnOgs9dErjESgWLwuccdHPAWMxqhYxKxfSG1KNyuL6y9.jhe'),
