@@ -62,12 +62,12 @@ spring:
       continue-on-error: ${SPRING_SQL_INIT_CONTINUE_ON_ERROR:true}
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      database: ${REDIS_DATABASE:0}
-      timeout: ${REDIS_TIMEOUT:3000ms}
-      connect-timeout: ${REDIS_CONNECT_TIMEOUT:3000ms}
+      host: ${APP_REDIS_HOST:localhost}
+      port: ${APP_REDIS_PORT:6379}
+      password: ${APP_REDIS_PASSWORD:}
+      database: ${APP_REDIS_DATABASE:0}
+      timeout: ${APP_REDIS_TIMEOUT:3000ms}
+      connect-timeout: ${APP_REDIS_CONNECT_TIMEOUT:3000ms}
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
