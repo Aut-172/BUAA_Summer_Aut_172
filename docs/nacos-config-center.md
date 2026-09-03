@@ -71,7 +71,7 @@ Gateway 和六个业务服务均已增加 `com.alibaba.cloud:spring-cloud-starte
 
 ## CI/CD 自动发布
 
-GitHub Actions 的 `container-build-and-k8s-deploy` job 在 `push main` 时会把 `configs/`、`k8s/`、`scripts/` 和 `db/` 一起打包上传到 ECS。远端执行 `scripts/deploy-kind.sh` 时，会在 Nacos Deployment 就绪后通过临时 `kubectl port-forward` 调用 `scripts/publish-nacos-config.sh`，自动发布 `configs/nacos/` 下的 `.yml`、`.yaml` 和 `.json` 文件。
+GitHub Actions 的 `container-build-and-k8s-deploy` job 在 `push main` 时会把 `configs/`、`k8s/`、`scripts/`、`db/`、`load-tests/` 和 `docs/` 一起打包上传到 ECS。远端执行 `scripts/deploy-kind.sh` 时，会在 Nacos Deployment 就绪后通过临时 `kubectl port-forward` 调用 `scripts/publish-nacos-config.sh`，自动发布 `configs/nacos/` 下的 `.yml`、`.yaml` 和 `.json` 文件。
 
 因此走 CI/CD 正常发版时，不需要再手工把规则发布到 Nacos。仍需要手工发布的场景主要有三类：本机调试、云端临时热改、或者只改配置不希望触发完整镜像构建发布。若要临时跳过自动发布，可在远端部署环境设置 `PUBLISH_NACOS_CONFIG=false`。
 
