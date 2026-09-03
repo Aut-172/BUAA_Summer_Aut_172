@@ -1,0 +1,19 @@
+NAME                                                  READY   STATUS    RESTARTS       AGE     IP            NODE                      NOMINATED NODE   READINESS GATES
+life-assistant-api-gateway-d7fc78bd-4xvj4             1/1     Running   0              18m     10.42.0.204   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-engagement-service-5ff9ccfcb9-2fq9n    1/1     Running   0              20m     10.42.0.201   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-frontend-745b598b7c-sdf46              1/1     Running   0              18m     10.42.0.203   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-fulfillment-service-5579cbdf5d-5mjsl   1/1     Running   0              12m     10.42.0.209   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-fulfillment-service-5579cbdf5d-cwhsg   0/1     Running   0              62s     10.42.0.219   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-merchant-service-76dd444dc-6grgl       1/1     Running   0              7m47s   10.42.0.211   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-merchant-service-76dd444dc-7ldm5       1/1     Running   0              11m     10.42.0.210   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-merchant-service-76dd444dc-9mw4s       1/1     Running   0              7m47s   10.42.0.212   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-merchant-service-76dd444dc-s4zww       1/1     Running   0              12m     10.42.0.208   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-merchant-service-76dd444dc-tbcq9       1/1     Running   0              6m17s   10.42.0.213   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-mysql-596766557b-hl5pf                 1/1     Running   16 (18h ago)   2d23h   10.42.0.75    izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-nacos-5995f55965-l7wq6                 1/1     Running   6 (19h ago)    2d23h   10.42.0.72    izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-order-service-5c75679647-sxkph         1/1     Running   0              113s    10.42.0.217   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-order-service-5c75679647-xd6xk         1/1     Running   0              113s    10.42.0.218   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-order-service-5c75679647-z59d7         1/1     Running   0              113s    10.42.0.216   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-redis-c4fcbf6c-r8mhj                   1/1     Running   2 (19h ago)    2d23h   10.42.0.69    izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-settlement-service-85968c8f84-phmj4    1/1     Running   0              23m     10.42.0.199   izf8z9823mhcfvpm8llt12z   <none>           <none>
+life-assistant-user-service-8486f4fdc9-d4pf7          1/1     Running   0              12m     10.42.0.207   izf8z9823mhcfvpm8llt12z   <none>           <none>

@@ -1,0 +1,14 @@
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME                      ENDPOINTS                                            AGE
+api-gateway               10.42.0.202:8080,10.42.0.204:8080,10.42.0.205:8080   2d22h
+engagement-service        10.42.0.201:8086                                     2d23h
+fulfillment-service       10.42.0.209:8085                                     2d23h
+kubernetes                172.16.136.182:6443                                  3d
+life-assistant-frontend   10.42.0.203:80                                       2d19h
+merchant-service          10.42.0.208:8081,10.42.0.210:8081                    2d23h
+mysql                     10.42.0.75:3306                                      2d23h
+nacos                     10.42.0.72:9848,10.42.0.72:8848                      2d23h
+order-service             10.42.0.198:8083                                     2d23h
+redis                     10.42.0.69:6379                                      2d23h
+settlement-service        10.42.0.199:8084                                     2d23h
+user-service              10.42.0.207:8082                                     2d23h

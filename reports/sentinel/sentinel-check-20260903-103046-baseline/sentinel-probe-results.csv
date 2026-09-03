@@ -1,0 +1,11 @@
+timestamp,scenario,name,method,url,http_status,business_code,elapsed_ms,degraded,dependency,message,fallback_reason,error
+"2026-09-03 10:30:46.473 +0800","baseline","captcha","GET","http://47.120.37.61:30081/api/captcha","200","200","18.44","","","success","",""
+"2026-09-03 10:30:47.027 +0800","baseline","captcha","GET","http://47.120.37.61:30081/api/captcha","200","200","38.32","","","success","",""
+"2026-09-03 10:30:47.592 +0800","baseline","captcha","GET","http://47.120.37.61:30081/api/captcha","200","200","48.04","","","success","",""
+"2026-09-03 10:30:48.131 +0800","baseline","captcha","GET","http://47.120.37.61:30081/api/captcha","200","200","47.84","","","success","",""
+"2026-09-03 10:30:48.698 +0800","baseline","captcha","GET","http://47.120.37.61:30081/api/captcha","200","200","18.88","","","success","",""
+"2026-09-03 10:30:49.186 +0800","baseline","search","GET","http://47.120.37.61:30081/api/search?keyword=Braised","200","200","36.44","","","success","",""
+"2026-09-03 10:30:49.825 +0800","baseline","search","GET","http://47.120.37.61:30081/api/search?keyword=Braised","200","200","115.65","","","success","",""
+"2026-09-03 10:30:51.083 +0800","baseline","search","GET","http://47.120.37.61:30081/api/search?keyword=Braised","200","200","691.87","","","success","",""
+"2026-09-03 10:30:51.730 +0800","baseline","search","GET","http://47.120.37.61:30081/api/search?keyword=Braised","200","200","55.85","","","success","",""
+"2026-09-03 10:30:52.630 +0800","baseline","search","GET","http://47.120.37.61:30081/api/search?keyword=Braised","200","200","297.77","","","success","",""

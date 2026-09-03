@@ -1,0 +1,12 @@
+timestamp,scenario,name,method,url,http_status,business_code,elapsed_ms,degraded,dependency,message,fallback_reason,error
+"2026-09-03 10:34:05.227 +0800","dependency-fallback","merchant-login","POST","http://47.120.37.61:30081/api/auth/merchant/login","200","200","2665.38","","","success","",""
+"2026-09-03 10:34:05.610 +0800","dependency-fallback","merchant-dashboard","GET","http://47.120.37.61:30081/api/merchant/dashboard","200","200","28.92","true","order-service","订单服务暂不可用，已返回临时看板数据，请稍后刷新。","remote code 503",""
+"2026-09-03 10:34:08.996 +0800","dependency-fallback","merchant-dashboard","GET","http://47.120.37.61:30081/api/merchant/dashboard","200","200","26.18","true","order-service","订单服务暂不可用，已返回临时看板数据，请稍后刷新。","remote code 503",""
+"2026-09-03 10:34:12.402 +0800","dependency-fallback","merchant-dashboard","GET","http://47.120.37.61:30081/api/merchant/dashboard","200","200","34.95","true","order-service","订单服务暂不可用，已返回临时看板数据，请稍后刷新。","remote code 503",""
+"2026-09-03 10:34:15.821 +0800","dependency-fallback","merchant-dashboard","GET","http://47.120.37.61:30081/api/merchant/dashboard","200","200","24.31","true","order-service","订单服务暂不可用，已返回临时看板数据，请稍后刷新。","remote code 503",""
+"2026-09-03 10:34:19.288 +0800","dependency-fallback","merchant-dashboard","GET","http://47.120.37.61:30081/api/merchant/dashboard","200","200","43.49","true","order-service","订单服务暂不可用，已返回临时看板数据，请稍后刷新。","remote code 503",""
+"2026-09-03 10:34:22.655 +0800","dependency-fallback","merchant-dashboard","GET","http://47.120.37.61:30081/api/merchant/dashboard","200","200","19.1","true","order-service","订单服务暂不可用，已返回临时看板数据，请稍后刷新。","remote code 503",""
+"2026-09-03 10:34:25.994 +0800","dependency-fallback","merchant-dashboard","GET","http://47.120.37.61:30081/api/merchant/dashboard","200","200","17.47","true","order-service","订单服务暂不可用，已返回临时看板数据，请稍后刷新。","remote code 503",""
+"2026-09-03 10:34:29.331 +0800","dependency-fallback","merchant-dashboard","GET","http://47.120.37.61:30081/api/merchant/dashboard","200","200","17.23","true","order-service","订单服务暂不可用，已返回临时看板数据，请稍后刷新。","remote code 503",""
+"2026-09-03 10:34:32.671 +0800","dependency-fallback","merchant-dashboard","GET","http://47.120.37.61:30081/api/merchant/dashboard","200","200","18.63","true","order-service","订单服务暂不可用，已返回临时看板数据，请稍后刷新。","remote code 503",""
+"2026-09-03 10:34:36.068 +0800","dependency-fallback","merchant-dashboard","GET","http://47.120.37.61:30081/api/merchant/dashboard","200","200","19.36","true","order-service","订单服务暂不可用，已返回临时看板数据，请稍后刷新。","remote code 503",""
