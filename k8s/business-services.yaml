@@ -56,11 +56,11 @@ spec:
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: mysql-root-password } }
-            - name: APP_REDIS_HOST
+            - name: REDIS_HOST
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-host } }
-            - name: APP_REDIS_PORT
+            - name: REDIS_PORT
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-port } }
-            - name: APP_REDIS_DATABASE
+            - name: REDIS_DATABASE
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-database } }
             - name: APP_CACHE_ENABLED
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-enabled } }
@@ -167,10 +167,12 @@ spec:
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: mysql-root-password } }
-            - name: APP_REDIS_HOST
+            - name: REDIS_HOST
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-host } }
-            - name: APP_REDIS_PORT
+            - name: REDIS_PORT
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-port } }
+            - name: REDIS_DATABASE
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-database } }
             - name: JWT_SECRET
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: jwt-secret } }
             - name: APP_AUTH_CAPTCHA_ENABLED
@@ -258,11 +260,11 @@ spec:
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: mysql-root-password } }
-            - name: APP_REDIS_HOST
+            - name: REDIS_HOST
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-host } }
-            - name: APP_REDIS_PORT
+            - name: REDIS_PORT
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-port } }
-            - name: APP_REDIS_DATABASE
+            - name: REDIS_DATABASE
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-database } }
             - name: APP_CACHE_ENABLED
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-enabled } }
@@ -434,10 +436,12 @@ spec:
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: mysql-root-password } }
-            - name: APP_REDIS_HOST
+            - name: REDIS_HOST
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-host } }
-            - name: APP_REDIS_PORT
+            - name: REDIS_PORT
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-port } }
+            - name: REDIS_DATABASE
+              valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-database } }
             - name: JWT_SECRET
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: jwt-secret } }
             - name: APP_AUTH_CAPTCHA_ENABLED
@@ -525,11 +529,11 @@ spec:
             - { name: SPRING_DATASOURCE_USERNAME, value: root }
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom: { secretKeyRef: { name: life-assistant-secret, key: mysql-root-password } }
-            - name: APP_REDIS_HOST
+            - name: REDIS_HOST
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-host } }
-            - name: APP_REDIS_PORT
+            - name: REDIS_PORT
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-port } }
-            - name: APP_REDIS_DATABASE
+            - name: REDIS_DATABASE
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: redis-database } }
             - name: APP_CACHE_ENABLED
               valueFrom: { configMapKeyRef: { name: life-assistant-config, key: app-cache-enabled } }
