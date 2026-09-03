@@ -2,6 +2,44 @@
 
 当前版本已移除旧单体后端源码，运行态由 `services/` 下的微服务实现。旧单体版本已经通过 Git tag 保留，不再放在主干目录中。
 
+## 当前交付状态
+
+截至 2026-09-03，本项目已经形成“React 前端 + Spring Cloud 微服务 + Docker Compose + Kubernetes 示例部署 + CI/CD”的阶段性交付版本。
+
+- 前端：`frontend/` 使用 React 18、React Router、Vite 和 Axios，页面请求统一走 `/api`。
+- 网关：`services/api-gateway/` 统一承接前端入口，并按领域路由到各业务服务。
+- 微服务：六个业务服务分别承载商家、用户、订单、结算、履约、互动领域能力，公共认证、错误处理和 Feign 约定沉淀在 `services/common-lib/`。
+- 数据库：`db/microservices/init-microservice-schemas.sql` 初始化多 schema，业务服务不直接跨库访问。
+- 配置和治理：Nacos Config、Sentinel 规则、Feign 基础治理、OSS/本地图片存储、HPA 和故障容错实验材料已归档在 `docs/` 与 `reports/`。
+- 测试：最近仓库内报告显示微服务测试 84/84 通过，B 侧专项测试 63/63 通过；前端 Playwright 本地报告曾因浏览器启动权限 `spawn EPERM` 失败，CI 仍以 `frontend-e2e` job 为准。
+
+## 文档导航
+
+建议按以下顺序阅读：
+
+1. [docs/delivery/00-交付材料清单.md](docs/delivery/00-交付材料清单.md)：按最终提交要求汇总可编辑文档、报告、模型源文件、部署材料和 PDF 位置。
+2. [docs/delivery/01-用例清单-汇报重点.md](docs/delivery/01-用例清单-汇报重点.md)：UC01-UC21 用例总表，并标出最终汇报重点讲解用例。
+3. [docs/delivery/02-需求说明书.md](docs/delivery/02-需求说明书.md)、[docs/delivery/03-概要设计说明书.md](docs/delivery/03-概要设计说明书.md)、[docs/delivery/04-详细设计说明书.md](docs/delivery/04-详细设计说明书.md)、[docs/delivery/05-需求追溯表.md](docs/delivery/05-需求追溯表.md)：最终版需求、设计和追溯材料。
+4. [frontend/项目结构说明书.md](frontend/项目结构说明书.md)：前端和后端目录、入口文件、页面与测试布局。
+5. [frontend/项目交付说明.md](frontend/项目交付说明.md)：当前交付范围、已闭环能力、剩余增强项。
+6. [frontend/接口说明文档.md](frontend/接口说明文档.md)：前端 API 调用和后端服务归属。
+7. [frontend/角色体系与业务流程说明.md](frontend/角色体系与业务流程说明.md)：游客、消费者、商家、骑手、管理员的业务链路。
+8. [frontend/前端联调与验收清单.md](frontend/前端联调与验收清单.md)：交付前手工验收清单。
+9. [frontend/最终收口检查说明.md](frontend/最终收口检查说明.md)：最后验收口径和风险边界。
+10. [docs/microservices/owner-a-boundary-plan.md](docs/microservices/owner-a-boundary-plan.md)：微服务边界、数据库归属和拆分计划。
+
+运维和实验类文档：
+
+- [docs/nacos-config-center.md](docs/nacos-config-center.md)：Nacos Config 约定和发布脚本。
+- [docs/sentinel-governance.md](docs/sentinel-governance.md)：Sentinel 治理落地说明。
+- [docs/sentinel-experiment-guide.md](docs/sentinel-experiment-guide.md) 与 [docs/sentinel-experiment-runbook.md](docs/sentinel-experiment-runbook.md)：Sentinel 实验设计与复现步骤。
+- [docs/feign-basic-governance.md](docs/feign-basic-governance.md)：Feign 超时、日志和调用约束。
+- [docs/fault-tolerance-experiment-guide.md](docs/fault-tolerance-experiment-guide.md) 与 [docs/fault-tolerance-multi-link-runbook.md](docs/fault-tolerance-multi-link-runbook.md)：故障容错实验说明。
+- [docs/hpa-load-test-experiment-guide.md](docs/hpa-load-test-experiment-guide.md)：HPA 压测实验说明。
+- [docs/oss-image-storage.md](docs/oss-image-storage.md)：图片上传和存储配置。
+
+历史课程材料位于 `frontend/参考文档/参考文档/`，仅作为需求、设计和演示依据保留；当前实现口径以上述最新文档和代码为准。
+
 ## 目录结构
 
 ```text
@@ -9,17 +47,20 @@ life-service/
 ├─ services/
 │  ├─ api-gateway/          # API 网关，统一前端入口
 │  ├─ common-lib/           # 微服务公共依赖
-│  ├─ merchant-service/     # 商家、商品、分类、搜索、推荐
+│  ├─ merchant-service/     # 商家、商品、分类、搜索、推荐、商家后台
 │  ├─ user-service/         # 用户、管理员账号、地址、购物车、收藏
 │  ├─ order-service/        # 订单主链路与订单内部接口
 │  ├─ settlement-service/   # 支付、优惠券锁定与核销
 │  ├─ fulfillment-service/  # 骑手、配送履约
-│  └─ engagement-service/   # 评价、消息
+│  └─ engagement-service/   # 评价、图片上传、消息
 ├─ db/microservices/        # 多 schema 初始化 SQL
 ├─ frontend/                # Vite + React 前端
 ├─ k8s/                     # Kubernetes 示例部署清单
-├─ scripts/                 # 初始化、启动、验证脚本
-└─ docs/                    # 微服务边界与公共包说明
+├─ configs/                 # Nacos/Sentinel 等配置材料
+├─ load-tests/              # 压测、故障和 Sentinel 探测脚本
+├─ scripts/                 # 初始化、启动、验证、部署脚本
+├─ reports/                 # 测试、性能和治理实验报告
+└─ docs/                    # 微服务边界、治理、实验和运维说明
 ```
 
 ## 技术栈
@@ -27,13 +68,15 @@ life-service/
 - Java 21
 - Spring Boot 3.4
 - Spring Cloud Gateway
-- Nacos Discovery
+- Nacos Discovery / Config
 - OpenFeign
 - Spring Cloud LoadBalancer
+- Sentinel
 - MyBatis-Plus
 - MySQL 8
 - Redis 7
-- React 18 + Vite
+- React 18 + React Router + Vite
+- Docker Compose / Kubernetes
 
 ## 服务与端口
 
@@ -47,7 +90,7 @@ life-service/
 | fulfillment-service | 8085 | 8085 | 履约域 |
 | engagement-service | 8086 | 8086 | 互动域 |
 | frontend | 80 | 5173 | 静态前端，反向代理到 Gateway |
-| nacos | 8848/9848 | 8848/9848 | 注册中心 |
+| nacos | 8848/9848 | 8848/9848 | 注册中心和配置中心 |
 | mysql | 3306 | 3306 | 多库数据服务器 |
 | redis | 6379 | 6379 | 验证码等公共缓存 |
 
@@ -70,10 +113,12 @@ docker compose up --build
 `db-init` 会把完整初始化脚本转换为非破坏性执行：补齐缺失的 database/table/初始化数据，但不会 drop 已有表。已有旧 MySQL 卷缺少 `engagement_db` 时，单独执行 `docker compose run --rm db-init` 即可修复。
 
 运行时变量见 `.env.example`，至少要关注 `DB_HOST`、`DB_PORT`、`NACOS_SERVER_ADDR`、`REDIS_HOST` 和 `REDIS_PORT`。本地直连默认是 `localhost`，容器里要改成对应服务名或宿主机地址。
-Feign 服务间调用默认使用 `FEIGN_CONNECT_TIMEOUT=1000`、`FEIGN_READ_TIMEOUT=3000` 和 `FEIGN_LOGGER_LEVEL=basic`，详细治理约定见 [docs/feign-basic-governance.md](docs/feign-basic-governance.md)。
-配置中心已接入 Nacos Config，默认从 `life-assistant-common.yml` 和各服务 `${spring.application.name}.yml` 读取配置；样例配置和发布脚本见 [docs/nacos-config-center.md](docs/nacos-config-center.md)。
-Sentinel 已接入入口限流、业务服务限流和 Feign 熔断规则数据源，云端默认不部署 Dashboard，治理说明见 [docs/sentinel-governance.md](docs/sentinel-governance.md)。
-Sentinel 实验设计和探测脚本见 [docs/sentinel-experiment-guide.md](docs/sentinel-experiment-guide.md)，按时间和窗口划分的复现步骤见 [docs/sentinel-experiment-runbook.md](docs/sentinel-experiment-runbook.md)。
+
+治理配置入口：
+
+- Feign 服务间调用默认使用 `FEIGN_CONNECT_TIMEOUT=1000`、`FEIGN_READ_TIMEOUT=3000` 和 `FEIGN_LOGGER_LEVEL=basic`，详见 [docs/feign-basic-governance.md](docs/feign-basic-governance.md)。
+- Nacos Config 默认从 `life-assistant-common.yml` 和各服务 `${spring.application.name}.yml` 读取配置，详见 [docs/nacos-config-center.md](docs/nacos-config-center.md)。
+- Sentinel 已接入入口限流、业务服务限流和 Feign 熔断规则数据源，详见 [docs/sentinel-governance.md](docs/sentinel-governance.md)。
 
 启动后访问：
 
@@ -154,13 +199,15 @@ powershell -ExecutionPolicy Bypass -File scripts\seed-merchant-revenue-demo.ps1
 powershell -ExecutionPolicy Bypass -File scripts\test-microservices.ps1
 ```
 
+最近一次仓库内报告：`reports/testing/microservice-test-report.md`，84/84 通过。
+
 验证 B 侧边界与服务构建（同时检查 B 侧服务没有复制公共包、没有直接引用外部服务 Mapper/Service、没有固定 `localhost:808x` 的跨服务调用）：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\test-b-side-services.ps1
 ```
 
-该脚本默认生成 `reports/testing/b-side-test-report.md`。最近一次仓库内报告显示 `merchant-service`、`user-service`、`fulfillment-service`、`engagement-service` 合计 61 个服务级用例通过。若需要重新生成报告，可传入 `-ReportPath` 指定输出位置。
+最近一次仓库内报告：`reports/testing/b-side-test-report.md`，`merchant-service`、`user-service`、`fulfillment-service`、`engagement-service` 合计 63/63 通过。若需要重新生成报告，可传入 `-ReportPath` 指定输出位置。
 
 单个服务也可以独立测试：
 
@@ -179,7 +226,7 @@ npm.cmd run test:ci
 npm.cmd run e2e
 ```
 
-前端单测覆盖 `Home`、`Search`、`Login`、`MerchantDetail`、`Cart`、`Checkout`、`Orders`、`Profile`、`Messages`、`MerchantConsole`、`RiderConsole`、`AdminConsole` 等页面；Playwright E2E 覆盖 UC01-UC21 的多角色注册登录、消费者下单闭环、商家经营入口、骑手履约入口和管理员主体管理场景。`reports/testing/b-side-e2e-report.md` 是直连 Gateway 的接口冒烟报告，历史失败原因为本机 `localhost:8080` Gateway 未启动；`reports/testing/b-side-e2e-script-smoke.md` 是无 token 参数时的脚本跳过报告，不代表真实链路通过。
+前端单测覆盖 `Home`、`Search`、`Login`、`MerchantDetail`、`Cart`、`Checkout`、`Coupons`、`Orders`、`Profile`、`Messages`、`MessageOrderDetail`、`MerchantConsole`、`RiderConsole`、`AdminConsole` 等页面；Playwright E2E 覆盖 UC01-UC21 的多角色注册登录、消费者下单闭环、商家经营入口、骑手履约入口和管理员主体管理场景。`reports/testing/b-side-e2e-report.md` 是直连 Gateway 的接口冒烟报告，历史失败原因为本机 `localhost:8080` Gateway 未启动；`reports/testing/b-side-e2e-script-smoke.md` 是无 token 参数时的脚本跳过报告，不代表真实链路通过。
 
 ## CI/CD
 
@@ -194,7 +241,7 @@ GitHub Actions 定义在 [.github/workflows/ci.yml](.github/workflows/ci.yml)，
 
 本地脚本 `scripts/test-microservices.ps1`、`scripts/test-b-side-services.ps1` 和 `scripts/deploy-kind.sh` 与 CI 流程互为补充：前者便于 Windows 本地收尾验证，后者是 GitHub Actions 在 Linux runner 上的正式门禁和发布路径。
 
-## 性能对比
+## 性能与治理实验
 
 性能对比脚本位于 [scripts/performance/compare-performance.mjs](scripts/performance/compare-performance.mjs)，会按同一套请求、同一并发和同一轮次分别压测单体版与微服务版，并自动生成详细报告：
 
@@ -208,7 +255,11 @@ node scripts/performance/compare-performance.mjs
 - `performance-comparison.raw.json`
 - `performance-comparison.raw.csv`
 
-脚本默认对比的接口是 `GET /api/merchants`、`GET /api/products/30001` 和 `GET /api/orders/70001`。如果要换基址、并发数、轮次或容器名，可以通过命令行参数覆盖。
+当前可作为交付依据的实验报告：
+
+- `reports/performance/performance-comparison-summary.md`
+- `reports/sentinel/sentinel-governance-experiment-report-20260903.md`
+- `reports/fault/fault-tolerance-experiment-report-20260903.md`
 
 ## Kubernetes
 

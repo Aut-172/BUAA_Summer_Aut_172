@@ -1,0 +1,22 @@
+flowchart LR
+  FE[React frontend] --> GW[API Gateway]
+  GW --> US[user-service\nuser/address/cart/favorite]
+  GW --> MS[merchant-service\nmerchant/product/search/dashboard]
+  GW --> OS[order-service\norder/state/merchant-order]
+  GW --> SS[settlement-service\ncoupon/payment]
+  GW --> FS[fulfillment-service\nrider/delivery]
+  GW --> ES[engagement-service\nreview/upload/message]
+  US --> UDB[(user_db)]
+  MS --> MDB[(merchant_db)]
+  OS --> ODB[(order_db)]
+  SS --> SDB[(settlement_db)]
+  FS --> FDB[(fulfillment_db)]
+  ES --> EDB[(engagement_db)]
+  OS --> MS
+  OS --> SS
+  SS --> OS
+  FS --> OS
+  ES --> OS
+  ES --> US
+  ES --> MS
+  US --> MS

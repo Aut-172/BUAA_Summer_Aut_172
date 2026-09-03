@@ -1,0 +1,11 @@
+flowchart LR
+  R[Requirements\nREQ01-REQ21] --> U[Use cases\nUC01-UC21]
+  U --> F[Frontend pages\nLogin/Home/Checkout/Orders/Consoles]
+  F --> G[API Gateway\n/api routes]
+  G --> S[Microservices\nuser/merchant/order/settlement/fulfillment/engagement]
+  S --> D[Database owners\nuser_db/merchant_db/order_db/settlement_db/fulfillment_db/engagement_db]
+  S --> T[Test evidence\n84 microservice tests\n63 B-side tests\nfrontend E2E reports]
+  S --> O[Operational evidence\nHPA/fault/Sentinel/performance reports]
+  T --> C[Delivery checklist]
+  O --> C
+  C --> P[Final presentation focus\nUC07/UC08/UC11/UC14/UC16/UC18/UC20/UC21]

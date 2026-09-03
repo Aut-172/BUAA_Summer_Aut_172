@@ -1,0 +1,21 @@
+sequenceDiagram
+  participant FE as React frontend
+  participant GW as API Gateway
+  participant OS as order-service
+  participant US as user-service
+  participant MS as merchant-service
+  participant SS as settlement-service
+  FE->>GW: POST /api/checkout
+  GW->>OS: route checkout
+  OS->>US: GET /internal/users/{userId}/addresses/{addressId}
+  US-->>OS: address snapshot
+  OS->>MS: POST /internal/products/quote
+  MS-->>OS: product/spec price snapshot
+  OS->>MS: POST /internal/products/reserve(requestId)
+  MS-->>OS: reserved
+  OS->>SS: POST /internal/coupon-locks
+  SS-->>OS: locked discount
+  OS->>OS: create orders/order_item/group_coupon
+  OS->>US: DELETE /internal/users/{userId}/cart?merchantId=...
+  OS-->>GW: order created
+  GW-->>FE: Result<Order>

@@ -28,6 +28,7 @@ tools/plantuml.jar
 .gradle-home*/
 .manual-junit-runner/
 .tmp-d/
+tmp/
 !需求追溯表.assets/plantuml/*.png
 !需求追溯表.assets/plantuml/*.puml
 !微服务划分与数据库归属.assets/
@@ -43,6 +44,12 @@ tools/plantuml.jar
 backend/src/main/resources/application-local.yml
 backend/src/main/resources/application-local.yaml
 
+# Delivery PDFs: keep the final assembled handoff, ignore local scratch exports.
+output/*
+!output/pdf/
+output/pdf/*
+!output/pdf/life-service-delivery-pack.pdf
+
 # Keep generated test, performance, and experiment reports versioned.
 !reports/
 !reports/**
@@ -57,6 +64,15 @@ backend/src/main/resources/application-local.yaml
 !reports/**/*.tgz
 !reports/**/*.gz
 *.jtl
+
+# HPA/JMeter experiments keep archived reports and HTML outputs in git.
+# Ignore only transient files produced while re-running local load tests.
+reports/perf/**/work/
+reports/perf/**/tmp/
+reports/perf/**/*.jtl
+reports/perf/**/*.log
+reports/perf/**/*.tgz
+reports/perf/**/*.gz
 
 # Fault tolerance experiments keep concise reports and tabular evidence in git.
 # Raw response dumps, service logs, and archives are reproducible and may be noisy.

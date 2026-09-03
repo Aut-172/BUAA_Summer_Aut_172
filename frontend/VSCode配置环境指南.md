@@ -2,260 +2,199 @@
 
 ## 1. 适用对象
 
-本指南面向第一次接手本项目的同学，目标是：
+本指南面向第一次接手项目的同学，目标是能在 VSCode 中完成前端开发、后端联调和提交前验证。
 
-- 能在 VSCode 中快速打开项目
-- 能正确安装运行环境
-- 能启动前端开发服务
-- 能看到当前完整的角色系统效果
-
----
+当前项目根目录是 `life-service/`，前端代码位于 `frontend/`，后端微服务位于 `services/`。
 
 ## 2. 基础环境要求
 
-请先确保本机已安装：
+建议准备以下环境：
 
-### 2.1 Node.js
-
-推荐版本：
-- Node.js 18 及以上
+- Node.js 18 及以上，CI 使用 Node 22。
+- JDK 21。
+- Docker Desktop，推荐用于本地启动 MySQL、Redis、Nacos 和各微服务容器。
+- VSCode 或 IntelliJ IDEA。VSCode 建议安装 ESLint、Prettier、Java Extension Pack。
 
 检查命令：
 
 ```bash
 node -v
 npm -v
+java -version
+docker version
 ```
 
-如果能输出版本号，说明安装成功。
+## 3. 打开项目
 
-### 2.2 VSCode
-
-推荐使用最新版 VSCode。
-
-建议安装扩展：
-- ESLint
-- Prettier - Code formatter
-- EditorConfig（可选）
-- Chinese (Simplified) Language Pack（可选）
-
----
-
-## 3. 获取项目
-
-将项目代码拉到本地后，在 VSCode 中打开项目根目录：
+在 VSCode 中打开仓库根目录：
 
 ```text
-bighomework/
+life-service/
 ```
 
-不要只打开 `src/`，否则运行脚本和配置文件不会完整生效。
+不要只打开 `frontend/` 或 `services/`，否则根目录脚本、Docker Compose、K8s 清单和文档相互引用会不完整。
 
----
+## 4. 前端依赖安装
 
-## 4. 安装依赖
+在 VSCode 终端执行：
 
-在 VSCode 终端中执行：
-
-```bash
+```powershell
+cd frontend
 npm install
 ```
 
-安装成功后，会生成 / 更新：
-- `node_modules/`
+安装成功后会生成或更新 `frontend/node_modules/`。
 
----
+## 5. 前端开发模式
 
-## 5. 启动项目
+只开发页面或跑前端 mock E2E 时，可以直接启动前端：
 
-### 5.1 开发模式启动
-
-执行：
-
-```bash
+```powershell
+cd frontend
 npm run dev
 ```
 
-默认会启动：
-- 前端页面：`http://127.0.0.1:5173/`
-- 本地 mock API：由 `vite.config.js` 自动启动
-
-如果浏览器没自动打开，请手动访问：
+默认访问：
 
 ```text
 http://127.0.0.1:5173/
 ```
 
-### 5.2 生产构建检查
+前端默认 API 基址是 `/api`。如果没有启动 Gateway，请求真实接口会失败；Playwright E2E 中的 mock 只在测试运行时接管接口，不是日常 dev 服务的一部分。
 
-执行：
+## 6. 完整本地联调
 
-```bash
-npm run build
+需要验证真实后端时，在仓库根目录启动 Docker Compose：
+
+```powershell
+copy .env.example .env
+$env:COMPOSE_PARALLEL_LIMIT=1
+docker compose up -d mysql redis nacos
+docker compose run --rm db-init
+docker compose up --build
 ```
 
-这会验证：
-- 代码是否存在语法问题
-- 构建是否能成功完成
-
----
-
-## 6. 常见运行问题
-
-### 6.1 端口占用
-
-如果启动时报错类似：
+常用访问地址：
 
 ```text
-EADDRINUSE: address already in use :::3001
+前端：http://localhost:5173
+Gateway：http://localhost:8080
+Gateway 健康检查：http://localhost:8080/actuator/health
+Nacos：http://localhost:8848/nacos
 ```
 
-说明本地已有旧的 mock 服务仍在运行。
+若只想让本地 Vite 前端直连某个远端 Gateway，可在启动前设置：
 
-解决方法：
-- 关闭旧终端
-- 或结束占用端口的 Node 进程
-- 然后重新执行：
-
-```bash
+```powershell
+$env:VITE_API_BASE_URL="http://<server-ip>:30081/api"
 npm run dev
 ```
 
-### 6.2 页面不是最新代码
+## 7. 构建与测试
 
-如果你已经改了代码，但浏览器效果不更新：
+前端提交前建议执行：
 
-1. 先确认 `npm run dev` 是否仍在运行
-2. 刷新浏览器页面
-3. 如果仍然不对，重启 dev 服务
+```powershell
+cd frontend
+npm.cmd run build
+npm.cmd run test:ci
+```
 
-### 6.3 账号登录失败
+前端 E2E：
 
-如果商家或骑手账号登录失败，很可能是旧服务未重启。
+```powershell
+cd frontend
+npm.cmd run e2e
+```
 
-请确认当前是最新服务，然后使用以下测试账号：
+说明：`npm.cmd run e2e` 默认使用 Playwright 和 `frontend/e2e/support/mockApi.js` 覆盖前端场景，适合验证页面流程。真实 Gateway 冒烟需要先启动完整后端，并使用接口冒烟脚本或专门的真实环境测试命令。
 
-- 普通用户：`demo / 123456`
-- 商家：`merchant01 / 123456`
-- 骑手：`rider01 / 123456`
+后端全量测试：
 
----
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\test-microservices.ps1
+```
 
-## 7. 当前可测试角色
+B 侧专项测试：
 
-### 7.1 游客
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\test-b-side-services.ps1
+```
 
-未登录直接访问即可。
+## 8. 测试账号
 
-特点：
-- 可浏览商家和商品
-- 不可购买
+初始化数据中常用账号：
 
-### 7.2 普通用户
+| 角色 | 账号 | 密码 |
+| --- | --- | --- |
+| 普通用户 | `demo` | `123456` |
+| 商家 | `merchant01` | `123456` |
+| 骑手 | `rider01` | `123456` |
+| 管理员 | `admin` | `admin123` |
 
-账号：
+骑手和商家账号可能受审核、冻结状态影响；若登录成功但访问业务页被拒绝，请先用管理员端或数据库检查状态。
+
+## 9. 关键文件
+
+前端优先阅读：
+
+- `frontend/src/main.jsx`：React 应用入口、路由、导航和角色保护。
+- `frontend/src/utils/api.js`：Axios API 客户端和接口方法。
+- `frontend/src/utils/ApiProvider.jsx`：登录态、token、角色和全局提示。
+- `frontend/src/pages/`：页面组件和单测。
+- `frontend/e2e/support/mockApi.js`：Playwright E2E 的 mock 接口。
+- `frontend/nginx.conf`：前端容器内 `/api` 和 `/uploads` 反向代理。
+
+后端优先阅读：
+
+- `services/api-gateway/`：Gateway 路由。
+- `services/common-lib/`：公共 JWT、Result、异常和 Feign 常量。
+- `services/*-service/src/main/java/**/controller/`：对外接口和内部接口。
+- `db/microservices/init-microservice-schemas.sql`：初始化数据和多 schema 表结构。
+
+## 10. 常见问题
+
+### 10.1 前端页面能打开但接口失败
+
+确认 Gateway 是否运行：
 
 ```text
-demo
-123456
+http://localhost:8080/actuator/health
 ```
 
-特点：
-- 可加购物车
-- 可下单
-- 可支付 / 取消 / 确认收货
-- 可评价商品
+如果前端部署在 K8s NodePort `30080`，页面会自动把 API 基址切到同主机 `30081/api`。域名、HTTPS 或自定义端口场景请显式配置 `VITE_API_BASE_URL`。
 
-### 7.3 商家
+### 10.2 Docker Compose 构建很慢或失败
 
-账号：
+首次构建会解压 Gradle 发行包。Windows Docker Desktop 下建议保留：
 
-```text
-merchant01
-123456
+```powershell
+$env:COMPOSE_PARALLEL_LIMIT=1
 ```
 
-特点：
-- 可进入商家后台
-- 可维护店铺资料
-- 可编辑商品与规格
-- 可处理本店订单
+### 10.3 Playwright 本地启动浏览器失败
 
-### 7.4 骑手
+历史报告中出现过 `browserType.launch: spawn EPERM`，通常与本机权限、杀毒软件、浏览器安装或沙箱限制有关。先尝试：
 
-账号：
-
-```text
-rider01
-123456
+```powershell
+cd frontend
+npx playwright install chromium
+npm.cmd run e2e:direct
 ```
 
-特点：
-- 可进入骑手工作台
-- 可接单 / 已取餐 / 完成配送
+若仍失败，以 CI 的 `frontend-e2e` 结果或可用机器上的 Playwright 结果作为准入依据。
 
----
+### 10.4 文档和代码不一致
 
-## 8. 关键文件说明
+当前实现口径优先级：
 
-你需要重点关注这些文件：
+1. 代码和自动化测试。
+2. 根目录 `README.md`。
+3. `frontend/接口说明文档.md` 和 `frontend/项目交付说明.md`。
+4. `frontend/参考文档/参考文档/` 下的课程参考材料。
 
-- `src/app.js`
-  - 页面逻辑、路由、状态、事件、角色权限
-- `src/api.js`
-  - 前端统一接口层
-- `src/style.css`
-  - 样式文件
-- `vite.config.js`
-  - Vite 配置与 mock 接口实现
-- `接口说明文档.md`
-  - 前后端接口契约
-- `项目结构说明书.md`
-  - 项目整体结构说明
+## 11. 协作建议
 
----
-
-## 9. VSCode 推荐工作方式
-
-建议：
-
-1. 左侧打开 `src/app.js`
-2. 下方开终端运行 `npm run dev`
-3. 浏览器打开 `http://127.0.0.1:5173/`
-4. 修改代码后直接刷新或等待热更新
-5. 提交前执行：
-
-```bash
-npm run build
-```
-
----
-
-## 10. 团队协作建议
-
-多人开发时建议遵守：
-
-- 改动前先看 `接口说明文档.md`
-- 涉及角色逻辑优先确认是否影响：游客 / 普通用户 / 商家 / 骑手
-- 改完必须跑一次：
-
-```bash
-npm run build
-```
-
-- 如果新增接口，同时更新：
-  - `src/api.js`
-  - `接口说明文档.md`
-
----
-
-## 11. 后续后端接入说明
-
-当前项目使用 mock API 驱动。
-
-后端接入时：
-- 保持 `/api/...` 路径不变
-- 保持 JSON 字段结构不变
-- 逐步把 `vite.config.js` 中的 mock 接口替换为真实 Spring Boot 接口即可
-
-前端页面不需要大规模重写。
+- 新增或修改接口时，同步更新 `frontend/src/utils/api.js`、对应后端 Controller 测试和 `frontend/接口说明文档.md`。
+- 修改角色链路时，同步检查 `frontend/src/main.jsx`、目标页面、`ApiProvider.jsx` 和角色流程文档。
+- 修改部署、配置或治理能力时，同步更新 `README.md`、`docs/` 下对应文档和 `reports/` 下最新报告入口。

@@ -7,3 +7,4 @@ Dockerfile text eol=lf
 **/.dockerignore text eol=lf
 gradlew text eol=lf
 **/gradlew text eol=lf
+*.pdf binary
